@@ -32,8 +32,14 @@ docker-compose-up: docker-image
 docker-compose-down:
 	docker compose -f docker-compose-dev.yaml stop -t 1
 	docker compose -f docker-compose-dev.yaml down
+	docker compose -f docker-compose-rabbit.yaml stop -t 1
+	docker compose -f docker-compose-rabbit.yaml down
 .PHONY: docker-compose-down
 
 docker-compose-logs:
 	docker compose -f docker-compose-dev.yaml logs -f
 .PHONY: docker-compose-logs
+
+docker-rabbit-up:
+	docker compose -f docker-compose-rabbit.yaml up -d --build
+.PHONY: docker-rabbit-up

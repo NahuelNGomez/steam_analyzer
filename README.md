@@ -46,6 +46,21 @@ Facultad de Ingeniería, Universidad de Buenos Aires
 
 ---
 
+## Ejecución
+
+Lo primero que se debe hacer es correr rabbitmq:
+
+```bash
+make docker-rabbit-up
+```
+
+Luego se debe levantar el servidor y el cliente:
+```bash
+make docker-compose-up
+```
+
+---
+
 ## Introducción
 
 El objetivo de este sistema es procesar 5 queries sobre un dataset de juegos y otro dataset de reviews. Las queries son las siguientes:
