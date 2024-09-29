@@ -1,4 +1,4 @@
-![Logo FIUBA](./logofiuba.jpg)
+![Logo FIUBA](./images/logofiuba.jpg)
 
 # Sistemas Distribuidos I
 
@@ -77,7 +77,7 @@ Describe la organización del sistema desde un punto de vista funcional, identif
 
 ### DAG
 
-![DAG de Steam Analyzer](./diagramas-DAG.drawio.png)
+![DAG de Steam Analyzer](./images/diagramas-DAG.drawio.png)
 
 El diagrama presenta dos fuentes principales de datos: Reviews y Games. Estos datos se envían por diferentes pipes y filters. Los filtros especializados (Filtros juegos indie, Filtros juegos shooter, Filtro reviews en inglés, Filtro de positividad) procesan los datos de manera independiente, permitiendo escalabilidad y claridad en el flujo de datos. Los acumuladores y contadores recopilan los resultados necesarios para las consultas específicas, que luego son enviados al Output Gateway para su entrega al cliente.
 
@@ -91,7 +91,7 @@ Enfocada en la estructura interna del código, esta vista detalla cómo se organ
 
 ### Diagrama de Paquetes
 
-![Diagrama de Paquetes de Steam Analyzer](./diagramas-paquetes.drawio.png)
+![Diagrama de Paquetes de Steam Analyzer](./images/diagramas-paquetes.drawio.png)
 
 El Steam Analyzer está organizado de la siguiente manera:
 - **Cliente**: Representa el punto de entrada para los usuarios, donde pueden enviar datos y recibir respuestas de las queries.
@@ -111,19 +111,19 @@ Describe la dinámica en tiempo de ejecución del sistema. Se enfoca en cómo se
 
 ### Diagrama de Secuencia
 
-![Diagrama de Secuencia de Steam Analyzer](./diagramas-Secuencia.drawio.png)
+![Diagrama de Secuencia de Steam Analyzer](./images/diagramas-Secuencia.drawio.png)
 
 El diagrama representa una secuencia generalizada de todas las queries. Las queries T1 representan los filtros y acumuladores que solo requieren información contenida en el dataset de games. A su vez, las queries T2 representan las que requieren, además de información del dataset de games, también datos contenidos en el dataset de reviews.
 
 ### Diagrama de Secuencia Query 4
 
-![Diagrama de Secuencia Query 4](./diagramas-Secuencia_Q4.drawio.png)
+![Diagrama de Secuencia Query 4](./images/diagramas-Secuencia_Q4.drawio.png)
 
 Este diagrama está realizado a partir de la query N° 4. En el diagrama se observa primeramente la conexión entre el cliente y el gateway. Esta comunicación se realiza directamente por socket TCP. Dado esto, se realiza el envío de los juegos y reviews, y a su vez para cada envío, el Gateway devuelve los ACK correspondientes. Luego, los diferentes filtros van reduciendo la cantidad de datos que satisfacen las diferentes condiciones.
 
 ### Diagramas de Actividad
 
-![Diagrama de Actividad de Steam Analyzer](./diagramas-Actividad.drawio.png)
+![Diagrama de Actividad de Steam Analyzer](./images/diagramas-Actividad.drawio.png)
 
 Este diagrama representa las diferentes actividades que se van realizando, abarcando simultáneamente las 5 queries. Por esta razón, hay actividades que se encuentran conjuntas, dado que se prefirió realizarlo desde un enfoque general y no hacer énfasis en actividades atómicas dentro de cada query.
 
@@ -137,7 +137,7 @@ Se refiere a la distribución física del sistema en diferentes nodos o máquina
 
 ### Diagrama de Robustez
 
-![Diagrama de Robustez de Steam Analyzer](./diagramas-Robustez.drawio.png)
+![Diagrama de Robustez de Steam Analyzer](./images/diagramas-Robustez.drawio.png)
 
 Se observan los diferentes recorridos para cada ejercicio a realizar.
 
@@ -147,7 +147,7 @@ Se observan los diferentes recorridos para cada ejercicio a realizar.
 
 ### Diagrama de Casos de Uso
 
-![Casos de Uso de Steam Analyzer](./diagramas-Casos_de_uso.drawio.png)
+![Casos de Uso de Steam Analyzer](./images/diagramas-Casos_de_uso.drawio.png)
 
 - **Subir dataset de juegos**: Representa la capacidad del cliente de poder enviar información al servidor sobre un archivo `.csv` de un dataset de juegos.
 - **Subir dataset de reviews**: Representa la capacidad del cliente para enviar datos al servidor sobre un archivo `.csv` de un dataset de reviews, vinculado al dataset de juegos anteriormente mencionado.
