@@ -14,6 +14,28 @@ def setup_logging(level):
         numeric_level = logging.INFO
     logging.basicConfig(level=numeric_level,
                         format='%(asctime)s - %(levelname)s - %(message)s')
+    
+
+def sendGames(s):
+    with open("data/samplegames.csv", "r") as file:
+        games = file.read()
+        s.sendall(games.encode())
+        logging.debug(f"Enviado: {games}")
+        data = s.recv(1024)
+        logging.debug(f"Recibido: {data.decode()}")
+        print(f"Respuesta del servidor: {data.decode()}")
+        time.sleep(1)
+
+def sendReviews(s):
+    with open("data/samplereviews.csv", "r") as file:
+        reviews = file.read()
+        s.sendall(reviews.encode())
+        logging.debug(f"Enviado: {reviews}")
+        data = s.recv(1024)
+        logging.debug(f"Recibido: {data.decode()}")
+        print(f"Respuesta del servidor: {data.decode()}")
+        time.sleep(1)
+
 def start_client(boundary_ip, boundary_port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
@@ -23,13 +45,8 @@ def start_client(boundary_ip, boundary_port):
             message = "Mensaje automático desde el cliente"
             while True:
                 logging.debug(f"Enviado: {message}")
-                s.sendall(message.encode())
-                
-                data = s.recv(1024)
-                logging.debug(f"Recibido: {data.decode()}")
-                print(f"Respuesta del servidor: {data.decode()}")
-                time.sleep(1)
-            
+                sendGames(s)
+                sendReviews(s)
         except ConnectionRefusedError:
             logging.error(f"No se pudo conectar al servidor en {boundary_ip}:{boundary_port}")
 
