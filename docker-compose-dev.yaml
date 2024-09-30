@@ -22,6 +22,18 @@ services:
     depends_on:
       - server
 
+  test_filter:
+    container_name: test_filter
+    build:
+      context: ./test_filter
+      dockerfile: Dockerfile
+    entrypoint: python3 /main.py
+    environment:
+      - CLI_ID=1
+      - CLI_LOG_LEVEL=DEBUG
+    networks:
+      - testing_net
+
 networks:
   testing_net:
     ipam:
