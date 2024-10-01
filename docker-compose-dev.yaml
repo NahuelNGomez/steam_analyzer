@@ -1,42 +1,68 @@
 name: tp1
+
 services:
-  server:
-    container_name: server
-    image: server:latest
-    entrypoint: python3 /main.py
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - testing_net
 
-  client:
-    container_name: client
-    image: client:latest
-    entrypoint: python3 /client.py
-    environment:
-      - CLI_ID=1
-      - CLI_LOG_LEVEL=DEBUG
+  gateway:
+    container_name: gateway
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    image: gateway:latest
     networks:
       - testing_net
     depends_on:
-      - server
-
-  test_filter:
-    container_name: test_filter
-    build:
-      context: ./test_filter
-      dockerfile: Dockerfile
-    entrypoint: python3 /main.py
+      - rabbitmq
     environment:
-      - CLI_ID=1
-      - CLI_LOG_LEVEL=DEBUG
+      - rabbitmq_HOST=rabbitmq
+      - rabbitmq_PORT=5672
+      - rabbitmq_GAMES_QUEUE=games_queue
+      - rabbitmq_REVIEWS_QUEUE=reviews_queue
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./gateway/config.ini:/gateway/config.ini  
+
+  client:
+    container_name: client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: client:latest
     networks:
       - testing_net
+    depends_on:
+      - gateway
+    volumes:
+      - ./client/data:/data  
+      - ./client/config.ini:/client/config.ini 
+
+  games_filter:
+    container_name: games_filter
+    build:
+      context: ./games_filter
+      dockerfile: Dockerfile
+    image: games_filter:latest
+    networks:
+      - testing_net
+    depends_on:
+      - rabbitmq
+    environment:
+      - rabbitmq_HOST=rabbitmq
+      - rabbitmq_PORT=5672
+      - rabbitmq_GAMES_QUEUE=games_queue
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - ./games_filter/config.ini:/games_filter/config.ini  
+      - ./games_filter/data:/data 
+    entrypoint: python3 main.py
 
 networks:
   testing_net:
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.25.125.0/24
+    driver: bridge
