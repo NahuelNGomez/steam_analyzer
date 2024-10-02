@@ -6,13 +6,13 @@ import time
 
 class RabbitMQHandler:
     def __init__(self, config, retries=5, delay=5):
-        self.config = config 
+        self.config = config  # Almacenar config como un atributo de instancia
         self.host = config.get('rabbitmq_HOST', 'localhost')
         self.port = int(config.get('rabbitmq_PORT', 5672))
         self.exchange = config.get('rabbitmq_EXCHANGE', '')
         self.exchange_type = config.get('rabbitmq_EXCHANGE_TYPE', 'direct')
-        self.username = config.get('rabbitmq_USER', 'guest')  
-        self.password = config.get('rabbitmq_PASS', 'guest')  
+        self.username = config.get('rabbitmq_USER', 'user')  
+        self.password = config.get('rabbitmq_PASS', 'password')  
         self.virtual_host = config.get('rabbitmq_VIRTUAL_HOST', '/')
         self.ssl = config.getboolean('rabbitmq_SSL', False)
         self.connection = None
@@ -68,7 +68,13 @@ class RabbitMQHandler:
     
     def send_message(self, queue_name, message):
         try:
+            # Declarar la cola
             self.channel.queue_declare(queue=queue_name, durable=True)
+            
+            # Enlazar la cola al intercambio con la clave de enrutamiento correspondiente
+            self.channel.queue_bind(queue=queue_name, exchange=self.exchange, routing_key=queue_name)
+            
+            # Publicar el mensaje
             self.channel.basic_publish(
                 exchange=self.exchange,
                 routing_key=queue_name,

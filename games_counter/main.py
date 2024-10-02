@@ -59,9 +59,11 @@ def main():
     def callback(ch, method, properties, body):
         try:
             logging.debug(f"Recibido mensaje: {body}...")
+            print(f'[x] Recibido {body}', flush=True)
             message = json.loads(body.decode('utf-8'))
             counter.counterGames(message)  
             logging.info(f"Procesado mensaje: {message}")
+            print(f"Procesado mensaje: {message}", flush=True)
         except Exception as e:
             logging.error(f"Error al procesar el mensaje: {e}")
 
@@ -70,6 +72,8 @@ def main():
     
     try:
         channel.start_consuming()
+        logging.info("Consumidor iniciado.")
+        print(f'Consumidor iniciado.', flush=True)
     except KeyboardInterrupt:
         logging.info('Interrumpido por el usuario.')
         channel.stop_consuming()
