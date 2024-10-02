@@ -3,7 +3,6 @@ import struct
 class Protocol:
     def __init__(self, socket):
         self.socket = socket
-
     def send_message(self, message):
         # Codificar el mensaje a bytes
         message_bytes = message.encode('utf-8')

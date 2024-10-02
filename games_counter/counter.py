@@ -34,3 +34,6 @@ class GamesCounter:
             logging.info(f"Conteo Actual: {dict(self.platform_counts)}")
         except Exception as e:
             logging.error(f"Error al filtrar el juego: {e}")
+    
+    def get_platform_counts(self):
+        return str(dict(self.platform_counts))

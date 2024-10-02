@@ -13,6 +13,13 @@ def load_config():
     config.read('config.ini')  
     return config['DEFAULT']
 
+
+def send_message(queue, message, connection):
+    channel = connection.channel()
+    channel.queue_declare(queue=queue, durable=True)
+    channel.basic_publish(exchange='', routing_key=queue, body=message)
+    print(f'games counter envió result por la queue.', flush=True)
+
 def main():
     config = load_config()
     logging.basicConfig(level=getattr(logging, config.get('LOGGING_LEVEL', 'INFO').upper()),
@@ -61,6 +68,13 @@ def main():
             logging.debug(f"Recibido mensaje: {body}...")
             print(f'[x] Recibido {body}', flush=True)
             message = json.loads(body.decode('utf-8'))
+            logging.debug(f"Mensaje decodificado: {message}")
+            if ('fin' in body.decode('utf-8')):
+                logging.info("Fin de los mensajes de juegos.")
+                print(f"Fin de los mensajes de juegos.", flush=True) 
+                ch.basic_cancel(consumer_tag=method.consumer_tag)
+                return
+                
             counter.counterGames(message)  
             logging.info(f"Procesado mensaje: {message}")
             print(f"Procesado mensaje: {message}", flush=True)
@@ -73,7 +87,10 @@ def main():
     try:
         channel.start_consuming()
         logging.info("Consumidor iniciado.")
-        print(f'Consumidor iniciado.', flush=True)
+        print(f'Consumidor termino de consumir.', flush=True)
+    
+        send_message('result_queue', counter.get_platform_counts(),connection)
+        print(f'games counter envia result.', flush=True)
     except KeyboardInterrupt:
         logging.info('Interrumpido por el usuario.')
         channel.stop_consuming()
