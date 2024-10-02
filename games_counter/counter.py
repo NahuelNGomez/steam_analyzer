@@ -3,11 +3,11 @@
 import logging
 from collections import defaultdict
 
-class GamesFilter:
+class GamesCounter:
     def __init__(self):
         self.platform_counts = defaultdict(int)
 
-    def filter_game(self, game):
+    def counterGames(self, game):
         try:
             game_name = game.get('Name', 'Unknown')
             windows = game.get('Windows', False)

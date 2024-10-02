@@ -17,5 +17,6 @@ class Dispatcher:
         queue = self.games_queue if data_type == 'games' else self.reviews_queue
         for row in data:
             message = json.dumps(row)
+            logging.debug(f"Enviando mensaje a {queue}: {message}...")
             self.rabbitmq.send_message(queue, message)
             logging.debug(f"Dispatched message to {queue}: {message}")

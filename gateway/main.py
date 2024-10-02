@@ -5,6 +5,7 @@ import configparser
 from connectionHandler import ConnectionHandler
 from dispatcher import Dispatcher
 
+
 def load_config(config_file='config.ini'):
     config = configparser.ConfigParser()
     config.read(config_file)

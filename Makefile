@@ -1,29 +1,31 @@
+# Makefile
+
 SHELL := /bin/bash
 PROJECT_NAME = tp1
 
 default: docker-compose-up
 
 docker-compose-up:
-	# Ejecuta este comando de vez en cuando para limpiar etapas intermedias generadas 
-	# durante la construcción de las imágenes (tu disco duro lo agradecerá :) ). 
-	# No lo dejes descomentado si deseas evitar reconstruir imágenes innecesariamente.
-	# docker rmi `docker images --filter label=intermediateStageToBeDeleted=true -q`
-	docker compose -f docker-compose-dev.yaml up -d --build
+	# Ejecuta RabbitMQ primero
+	docker compose -f docker-compose-rabbit.yaml -f docker-compose-system.yaml up -d --build
 
 .PHONY: docker-compose-up
 
 docker-compose-down:
-	docker compose -f docker-compose-dev.yaml down
+	# Baja ambos archivos docker-compose en el orden inverso
+	docker compose -f docker-compose-system.yaml -f docker-compose-rabbit.yaml down
 
 .PHONY: docker-compose-down
 
 docker-compose-logs:
-	docker compose -f docker-compose-dev.yaml logs -f
+	# Mostrar logs de ambos archivos
+	docker compose -f docker-compose-rabbit.yaml -f docker-compose-system.yaml logs -f
 
 .PHONY: docker-compose-logs
 
 docker-compose-rebuild:
-	docker compose -f docker-compose-dev.yaml build --no-cache
+	# Reconstruir ambos sistemas sin caché
+	docker compose -f docker-compose-rabbit.yaml -f docker-compose-system.yaml build --no-cache
 
 .PHONY: docker-compose-rebuild
 

@@ -1,11 +1,11 @@
-# games_filter/main.py
+# games_counter/main.py
 
 import pika
 import json
 import logging
 import time
 from collections import defaultdict
-from filter import GamesFilter
+from counter import GamesCounter
 import configparser
 
 def load_config():
@@ -15,23 +15,35 @@ def load_config():
 
 def main():
     config = load_config()
-    logging.basicConfig(level=getattr(logging, config.get('LOGGING_LEVEL', 'INFO').upper()))
+    logging.basicConfig(level=getattr(logging, config.get('LOGGING_LEVEL', 'INFO').upper()),
+                        format='%(asctime)s - %(levelname)s - %(message)s')
 
     rabbitmq_host = config.get('rabbitmq_HOST', 'rabbitmq')
     rabbitmq_port = int(config.get('rabbitmq_PORT', 5672))
     games_queue = config.get('rabbitmq_GAMES_QUEUE', 'games_queue')
+    rabbitmq_user = config.get('rabbitmq_USER', 'guest')
+    rabbitmq_pass = config.get('rabbitmq_PASS', 'guest')
 
     retries = 5
-    delay = 5
+    delay = 10
     attempt = 0
     connection = None
 
+    credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_pass)
+
     while attempt < retries:
         try:
-            connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, port=rabbitmq_port))
+            connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=rabbitmq_host,
+                    port=rabbitmq_port,
+                    credentials=credentials
+                )
+            )
+            logging.info("Conectado a RabbitMQ.")
             break
         except Exception as e:
-            attempt +=1
+            attempt += 1
             logging.error(f"Error al conectar a RabbitMQ: {e}. Intento {attempt} de {retries}")
             time.sleep(delay)
     else:
@@ -40,19 +52,22 @@ def main():
 
     channel = connection.channel()
     channel.queue_declare(queue=games_queue, durable=True)
+    logging.info(f"Declarada la cola: {games_queue}")
 
-    filter = GamesFilter()
+    counter = GamesCounter()
 
     def callback(ch, method, properties, body):
         try:
+            logging.debug(f"Recibido mensaje: {body}...")
             message = json.loads(body.decode('utf-8'))
-            filter.filter_game(message)  # Procesar directamente el diccionario del juego
+            counter.counterGames(message)  
+            logging.info(f"Procesado mensaje: {message}")
         except Exception as e:
             logging.error(f"Error al procesar el mensaje: {e}")
 
     channel.basic_consume(queue=games_queue, on_message_callback=callback, auto_ack=True)
-
     logging.info(' [*] Esperando mensajes de juegos. Para salir presiona CTRL+C')
+    
     try:
         channel.start_consuming()
     except KeyboardInterrupt:
@@ -61,6 +76,7 @@ def main():
     finally:
         if connection and connection.is_open:
             connection.close()
+            logging.info("Conexión a RabbitMQ cerrada.")
 
 if __name__ == '__main__':
     main()

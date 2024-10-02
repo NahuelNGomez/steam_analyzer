@@ -1,68 +1,75 @@
+# docker-compose-system.yaml
 name: tp1
 
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    networks:
-      - testing_net
-
   gateway:
     container_name: gateway
     build:
-      context: ./gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./gateway/Dockerfile
     image: gateway:latest
     networks:
       - testing_net
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     environment:
       - rabbitmq_HOST=rabbitmq
       - rabbitmq_PORT=5672
       - rabbitmq_GAMES_QUEUE=games_queue
       - rabbitmq_REVIEWS_QUEUE=reviews_queue
+      - rabbitmq_USER=admin
+      - rabbitmq_PASS=admin
       - LOGGING_LEVEL=DEBUG
     volumes:
+      - ./gateway:/gateway
       - ./gateway/config.ini:/gateway/config.ini  
+      - ./common:/common
 
   client:
     container_name: client
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./client/Dockerfile
     image: client:latest
     networks:
       - testing_net
     depends_on:
       - gateway
+    environment:
+      - LOGGING_LEVEL=INFO
     volumes:
+      - ./client:/client
       - ./client/data:/data  
       - ./client/config.ini:/client/config.ini 
+      - ./common:/common 
 
-  games_filter:
-    container_name: games_filter
+  games_counter:
+    container_name: games_counter
     build:
-      context: ./games_filter
+      context: ./games_counter
       dockerfile: Dockerfile
-    image: games_filter:latest
+    image: games_counter:latest
     networks:
       - testing_net
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     environment:
       - rabbitmq_HOST=rabbitmq
       - rabbitmq_PORT=5672
       - rabbitmq_GAMES_QUEUE=games_queue
+      - rabbitmq_USER=admin
+      - rabbitmq_PASS=admin
       - LOGGING_LEVEL=INFO
     volumes:
-      - ./games_filter/config.ini:/games_filter/config.ini  
-      - ./games_filter/data:/data 
+      - ./games_counter/config.ini:/games_counter/config.ini  
+      - ./games_counter/data:/data 
     entrypoint: python3 main.py
 
 networks:
   testing_net:
-    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.125.0/24
