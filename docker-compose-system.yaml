@@ -1,12 +1,27 @@
-# docker-compose-system.yaml
 name: tp1
-
 services:
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"     # Puerto para conexiones de clientes
+      - "15672:15672"   # Puerto para la interfaz de administración
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    networks:
+      - testing_net
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   gateway:
     container_name: gateway
     build:
-      context: .
-      dockerfile: ./gateway/Dockerfile
+      context: ./gateway
+      dockerfile: Dockerfile
     image: gateway:latest
     networks:
       - testing_net
@@ -18,6 +33,8 @@ services:
       - rabbitmq_PORT=5672
       - rabbitmq_GAMES_QUEUE=games_queue
       - rabbitmq_REVIEWS_QUEUE=reviews_queue
+      - rabbitmq_EXCHANGE=dispatcher_exchange
+      - rabbitmq_EXCHANGE_TYPE=direct
       - rabbitmq_USER=admin
       - rabbitmq_PASS=admin
       - LOGGING_LEVEL=DEBUG
@@ -29,8 +46,8 @@ services:
   client:
     container_name: client
     build:
-      context: .
-      dockerfile: ./client/Dockerfile
+      context: ./client
+      dockerfile: Dockerfile
     image: client:latest
     networks:
       - testing_net
@@ -38,18 +55,47 @@ services:
       - gateway
     environment:
       - LOGGING_LEVEL=INFO
+      - rabbitmq_HOST=rabbitmq
+      - rabbitmq_PORT=5672
+      - rabbitmq_RESULTS_QUEUE=results_queue
+      - rabbitmq_USER=admin
+      - rabbitmq_PASS=admin
     volumes:
       - ./client:/client
       - ./client/data:/data  
       - ./client/config.ini:/client/config.ini 
       - ./common:/common 
 
-  games_counter:
-    container_name: games_counter
+  # games_counter:
+  #   container_name: games_counter
+  #   build:
+  #     context: ./games_counter
+  #     dockerfile: Dockerfile
+  #   image: games_counter:latest
+  #   networks:
+  #     - testing_net
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   environment:
+  #     - rabbitmq_HOST=rabbitmq
+  #     - rabbitmq_PORT=5672
+  #     - rabbitmq_GAMES_QUEUE=games_queue
+  #     - rabbitmq_RESULTS_QUEUE=games_counter_results_queue
+  #     - rabbitmq_USER=admin
+  #     - rabbitmq_PASS=admin
+  #     - LOGGING_LEVEL=INFO
+  #   volumes:
+  #     - ./games_counter/config.ini:/games_counter/config.ini  
+  #     - ./games_counter/data:/data 
+  #   entrypoint: python3 main.py
+
+  filter_indie:
+    container_name: filter_indie
     build:
-      context: ./games_counter
+      context: ./filter_indie
       dockerfile: Dockerfile
-    image: games_counter:latest
+    image: filter_indie:latest
     networks:
       - testing_net
     depends_on:
@@ -58,18 +104,75 @@ services:
     environment:
       - rabbitmq_HOST=rabbitmq
       - rabbitmq_PORT=5672
-      - rabbitmq_GAMES_QUEUE=games_queue
+      - rabbitmq_INPUT_QUEUE=games_queue
+      - rabbitmq_OUTPUT_QUEUE=indie_games
+      - rabbitmq_EXCHANGE=dispatcher_exchange
+      - rabbitmq_EXCHANGE_TYPE=direct
       - rabbitmq_USER=admin
       - rabbitmq_PASS=admin
-      - LOGGING_LEVEL=INFO
+      - LOGGING_LEVEL=DEBUG
     volumes:
-      - ./games_counter/config.ini:/games_counter/config.ini  
-      - ./games_counter/data:/data 
+      - ./filter_indie/config.ini:/filter_indie/config.ini  
+      - ./filter_indie/data:/data 
+    entrypoint: python3 main.py
+
+  filter_range:
+    container_name: filter_range
+    build:
+      context: ./filter_range
+      dockerfile: Dockerfile
+    image: filter_range:latest
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      filter_indie:
+        condition: service_started
+    environment:
+      - rabbitmq_HOST=rabbitmq
+      - rabbitmq_PORT=5672
+      - rabbitmq_INPUT_QUEUE=indie_games
+      - rabbitmq_OUTPUT_QUEUE=indie_games_in_range
+      - rabbitmq_EXCHANGE=dispatcher_exchange
+      - rabbitmq_EXCHANGE_TYPE=direct
+      - rabbitmq_USER=admin
+      - rabbitmq_PASS=admin
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./filter_range/config.ini:/filter_range/config.ini  
+      - ./filter_range/data:/data 
+    entrypoint: python3 main.py
+
+  top10_indie_counter: 
+    container_name: top10_indie_counter
+    build: 
+      context: ./top10_indie_counter
+      dockerfile: Dockerfile
+    image: top10_indie_counter:latest
+    networks:
+      - testing_net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      filter_range:
+        condition: service_started
+    environment:
+      - rabbitmq_HOST=rabbitmq
+      - rabbitmq_PORT=5672
+      - rabbitmq_INPUT_QUEUE=indie_games_in_range
+      - rabbitmq_RESULTS_QUEUE=results_queue
+      - rabbitmq_USER=admin
+      - rabbitmq_PASS=admin
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./top10_indie_counter/config.ini:/top10_indie_counter/config.ini
+      - ./top10_indie_counter/data:/data
     entrypoint: python3 main.py
 
 networks:
   testing_net:
+    driver: bridge
     ipam:
-      driver: default
       config:
         - subnet: 172.25.125.0/24
