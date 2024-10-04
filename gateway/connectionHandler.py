@@ -105,9 +105,9 @@ class ConnectionHandler:
                     logging.debug(f"Enviando mensaje {message}...")
                     middleware.send(data = message)
                     logging.debug(f"Dispatched message {message}")
-                if packet == "fin\n\n":
-                    logging.info("Enviando mensaje de fin a las colas...")
-                    middleware.send(data=packet)
+                # if packet == "fin\n\n":
+                #     logging.info("Enviando mensaje de fin a las colas...")
+                middleware.send(data="fin\n\n")
             except OSError:
                 logging.error("Middleware closed")
                 break

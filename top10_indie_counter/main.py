@@ -1,100 +1,35 @@
-# top10_indie_counter/main.py
-
-import pika
 import json
 import logging
-import time
+import os
 from counter import Top10IndieCounter
-import configparser
 
 def load_config():
+    import configparser
     config = configparser.ConfigParser()
-    config.read('config.ini')  
+    config.read('config.ini')
     return config['DEFAULT']
-
-def send_message(queue, message, connection):
-    channel = connection.channel()
-    channel.queue_declare(queue=queue, durable=True)
-    channel.basic_publish(exchange='', routing_key=queue, body=message)
-    print(f'top10_indie_counter envió result por la cola {queue}.', flush=True)
 
 def main():
     config = load_config()
-    logging.basicConfig(level=getattr(logging, config.get('LOGGING_LEVEL', 'INFO').upper()),
-                        format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=getattr(logging, config.get('LOGGING_LEVEL', 'INFO').upper()),
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
 
-    rabbitmq_host = config.get('rabbitmq_HOST', 'rabbitmq')
-    rabbitmq_port = int(config.get('rabbitmq_PORT', 5672))
-    input_queue = config.get('rabbitmq_INDI_GAMES_IN_RANGE_QUEUE', 'indie_games_in_range')
-    results_queue = config.get('rabbitmq_RESULTS_QUEUE', 'result_queue')  # Cola para enviar el resultado
-    retries = 5
-    delay = 10
-    attempt = 0
-    connection = None
+    input_queues = os.getenv("INPUT_QUEUES")
+    input_queues = json.loads(input_queues) if input_queues else {}
+    
+    output_queues = os.getenv("OUTPUT_QUEUES")
+    output_queues = json.loads(output_queues) if output_queues else []
 
-    while attempt < retries:
-        try:
-            connection = pika.BlockingConnection(
-                pika.ConnectionParameters(
-                    host=rabbitmq_host,
-                    port=rabbitmq_port,
-                )
-            )
-            logging.info("Conectado a RabbitMQ.")
-            break
-        except Exception as e:
-            attempt += 1
-            logging.error(f"Error al conectar a RabbitMQ: {e}. Intento {attempt} de {retries}")
-            time.sleep(delay)
-    else:
-        logging.critical("No se pudo conectar a RabbitMQ después de varios intentos.")
-        return
+    output_exchanges = os.getenv("OUTPUT_EXCHANGES")
+    output_exchanges = json.loads(output_exchanges) if output_exchanges else []
 
-    channel = connection.channel()
-    channel.queue_declare(queue=input_queue, durable=True)
-    channel.queue_declare(queue=results_queue, durable=True)
-    logging.info(f"Declaradas las colas: {input_queue}, {results_queue}")
+    instance_id = os.getenv("INSTANCE_ID")
+    instance_id = json.loads(instance_id) if instance_id else 0
 
-    counter = Top10IndieCounter()
-
-    def callback(ch, method, properties, body):
-        try:
-            logging.debug(f"Recibido mensaje: {body}...")
-            print(f'[x] Recibido {body}', flush=True)
-            mensaje_str = body.decode('utf-8')
-
-            if mensaje_str == 'fin\n\n' :
-                logging.info("Fin de los mensajes de juegos.")
-                print(f"Fin de los mensajes de juegos.", flush=True)
-                # Enviar el mensaje de fin a la siguiente cola
-                send_message(results_queue, json.dumps(counter.get_games()), connection)
-                ch.basic_cancel(consumer_tag=method.consumer_tag)
-                return
-            message = json.loads(mensaje_str)
-            logging.debug(f"Mensaje decodificado: {message}")
-
-            counter.process_game(message)
-            logging.info(f"Procesado mensaje: {message}")
-            print(f"Procesado mensaje: {message}", flush=True)
-        except Exception as e:
-            logging.error(f"Error al procesar el mensaje: {e}")
-
-    channel.basic_consume(queue=input_queue, on_message_callback=callback, auto_ack=True)
-    logging.info(' [*] Esperando mensajes en indie_games_in_range. Para salir presiona CTRL+C')
-
-    try:
-        channel.start_consuming()
-        logging.info("Consumidor iniciado.")
-        print(f'Consumidor termino de consumir.', flush=True)
-        send_message('result_queue', counter.calculate_top10(), connection)
-        print(f'top10_indie_counter envió result por la cola results_queue.', flush=True)
-
-    except KeyboardInterrupt:
-        logging.info('Interrumpido por el usuario.')
-        channel.stop_consuming()
-    finally:
-        connection.close()
-        logging.info("Conexión a RabbitMQ cerrada.")
+    counter = Top10IndieCounter(input_queues=input_queues, output_exchanges=output_exchanges, instance_id=instance_id)
+    counter.start()
 
 if __name__ == '__main__':
     main()

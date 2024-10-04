@@ -52,7 +52,10 @@ class FilterRange:
             return release_date.year
         
     def _finCallBack(self, data):
+        print("FILTER_RANGE sending data: ", data, flush=True)
         self.middleware.send(data = data)
+        
 
     def start(self):
         self.middleware.start()
+        

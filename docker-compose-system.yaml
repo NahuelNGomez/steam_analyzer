@@ -98,12 +98,13 @@ services:
       filter_range:
         condition: service_started
     environment:
-      - rabbitmq_INPUT_QUEUE=indie_games_in_range
-      - rabbitmq_RESULTS_QUEUE=result_queue
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - INPUT_QUEUES={"indie_range_games_queue":"indie_range_games"}
       - LOGGING_LEVEL=DEBUG
     volumes:
       - ./top10_indie_counter/config.ini:/top10_indie_counter/config.ini
       - ./top10_indie_counter/data:/data
+      - ./common:/common
     entrypoint: python3 main.py
 
 networks:
