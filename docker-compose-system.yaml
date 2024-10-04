@@ -76,21 +76,15 @@ services:
     container_name: filter_range
     build:
       context: ./filter_range
-      dockerfile: Dockerfile
     image: filter_range:latest
     networks:
       - testing_net
-    depends_on:
-      filter_indie:
-        condition: service_started
     environment:
-      - rabbitmq_INPUT_QUEUE=indie_games
-      - rabbitmq_OUTPUT_QUEUE=indie_games_in_range
+      - OUTPUT_EXCHANGES=["indie_range_games"]
+      - INPUT_QUEUES={"indie_games_queue":"indie_games"}
       - LOGGING_LEVEL=DEBUG
     volumes:
-      - ./filter_range/config.ini:/filter_range/config.ini
-      - ./filter_range/data:/data
-    entrypoint: python3 main.py
+      - ./common:/common
 
   top10_indie_counter:
     container_name: top10_indie_counter

@@ -1,12 +1,30 @@
 # filter_range/filter.py
 
+import json
 import logging
 from datetime import datetime
 
+from common.middleware import Middleware
+
 class FilterRange:
-    def __init__(self, start_year=2010, end_year=2019):
+    def __init__(self, start_year, end_year, input_queues, output_exchanges, instance_id):
+        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
+        
         self.start_year = start_year
         self.end_year = end_year
+        
+        
+    def _callBack(self, data):
+        message = json.loads(data)
+        logging.debug(f"Mensaje decodificado: {message}")
+
+        filtered_game = self.filter_by_range(message)
+        if filtered_game:
+            self.middleware.send(json.dumps(filtered_game))
+            logging.info(f"Juego filtrado enviado:{filtered_game}")
+        else:
+            logging.info("Juego no cumple con el filtro de rango.")
+            print("Juego no cumple con el filtro de rango.", flush=True)
 
     def filter_by_range(self, message):
         """
@@ -32,3 +50,9 @@ class FilterRange:
         except ValueError:
             release_date = datetime.strptime(release_date_str, "%B %d, %Y")
             return release_date.year
+        
+    def _finCallBack(self, data):
+        self.middleware.send(data = data)
+
+    def start(self):
+        self.middleware.start()
