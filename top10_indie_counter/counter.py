@@ -4,54 +4,45 @@ import logging
 from collections import defaultdict
 from datetime import datetime
 
+
 class Top10IndieCounter:
     def __init__(self):
         # Diccionario para almacenar el tiempo total y el conteo de juegos por game_id
-        self.game_playtimes = defaultdict(lambda: {'total_time': 0, 'count': 0})
-        self.games_info = {}  # Para almacenar información básica de los juegos
+        self.game_playtimes = {i: {"nombre": None, "tiempo": None} for i in range(10)}
+        
+    def get_games(self):
+        """
+        Recibe un diccionario con información de los juegos.
+        """
+        return self.game_playtimes
 
     def process_game(self, message):
         """
-        Procesa cada mensaje (juego) recibido.
+        Procesa cada mensaje (juego) recibido y lo añade al top 10 si corresponde.
         """
         try:
-            game_id = message.get('AppID')
-            name = message.get('Name')
-            genres_str = message.get('Genres', '')
-            release_date_str = message.get('Release date', '')
-            playtime = message.get('Average playtime forever')  # En minutos
+            # Extraer los datos del mensaje
+            game_id = message.get("AppID")
+            name = message.get("Name")
+            playtime = message.get("Average playtime forever")  # En minutos
+            playtime_hours = int(playtime) / 60
+            
+            print(f"Procesando juego2: {name} ({playtime_hours} horas)...", flush=True)
+            # Encuentra el puesto con el menor tiempo registrado
+            menor_puesto = min(
+                (k for k, v in self.game_playtimes.items() if v["tiempo"] is not None),
+                key=lambda k: self.game_playtimes[k]["tiempo"],
+                default=None
+            )
 
-            # Convertir playtime a horas si es necesario
-            if isinstance(playtime, (int, float)):
-                playtime_hours = playtime / 60  # Asumiendo que está en minutos
-            else:
-                playtime_hours = 0
+            # Si hay un puesto vacío, úsalo
+            puesto_vacio = next((k for k, v in self.game_playtimes.items() if v["tiempo"] is None), None)
 
-            # Convertir géneros a lista
-            genres = [genre.strip() for genre in genres_str.split(',')]
-
-            # Filtrar por género 'Indie'
-            if 'Indie' not in genres:
-                return
-
-            # Filtrar por década de 2010 (2010-2019)
-            try:
-                release_year = self.extract_year(release_date_str)
-                if not (2010 <= release_year <= 2019):
-                    return
-            except:
-                return  # Si no se puede extraer el año, omitir el juego
-
-            # Acumular el tiempo de juego
-            if playtime_hours > 0:
-                self.game_playtimes[game_id]['total_time'] += playtime_hours
-                self.game_playtimes[game_id]['count'] += 1
-
-                # Almacenar información básica del juego
-                if game_id not in self.games_info:
-                    self.games_info[game_id] = {
-                        'name': name
-                    }
+            # Si hay un puesto vacío, o el nuevo juego tiene mayor tiempo que el menor registrado, reemplaza
+            if puesto_vacio is not None:
+                self.game_playtimes[puesto_vacio] = {"nombre": name, "tiempo": playtime_hours}
+            elif menor_puesto is not None and playtime_hours > self.game_playtimes[menor_puesto]["tiempo"]:
+                self.game_playtimes[menor_puesto] = {"nombre": name, "tiempo": playtime_hours}
 
         except Exception as e:
             logging.error(f"Error en process_game: {e}")
@@ -77,17 +68,23 @@ class Top10IndieCounter:
             # Calcular el tiempo promedio de juego para cada juego
             avg_playtimes = []
             for game_id, data in self.game_playtimes.items():
-                total_time = data['total_time']
-                count = data['count']
+                total_time = data["total_time"]
+                count = data["count"]
                 avg_time = total_time / count if count else 0
-                avg_playtimes.append({
-                    'AppID': game_id,
-                    'Name': self.games_info.get(game_id, {}).get('name', 'Desconocido'),
-                    'Average Playtime (Hours)': round(avg_time, 2)
-                })
+                avg_playtimes.append(
+                    {
+                        "AppID": game_id,
+                        "Name": self.games_info.get(game_id, {}).get(
+                            "name", "Desconocido"
+                        ),
+                        "Average Playtime (Hours)": round(avg_time, 2),
+                    }
+                )
 
             # Ordenar los juegos por tiempo promedio de juego descendente
-            sorted_games = sorted(avg_playtimes, key=lambda x: x['Average Playtime (Hours)'], reverse=True)
+            sorted_games = sorted(
+                avg_playtimes, key=lambda x: x["Average Playtime (Hours)"], reverse=True
+            )
 
             # Seleccionar los top N juegos
             top_games = sorted_games[:top_n]

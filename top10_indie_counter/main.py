@@ -26,7 +26,7 @@ def main():
     rabbitmq_host = config.get('rabbitmq_HOST', 'rabbitmq')
     rabbitmq_port = int(config.get('rabbitmq_PORT', 5672))
     input_queue = config.get('rabbitmq_INDI_GAMES_IN_RANGE_QUEUE', 'indie_games_in_range')
-    results_queue = config.get('rabbitmq_RESULTS_QUEUE', 'results_queue')  # Cola para enviar el resultado
+    results_queue = config.get('rabbitmq_RESULTS_QUEUE', 'result_queue')  # Cola para enviar el resultado
     rabbitmq_user = config.get('rabbitmq_USER', 'admin')
     rabbitmq_pass = config.get('rabbitmq_PASS', 'admin')
 
@@ -67,14 +67,17 @@ def main():
         try:
             logging.debug(f"Recibido mensaje: {body}...")
             print(f'[x] Recibido {body}', flush=True)
-            message = json.loads(body.decode('utf-8'))
-            logging.debug(f"Mensaje decodificado: {message}")
+            mensaje_str = body.decode('utf-8')
 
-            if 'fin' in message:
+            if mensaje_str == 'fin\n\n' :
                 logging.info("Fin de los mensajes de juegos.")
                 print(f"Fin de los mensajes de juegos.", flush=True)
+                # Enviar el mensaje de fin a la siguiente cola
+                send_message(results_queue, json.dumps(counter.get_games()), connection)
                 ch.basic_cancel(consumer_tag=method.consumer_tag)
                 return
+            message = json.loads(mensaje_str)
+            logging.debug(f"Mensaje decodificado: {message}")
 
             counter.process_game(message)
             logging.info(f"Procesado mensaje: {message}")
@@ -89,8 +92,8 @@ def main():
         channel.start_consuming()
         logging.info("Consumidor iniciado.")
         print(f'Consumidor termino de consumir.', flush=True)
-        send_message('results_queue', counter.calculate_top10(), connection)
-        print(f'top10_indie_counter envió result por la cola results_queue.', flush=True)
+        send_message('result_queue', counter.calculate_top10(), connection)
+        print(f'top10_indie_counter envió result por la cola result_queue.', flush=True)
 
     except KeyboardInterrupt:
         logging.info('Interrumpido por el usuario.')

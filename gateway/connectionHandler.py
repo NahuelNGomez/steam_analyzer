@@ -27,7 +27,7 @@ class ConnectionHandler:
                     logging.info(f"Cliente {self.address} desconectado")
                     break
 
-                logging.debug(f"Recibido de {self.address}: {data[:50]}...")  # Mostrar solo los primeros 50 caracteres
+                logging.debug(f"Recibido de {self.address}: {data}...")  # Mostrar solo los primeros 50 caracteres
 
                 # Separar tipo de dataset y contenido usando doble salto de línea
                 parts = data.split("\n\n", 1)

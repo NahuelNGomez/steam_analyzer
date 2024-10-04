@@ -69,7 +69,7 @@ def main():
             print(f'[x] Recibido {body}', flush=True)
             message = json.loads(body.decode('utf-8'))
             logging.debug(f"Mensaje decodificado: {message}")
-            if ('fin' in body.decode('utf-8')):
+            if ('fin\n\n' in body.decode('utf-8')):
                 logging.info("Fin de los mensajes de juegos.")
                 print(f"Fin de los mensajes de juegos.", flush=True) 
                 ch.basic_cancel(consumer_tag=method.consumer_tag)

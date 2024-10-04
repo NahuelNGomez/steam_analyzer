@@ -16,7 +16,7 @@ def send_message(queue, message, connection):
     channel = connection.channel()
     channel.queue_declare(queue=queue, durable=True)
     channel.basic_publish(exchange='', routing_key=queue, body=message)
-    print(f'filter_indie envió juego a la cola {queue}.', flush=True)
+    print(f'filter_indie envió {message} a la cola {queue}.', flush=True)
 
 def main():
     config = load_config()
@@ -67,16 +67,17 @@ def main():
         try:
             logging.debug(f"Recibido mensaje: {body}...")
             print(f'[x] Recibido {body}', flush=True)
-            message = json.loads(body.decode('utf-8'))
-            logging.debug(f"Mensaje decodificado: {message}")
+            mensaje_str = body.decode('utf-8')
 
-            if 'fin' in message:
+            if mensaje_str == 'fin\n\n' :
                 logging.info("Fin de los mensajes de juegos.")
                 print(f"Fin de los mensajes de juegos.", flush=True)
                 # Enviar el mensaje de fin a la siguiente cola
-                send_message(output_queue, json.dumps(message), connection)
+                send_message(output_queue, mensaje_str, connection)
                 ch.basic_cancel(consumer_tag=method.consumer_tag)
                 return
+            message = json.loads(mensaje_str)
+            logging.debug(f"Mensaje decodificado: {message}")
 
             filtered_game = filter_indie.filter_indie_games(message)
             if filtered_game:

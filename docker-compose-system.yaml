@@ -57,7 +57,7 @@ services:
       - LOGGING_LEVEL=INFO
       - rabbitmq_HOST=rabbitmq
       - rabbitmq_PORT=5672
-      - rabbitmq_RESULTS_QUEUE=results_queue
+      - rabbitmq_RESULTS_QUEUE=result_queue
       - rabbitmq_USER=admin
       - rabbitmq_PASS=admin
     volumes:
@@ -161,7 +161,7 @@ services:
       - rabbitmq_HOST=rabbitmq
       - rabbitmq_PORT=5672
       - rabbitmq_INPUT_QUEUE=indie_games_in_range
-      - rabbitmq_RESULTS_QUEUE=results_queue
+      - rabbitmq_RESULTS_QUEUE=result_queue
       - rabbitmq_USER=admin
       - rabbitmq_PASS=admin
       - LOGGING_LEVEL=DEBUG
