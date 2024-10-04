@@ -27,12 +27,10 @@ def main():
     rabbitmq_port = int(config.get('rabbitmq_PORT', 5672))
     input_queue = config.get('rabbitmq_INDI_GAMES_IN_RANGE_QUEUE', 'indie_games_in_range')
     results_queue = config.get('rabbitmq_RESULTS_QUEUE', 'result_queue')  # Cola para enviar el resultado
-
     retries = 5
     delay = 10
     attempt = 0
     connection = None
-
 
     while attempt < retries:
         try:
@@ -89,7 +87,7 @@ def main():
         logging.info("Consumidor iniciado.")
         print(f'Consumidor termino de consumir.', flush=True)
         send_message('result_queue', counter.calculate_top10(), connection)
-        print(f'top10_indie_counter envió result por la cola result_queue.', flush=True)
+        print(f'top10_indie_counter envió result por la cola results_queue.', flush=True)
 
     except KeyboardInterrupt:
         logging.info('Interrumpido por el usuario.')

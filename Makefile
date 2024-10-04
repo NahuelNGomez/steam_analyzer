@@ -7,9 +7,15 @@ default: docker-compose-up
 
 docker-compose-up:
 	# Ejecuta RabbitMQ primero
-	docker compose -f docker-compose-rabbit.yaml -f docker-compose-system.yaml up -d --build
+	docker compose -f docker-compose-system.yaml up -d --build
 
 .PHONY: docker-compose-up
+
+
+docker-rabbit-up:
+	# Ejecuta RabbitMQ primero
+	docker compose -f docker-compose-rabbit.yaml up -d --build
+.PHONY: docker-rabbit-up
 
 docker-compose-down:
 	# Baja ambos archivos docker-compose en el orden inverso

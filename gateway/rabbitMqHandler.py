@@ -8,9 +8,9 @@ import time
 class RabbitMQHandler:
     def __init__(self, config, retries=5, delay=5):
         self.config = config  # Almacenar config como un atributo de instancia
-        self.host = config.get("rabbitmq_HOST", "localhost")
+        self.host = config.get("rabbitmq_HOST", "rabbitmq")
         self.port = int(config.get("rabbitmq_PORT", 5672))
-        self.exchange = config.get("rabbitmq_EXCHANGE", "")
+        self.exchange = config.get("rabbitmq_EXCHANGE", "dispatcher_exchange")
         self.ssl = config.getboolean("rabbitmq_SSL", False)
         self.connection = None
         self.channel = None
@@ -29,7 +29,7 @@ class RabbitMQHandler:
                 self.connection = pika.BlockingConnection(parameters)
                 self.channel = self.connection.channel()
                 self.channel.exchange_declare(
-                    exchange=self.exchange, exchange_type=self.exchange_type
+                    exchange=self.exchange, exchange_type='direct'
                 )
                 logging.info("Conectado a RabbitMQ.")
                 return
