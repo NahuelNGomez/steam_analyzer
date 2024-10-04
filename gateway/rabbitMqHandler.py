@@ -11,10 +11,6 @@ class RabbitMQHandler:
         self.host = config.get("rabbitmq_HOST", "localhost")
         self.port = int(config.get("rabbitmq_PORT", 5672))
         self.exchange = config.get("rabbitmq_EXCHANGE", "")
-        self.exchange_type = config.get("rabbitmq_EXCHANGE_TYPE", "direct")
-        self.username = config.get("rabbitmq_USER", "user")
-        self.password = config.get("rabbitmq_PASS", "password")
-        self.virtual_host = config.get("rabbitmq_VIRTUAL_HOST", "/")
         self.ssl = config.getboolean("rabbitmq_SSL", False)
         self.connection = None
         self.channel = None
@@ -26,31 +22,10 @@ class RabbitMQHandler:
         attempt = 0
         while attempt < self.retries:
             try:
-                credentials = pika.PlainCredentials(self.username, self.password)
-
-                if self.ssl:
-                    ssl_options = pika.SSLOptions(
-                        pika.ssl.create_default_context(
-                            cafile=self.config.get("rabbitmq_CA_FILE", None)
-                        ),
-                        self.host,
-                    )
-                    parameters = pika.ConnectionParameters(
+                parameters = pika.ConnectionParameters(
                         host=self.host,
                         port=self.port,
-                        credentials=credentials,
-                        virtual_host=self.virtual_host,
-                        ssl=True,
-                        ssl_options=ssl_options,
-                    )
-                else:
-                    parameters = pika.ConnectionParameters(
-                        host=self.host,
-                        port=self.port,
-                        credentials=credentials,
-                        virtual_host=self.virtual_host,
-                    )
-
+                )
                 self.connection = pika.BlockingConnection(parameters)
                 self.channel = self.connection.channel()
                 self.channel.exchange_declare(
@@ -116,6 +91,7 @@ class RabbitMQHandler:
             print(" [x] Received %r" % body, flush=True)
             message_body = body  # Guardar el mensaje
             ch.stop_consuming()  # Detener el consumo sin cancelar la cola
+
 
         # Declarar la cola (asegurarse de que existe)
         self.channel.queue_declare(queue=queue_name, durable=True)

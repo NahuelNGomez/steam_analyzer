@@ -28,15 +28,12 @@ def main():
     rabbitmq_host = config.get('rabbitmq_HOST', 'rabbitmq')
     rabbitmq_port = int(config.get('rabbitmq_PORT', 5672))
     games_queue = config.get('rabbitmq_GAMES_QUEUE', 'games_queue')
-    rabbitmq_user = config.get('rabbitmq_USER', 'guest')
-    rabbitmq_pass = config.get('rabbitmq_PASS', 'guest')
 
     retries = 5
     delay = 10
     attempt = 0
     connection = None
 
-    credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_pass)
 
     while attempt < retries:
         try:
@@ -44,7 +41,6 @@ def main():
                 pika.ConnectionParameters(
                     host=rabbitmq_host,
                     port=rabbitmq_port,
-                    credentials=credentials
                 )
             )
             logging.info("Conectado a RabbitMQ.")

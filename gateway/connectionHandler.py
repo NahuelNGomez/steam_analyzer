@@ -69,7 +69,6 @@ class ConnectionHandler:
             logging.info(f"Datos recibidos: {recived_data.decode('utf-8')}")
             self.protocol.send_message(recived_data.decode('utf-8'))
             self.protocol.send_message('close\n\n')
-            
 
         except Exception as e:
             logging.error(f"Error en la conexión con {self.address}: {e}")
