@@ -21,7 +21,8 @@ class ConnectionHandler:
         self.address = address
         self.protocol = Protocol(self.client_socket)
         self.games_from_client_queue = Queue(maxsize=100000)
-        self.games_middleware_sender_thread = None
+        self.result_to_client_queue = Queue(maxsize=100000)
+        self.games_middleware_sender_thread = None    
         # Thread para manejar la conexión - No lo haría para entrega 1.
         self.thread = threading.Thread(target=self.handle_connection)
         self.thread.daemon = True
@@ -31,8 +32,16 @@ class ConnectionHandler:
         self.games_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
             args=(self.games_from_client_queue, "games"),
+            name="games_middleware_sender",
+        )
+        self.games_middleware_receiver_thread = threading.Thread(
+            target=self._middleware_receiver,
+            args=(input_queues,),
+            name="games_middleware_receiver",
         )
         self.games_middleware_sender_thread.start()
+        self.games_middleware_receiver_thread.start()
+        
         logging.info(f"Conexión establecida desde {self.address}")
         try:
             while True:
@@ -82,6 +91,16 @@ class ConnectionHandler:
 
             logging.info(f"Fin del recibo de datos {self.address}")
             #self.protocol.send_message(recived_data.decode("utf-8"))
+            #self._middleware_receiver(self, self.input_queues)
+            while True:
+                try:
+                    data = self.result_to_client_queue.get(block=True)
+                    if data is None:
+                        break
+                    self.protocol.send_message(data)
+                except OSError:
+                    logging.error("Middleware closed")
+                    break
             self.protocol.send_message("close\n\n")
 
         except Exception as e:
@@ -105,14 +124,22 @@ class ConnectionHandler:
                     logging.debug(f"Enviando mensaje {message}...")
                     middleware.send(data = message)
                     logging.debug(f"Dispatched message {message}")
-                # if packet == "fin\n\n":
-                #     logging.info("Enviando mensaje de fin a las colas...")
                 middleware.send(data="fin\n\n")
             except OSError:
                 logging.error("Middleware closed")
                 break
         logging.info("Middleware sender stopped")
 
+    def _middleware_receiver(self, input_queues):
+        logging.info("Middleware receiver started")
+        print("Middleware receiver started", flush=True)
+        middleware = Middleware(input_queues, [], [], instance_id, self.get_data, self.get_data)
+        middleware.start()
+        logging.info("Middleware receiver stopped")
 
     def get_data(self, data):
-        logging.info("Getted data!", data)
+        logging.info("Got data!")
+        self.result_to_client_queue.put(data)
+        logging.info("Data sent to client")
+        
+            
