@@ -1,24 +1,38 @@
 # gateway/connectionHandler.py
 
+import json
 import logging
+import os
+from queue import Queue
+from common.middleware import Middleware
 from protocol import Protocol
-from dispatcher import Dispatcher
 import csv
 import io
 import threading
 
+input_queues: dict = json.loads(os.getenv("INPUT_QUEUES")) or {}
+output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []
+instance_id = os.getenv("INSTANCE_ID", 0)
+
+
 class ConnectionHandler:
-    def __init__(self, client_socket, address, dispatcher: Dispatcher):
+    def __init__(self, client_socket, address):
         self.client_socket = client_socket
         self.address = address
         self.protocol = Protocol(self.client_socket)
-        self.dispatcher = dispatcher
+        self.games_from_client_queue = Queue(maxsize=100000)
+        self.games_middleware_sender_thread = None
         # Thread para manejar la conexión - No lo haría para entrega 1.
         self.thread = threading.Thread(target=self.handle_connection)
         self.thread.daemon = True
         self.thread.start()
 
     def handle_connection(self):
+        self.games_middleware_sender_thread = threading.Thread(
+            target=self.__middleware_sender,
+            args=(self.games_from_client_queue, "games"),
+        )
+        self.games_middleware_sender_thread.start()
         logging.info(f"Conexión establecida desde {self.address}")
         try:
             while True:
@@ -27,7 +41,9 @@ class ConnectionHandler:
                     logging.info(f"Cliente {self.address} desconectado")
                     break
 
-                logging.debug(f"Recibido de {self.address}: {data}...")  # Mostrar solo los primeros 50 caracteres
+                logging.debug(
+                    f"Recibido de {self.address}: {data}..."
+                )  # Mostrar solo los primeros 50 caracteres
 
                 # Separar tipo de dataset y contenido usando doble salto de línea
                 parts = data.split("\n\n", 1)
@@ -37,12 +53,14 @@ class ConnectionHandler:
                     continue
 
                 data_type = parts[0].strip().lower()
-                if data_type not in ['games', 'reviews','fin']:
+                if data_type not in ["games", "fin"]: #["games", "reviews", "fin"]
                     logging.warning(f"Tipo de dataset desconocido: {data_type}")
-                    self.protocol.send_message(f"Error: Tipo de dataset desconocido '{data_type}'")
+                    self.protocol.send_message(
+                        f"Error: Tipo de dataset desconocido '{data_type}'"
+                    )
                     continue
-                
-                if data_type == 'fin':
+
+                if data_type == "fin":
                     self.protocol.send_message("OK - ACK de fin")
                     break
 
@@ -54,24 +72,47 @@ class ConnectionHandler:
                     data_list = [row for row in reader]
                     logging.info(f"{len(data_list)} filas procesadas para {data_type}.")
 
-                    # Enviar los datos procesados al dispatcher
-                    self.dispatcher.dispatch(data_list, data_type)
+                    self.games_from_client_queue.put(data_list)
 
                     # Enviar una respuesta al cliente
                     self.protocol.send_message("OK")
                 except Exception as e:
                     logging.error(f"Error al procesar el CSV: {e}")
                     self.protocol.send_message("Error processing data")
-            
+
             logging.info(f"Fin del recibo de datos {self.address}")
-            self.dispatcher.dispatchFin()
-            recived_data = self.dispatcher.get_data()
-            logging.info(f"Datos recibidos: {recived_data.decode('utf-8')}")
-            self.protocol.send_message(recived_data.decode('utf-8'))
-            self.protocol.send_message('close\n\n')
+            #self.protocol.send_message(recived_data.decode("utf-8"))
+            self.protocol.send_message("close\n\n")
 
         except Exception as e:
             logging.error(f"Error en la conexión con {self.address}: {e}")
         finally:
             self.client_socket.close()
             logging.info("Conexión cerrada.")
+
+    def __middleware_sender(self, packet_queue, output_exchange):
+        logging.info("Middleware sender started")
+        print("Middleware sender started", flush=True)
+        middleware = Middleware(output_exchanges=[output_exchange])
+        while True:
+            try:
+                packet = packet_queue.get(block=True)
+                if packet is None:
+                   # middleware.shutdown()
+                    break
+                for row in packet:
+                    message = json.dumps(row)
+                    logging.debug(f"Enviando mensaje {message}...")
+                    middleware.send(data = message)
+                    logging.debug(f"Dispatched message {message}")
+                if packet == "fin\n\n":
+                    logging.info("Enviando mensaje de fin a las colas...")
+                    middleware.send(data=packet)
+            except OSError:
+                logging.error("Middleware closed")
+                break
+        logging.info("Middleware sender stopped")
+
+
+    def get_data(self, data):
+        logging.info("Getted data!", data)

@@ -37,6 +37,7 @@ class Middleware:
                 self.channel.exchange_declare(
                     exchange=exchange, exchange_type="fanout"
                 )  # Cambiar a una variable
+                print(f"Binding {queue_name} to {exchange}", flush=True)
                 self.channel.queue_bind(exchange=exchange, queue=queue_name)
 
             callback_wrapper = self._create_callback_wrapper(
@@ -60,12 +61,18 @@ class Middleware:
     def _create_callback_wrapper(self, callback, eofCallback):
 
         def callback_wrapper(ch, method, properties, body):
-            if body == b"fin\n\n":
+            print(f'[x] Recibido {body}', flush=True)
+            mensaje_str = body.decode('utf-8')
+            if mensaje_str == 'fin\n\n':
                 eofCallback(body)
             else:
                 callback(body)
+            self.ack(method.delivery_tag)
 
         return callback_wrapper
+    
+    def ack(self, delivery_tag):
+        self.channel.basic_ack(delivery_tag=delivery_tag)
 
     def start(self):
         logging.info("Middleware Started!")

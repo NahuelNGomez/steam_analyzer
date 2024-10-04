@@ -7,12 +7,14 @@ services:
     image: gateway:latest
     networks:
       - testing_net
+    depends_on:
+      - filter_indie
     volumes:
       - ./common:/common
     environment:
       - LOGGING_LEVEL=DEBUG
       - OUTPUT_EXCHANGES=["games"]
-      - INPUT_QUEUES={"result_queue":""}
+      - INPUT_QUEUES={"result_queue":"result_queue"}
   client:
     container_name: client
     build:
@@ -60,18 +62,15 @@ services:
     container_name: filter_indie
     build:
       context: ./filter_indie
-      dockerfile: Dockerfile
     image: filter_indie:latest
     networks:
       - testing_net
     environment:
-      - rabbitmq_INPUT_QUEUE=games_queue
-      - rabbitmq_OUTPUT_QUEUE=indie_games
+      - OUTPUT_EXCHANGES=["indie_games"]
+      - INPUT_QUEUES={"games_queue":"games"}
       - LOGGING_LEVEL=DEBUG
     volumes:
-      - ./filter_indie/config.ini:/filter_indie/config.ini
-      - ./filter_indie/data:/data
-    entrypoint: python3 main.py
+      - ./common:/common
 
   filter_range:
     container_name: filter_range
