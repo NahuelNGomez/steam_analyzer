@@ -1,35 +1,37 @@
 # gateway/dispatcher.py
 import json
 import logging
+import os
 from rabbitMqHandler import RabbitMQHandler
+from common.middleware import Middleware
+
+input_queues: dict = json.loads(os.getenv("INPUT_QUEUES")) or {}
+output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []
+instance_id = os.getenv("INSTANCE_ID", 0)
 
 class Dispatcher:
     def __init__(self, config):
-        self.rabbitmq = RabbitMQHandler(config)
-        self.games_queue = config['rabbitmq_GAMES_QUEUE']
-        self.reviews_queue = config['rabbitmq_REVIEWS_QUEUE']
-        self.result_queue = config['rabbitmq_RESULT_QUEUE']
+        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self.get_data, self.dispatchFin)
+        self.middleware.start()
 
     def dispatch(self, data, data_type):
         """
         data: Lista de diccionarios representando filas del CSV
         data_type: 'games' o 'reviews'
         """
-        queue = self.games_queue if data_type == 'games' else self.reviews_queue
         for row in data:
             message = json.dumps(row)
-            logging.debug(f"Enviando mensaje a {queue}: {message}...")
-            self.rabbitmq.send_message(queue, message)
-            logging.debug(f"Dispatched message to {queue}: {message}")
+            logging.debug(f"Enviando mensaje {message}...")
+            self.middleware.send_message(data = message)
+            logging.debug(f"Dispatched message {message}")
             
     def dispatchFin(self):
         message = 'fin\n\n'
         logging.info("Enviando mensaje de fin a las colas...")
-        self.rabbitmq.send_message(self.games_queue, message)
-        self.rabbitmq.send_message(self.reviews_queue, message)
+        self.middleware.send(data = message)
+        self.middleware.send(data = message)
         logging.info("Fin de los mensajes de juegos y reviews.")
     
-    def get_data(self):
+    def get_data(self, data):
 
-        queue = self.result_queue
-        return self.rabbitmq.get_messages(queue)
+        logging.info("Getted data!", data)

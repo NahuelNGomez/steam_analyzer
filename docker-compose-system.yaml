@@ -4,19 +4,15 @@ services:
     container_name: gateway
     build:
       context: ./gateway
-      dockerfile: Dockerfile
     image: gateway:latest
     networks:
       - testing_net
-    environment:
-      - rabbitmq_GAMES_QUEUE=games_queue
-      - rabbitmq_REVIEWS_QUEUE=reviews_queue
-      - LOGGING_LEVEL=DEBUG
     volumes:
-      - ./gateway:/gateway
-      - ./gateway/config.ini:/gateway/config.ini
       - ./common:/common
-
+    environment:
+      - LOGGING_LEVEL=DEBUG
+      - OUTPUT_EXCHANGES=["games"]
+      - INPUT_QUEUES={"result_queue":""}
   client:
     container_name: client
     build:
