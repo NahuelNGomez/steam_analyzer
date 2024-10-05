@@ -4,31 +4,11 @@ import csv
 import io
 import logging
 from collections import defaultdict
-import re
 from common.middleware import Middleware
+from common.utils import split_complex_string
+from common.constants import GAMES_NAME_POS, GAMES_WINDOWS_POS, GAMES_MAC_POS, GAMES_LINUX_POS
 from datetime import datetime
 import json
-
-# POSITIONS - HARDCODE? - NO DEBERIA PASARLE COLUMNAS QUE NO USA
-NAME_POSITON = 1
-WINDOWS_POSITION = 16
-MAC_POSITION = 17
-LINUX_POSITION = 18
-
-
-def split_complex_string(s):
-    # Usamos una expresión regular que captura comas, pero no dentro de arrays [] ni dentro de comillas
-    # Esto identifica bloques entre comillas o corchetes como un solo token
-    pattern = r'''
-        (?:\[.*?\])   # Captura arrays entre corchetes
-        |             # O
-        (?:".*?")     # Captura texto entre comillas dobles
-        |             # O
-        (?:'.*?')     # Captura texto entre comillas simples
-        |             # O
-        (?:[^,]+)     # Captura cualquier cosa que no sea una coma
-    '''
-    return re.findall(pattern, s, re.VERBOSE)
 
 class GamesCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
@@ -42,13 +22,12 @@ class GamesCounter:
         self.platform_counts = defaultdict(int)
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
 
-
     def counterGames(self, game):
         try:
-            game_name = game[NAME_POSITON]
-            windows = game[WINDOWS_POSITION]
-            mac = game[MAC_POSITION]
-            linux = game[LINUX_POSITION]
+            game_name = game[GAMES_NAME_POS]
+            windows = game[GAMES_WINDOWS_POS]
+            mac = game[GAMES_MAC_POS]
+            linux = game[GAMES_LINUX_POS]
             
             print(f"Juego: {game_name}, Windows: {windows}, Mac: {mac}, Linux: {linux}", flush=True)
 

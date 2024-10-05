@@ -3,3 +3,5 @@ datasets/
 *.pyc
 __pycache__/
 /data2/
+client/datasets/
+client/data/

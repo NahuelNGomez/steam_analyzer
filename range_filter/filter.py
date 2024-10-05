@@ -1,24 +1,9 @@
 import json
 import logging
 from datetime import datetime
-import re
-
 from common.middleware import Middleware
-
-RELEASE_DATE_POSITION = 2
-
-
-def split_complex_string(s):
-    pattern = r'''
-        (?:\[.*?\])   # Captura arrays entre corchetes
-        |             # O
-        (?:".*?")     # Captura texto entre comillas dobles
-        |             # O
-        (?:'.*?')     # Captura texto entre comillas simples
-        |             # O
-        (?:[^,]+)     # Captura cualquier cosa que no sea una coma
-    '''
-    return re.findall(pattern, s, re.VERBOSE)
+from common.utils import split_complex_string
+from common.constants import GAMES_RELEASE_DATE_POS
 
 class RangeFilter:
     def __init__(self, start_year, end_year, input_queues, output_exchanges, instance_id):
@@ -26,7 +11,6 @@ class RangeFilter:
         
         self.start_year = start_year
         self.end_year = end_year
-        
         
     def _callBack(self, data):
         message =split_complex_string(data)
@@ -45,7 +29,7 @@ class RangeFilter:
         Filtra juegos publicados entre start_year y end_year.
         """
         try:
-            release_date_str = message[RELEASE_DATE_POSITION]
+            release_date_str = message[GAMES_RELEASE_DATE_POS]
             release_date_str = release_date_str[1:-1]
             release_year = self.extract_year(release_date_str)
             if self.start_year <= release_year <= self.end_year:

@@ -7,6 +7,8 @@ from queue import Queue
 import re
 from common.middleware import Middleware
 from common.protocol import Protocol
+from common.constants import MAX_QUEUE_SIZE
+from common.utils import split_complex_string
 import csv
 import io
 import threading
@@ -15,28 +17,13 @@ input_queues: dict = json.loads(os.getenv("INPUT_QUEUES")) or {}
 output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []
 instance_id = os.getenv("INSTANCE_ID", 0)
 
-def split_complex_string(s):
-    # Usamos una expresión regular que captura comas, pero no dentro de arrays [] ni dentro de comillas
-    # Esto identifica bloques entre comillas o corchetes como un solo token
-    pattern = r'''
-        (?:\[.*?\])   # Captura arrays entre corchetes
-        |             # O
-        (?:".*?")     # Captura texto entre comillas dobles
-        |             # O
-        (?:'.*?')     # Captura texto entre comillas simples
-        |             # O
-        (?:[^,]+)     # Captura cualquier cosa que no sea una coma
-    '''
-    return re.findall(pattern, s, re.VERBOSE)
-
-
 class ConnectionHandler:
     def __init__(self, client_socket, address):
         self.client_socket = client_socket
         self.address = address
         self.protocol = Protocol(self.client_socket)
-        self.games_from_client_queue = Queue(maxsize=100000)
-        self.result_to_client_queue = Queue(maxsize=100000)
+        self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
+        self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.games_middleware_sender_thread = None
         self.gamesHeader = []
         # Thread para manejar la conexión - No lo haría para entrega 1.

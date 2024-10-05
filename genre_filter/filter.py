@@ -1,22 +1,9 @@
 import json
 import logging
 from collections import defaultdict
-import re
 from common.middleware import Middleware
-
-GENRE_POSITION = 35
-
-def split_complex_string(s):
-    pattern = r'''
-        (?:\[.*?\])   # Captura arrays entre corchetes
-        |             # O
-        (?:".*?")     # Captura texto entre comillas dobles
-        |             # O
-        (?:'.*?')     # Captura texto entre comillas simples
-        |             # O
-        (?:[^,]+)     # Captura cualquier cosa que no sea una coma
-    '''
-    return re.findall(pattern, s, re.VERBOSE)
+from common.utils import split_complex_string
+from common.constants import GAMES_GENRES_POS
 
 class GenreFilter:
     def __init__(self, input_queues, output_exchanges, instance_id, genre):
@@ -39,7 +26,7 @@ class GenreFilter:
         :return: Diccionario del juego si cumple con el género, de lo contrario None.
         """
         try: 
-            genres_str = message[GENRE_POSITION]
+            genres_str = message[GAMES_GENRES_POS]
             genres_str = genres_str[1:-1]
             print(f"Genres: {genres_str}", flush=True)
             genres = [genre.strip() for genre in genres_str.split(',')]
@@ -65,7 +52,7 @@ class GenreFilter:
         :param data: Datos recibidos.
         """
         try:
-            result =split_complex_string(data)
+            result = split_complex_string(data)
             logging.debug(f"Mensaje decodificado: {result}")
 
             filtered_game = self.filter_games_by_genre(result)

@@ -2,7 +2,7 @@ import time
 import socket
 import logging
 from common.protocol import Protocol
-
+from common.constants import MAX_BATCH_SIZE
 
 class Client:
     def __init__(self, boundary_ip, boundary_port, retries=5, delay=5):
@@ -12,10 +12,7 @@ class Client:
         self.delay = delay
 
     def send_data(self, protocol, file_path, data_type):
-        BATCH_SIZE = 10
         try:
-            
-            
             with open(file_path, "r", encoding="utf-8") as file:
                 batch = []
                 first = True
@@ -27,7 +24,7 @@ class Client:
                         protocol.send_message(message)
                         continue
                     batch.append(line)
-                    if len(batch) == BATCH_SIZE:  # Si alcanzamos el tamaño del batch
+                    if len(batch) == MAX_BATCH_SIZE:  # Si alcanzamos el tamaño del batch
                         # Unir las líneas en un solo string con doble salto de línea entre datos
                         data = ''.join(batch)
                         message = f"{data_type}\n\n{data}"
