@@ -6,11 +6,6 @@ import time
 from filter import FilterRange
 import configparser
 
-def load_config():
-    config = configparser.ConfigParser()
-    config.read('config.ini')  
-    return config['DEFAULT']
-
 def send_message(queue, message, connection):
     channel = connection.channel()
     channel.queue_declare(queue=queue, durable=True)
@@ -19,8 +14,7 @@ def send_message(queue, message, connection):
     
 
 def main():
-    config = load_config()
-    logging.basicConfig(level=getattr(logging, config.get('LOGGING_LEVEL', 'INFO').upper()),
+    logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),
                         format='%(asctime)s - %(levelname)s - %(message)s')
     input_queues: dict = json.loads(os.getenv("INPUT_QUEUES")) or {}
     output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []

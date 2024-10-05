@@ -1,7 +1,7 @@
 import time
 import socket
 import logging
-from protocol import Protocol
+from common.protocol import Protocol
 
 
 class Client:

@@ -2,10 +2,7 @@
 
 FROM python:3.9.7-slim
 
-WORKDIR /client
-
-COPY . /client
-
+COPY . /
 
 RUN pip install --no-cache-dir pika
 

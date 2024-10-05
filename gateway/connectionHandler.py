@@ -5,7 +5,7 @@ import logging
 import os
 from queue import Queue
 from common.middleware import Middleware
-from protocol import Protocol
+from common.protocol import Protocol
 import csv
 import io
 import threading
