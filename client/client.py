@@ -12,15 +12,36 @@ class Client:
         self.delay = delay
 
     def send_data(self, protocol, file_path, data_type):
+        BATCH_SIZE = 10
         try:
+            
+            
             with open(file_path, "r", encoding="utf-8") as file:
-                data = file.read()
-                # Crear el mensaje con tipo y datos separados por doble salto de línea
-                message = f"{data_type}\n\n{data}"
-                protocol.send_message(message)
-                logging.debug(
-                    f"Enviado ({data_type}): {data[:50]}..."
-                )  # Mostrar solo los primeros 50 caracteres
+                batch = []
+                first = True
+                protocol.send_message(data_type)
+                for line in file:
+                    if first:
+                        first = False
+                        message = f"{data_type}\n\n{line}"
+                        protocol.send_message(message)
+                        continue
+                    batch.append(line)
+                    if len(batch) == BATCH_SIZE:  # Si alcanzamos el tamaño del batch
+                        # Unir las líneas en un solo string con doble salto de línea entre datos
+                        data = ''.join(batch)
+                        message = f"{data_type}\n\n{data}"
+                        protocol.send_message(message)
+                        logging.debug(f"Enviado ({data_type}): {data[:50]}...")
+                        batch.clear()  # Vaciar el batch para el siguiente conjunto de líneas
+                
+                # Enviar cualquier resto de líneas que no formó un batch completo
+                if batch:
+                    data = ''.join(batch)
+                    message = f"{data_type}\n\n{data}"
+                    protocol.send_message(message)
+                    logging.debug(f"Enviado ({data_type}): {data[:50]}...")
+
         except FileNotFoundError:
             logging.error(f"Archivo no encontrado: {file_path}")
         except Exception as e:
@@ -46,7 +67,7 @@ class Client:
                     logging.info(
                         f"Conectado al servidor en {self.boundary_ip}:{self.boundary_port}"
                     )
-
+                    
                     # Enviar datasets una vez
                     self.send_data(protocol, "data/samplegames.csv", "games")
                     self.send_data(protocol, "data/samplereviews.csv", "reviews")

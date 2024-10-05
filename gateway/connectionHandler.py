@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from queue import Queue
+import re
 from common.middleware import Middleware
 from common.protocol import Protocol
 import csv
@@ -14,6 +15,20 @@ input_queues: dict = json.loads(os.getenv("INPUT_QUEUES")) or {}
 output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []
 instance_id = os.getenv("INSTANCE_ID", 0)
 
+def split_complex_string(s):
+    # Usamos una expresión regular que captura comas, pero no dentro de arrays [] ni dentro de comillas
+    # Esto identifica bloques entre comillas o corchetes como un solo token
+    pattern = r'''
+        (?:\[.*?\])   # Captura arrays entre corchetes
+        |             # O
+        (?:".*?")     # Captura texto entre comillas dobles
+        |             # O
+        (?:'.*?')     # Captura texto entre comillas simples
+        |             # O
+        (?:[^,]+)     # Captura cualquier cosa que no sea una coma
+    '''
+    return re.findall(pattern, s, re.VERBOSE)
+
 
 class ConnectionHandler:
     def __init__(self, client_socket, address):
@@ -22,7 +37,8 @@ class ConnectionHandler:
         self.protocol = Protocol(self.client_socket)
         self.games_from_client_queue = Queue(maxsize=100000)
         self.result_to_client_queue = Queue(maxsize=100000)
-        self.games_middleware_sender_thread = None    
+        self.games_middleware_sender_thread = None
+        self.gamesHeader = []
         # Thread para manejar la conexión - No lo haría para entrega 1.
         self.thread = threading.Thread(target=self.handle_connection)
         self.thread.daemon = True
@@ -41,8 +57,9 @@ class ConnectionHandler:
         )
         self.games_middleware_sender_thread.start()
         self.games_middleware_receiver_thread.start()
-        
+
         logging.info(f"Conexión establecida desde {self.address}")
+        first = True
         try:
             while True:
                 data = self.protocol.receive_message()
@@ -57,8 +74,16 @@ class ConnectionHandler:
                 # Separar tipo de dataset y contenido usando doble salto de línea
                 parts = data.split("\n\n", 1)
                 if len(parts) < 2:
+                    print("Error: Formato de datos incorrecto:", parts, flush=True)
                     logging.warning("Datos recibidos en formato incorrecto.")
                     self.protocol.send_message("Error: Formato de datos incorrecto")
+                    continue
+
+                if first:
+                    first = False
+                    self.gamesHeader = parts[1].strip().split("\n")
+                    print("Header: ", self.gamesHeader, flush=True)
+                    self.protocol.send_message("OK")
                     continue
 
                 data_type = parts[0].strip().lower()
@@ -71,18 +96,12 @@ class ConnectionHandler:
 
                 if data_type == "fin":
                     self.protocol.send_message("OK - ACK de fin")
+                    self.games_from_client_queue.put("fin\n\n")
                     break
-
-                # Leer el CSV del segundo bloque de datos
-                csv_content = parts[1].strip()
-                csv_file = io.StringIO(csv_content)
                 try:
-                    reader = csv.DictReader(csv_file)
-                    data_list = [row for row in reader]
-                    logging.info(f"{len(data_list)} filas procesadas para {data_type}.")
-
-                    self.games_from_client_queue.put(data_list)
-
+                    list = parts[1].strip().split("\n")
+                    for row in list:
+                        self.games_from_client_queue.put(row)
                     # Enviar una respuesta al cliente
                     self.protocol.send_message("OK")
                 except Exception as e:
@@ -90,14 +109,12 @@ class ConnectionHandler:
                     self.protocol.send_message("Error processing data")
 
             logging.info(f"Fin del recibo de datos {self.address}")
-            #self.protocol.send_message(recived_data.decode("utf-8"))
-            #self._middleware_receiver(self, self.input_queues)
             while True:
                 try:
                     data = self.result_to_client_queue.get(block=True)
                     if data is None:
                         break
-                    self.protocol.send_message(data.decode("utf-8"))
+                    self.protocol.send_message(data)
                 except OSError:
                     logging.error("Middleware closed")
                     break
@@ -117,14 +134,12 @@ class ConnectionHandler:
             try:
                 packet = packet_queue.get(block=True)
                 if packet is None:
-                   # middleware.shutdown()
+                    # middleware.shutdown()
                     break
-                for row in packet:
-                    message = json.dumps(row)
-                    logging.debug(f"Enviando mensaje {message}...")
-                    middleware.send(data = message)
-                    logging.debug(f"Dispatched message {message}")
-                middleware.send(data="fin\n\n")
+                logging.debug(f"Enviando mensaje {packet}...")
+                middleware.send(data=packet)
+                logging.debug(f"Dispatched message {packet}")
+                
             except OSError:
                 logging.error("Middleware closed")
                 break
@@ -133,7 +148,9 @@ class ConnectionHandler:
     def _middleware_receiver(self, input_queues):
         logging.info("Middleware receiver started")
         print("Middleware receiver started", flush=True)
-        middleware = Middleware(input_queues, [], [], instance_id, self.get_data, self.get_data)
+        middleware = Middleware(
+            input_queues, [], [], instance_id, self.get_data, self.get_data
+        )
         middleware.start()
         logging.info("Middleware receiver stopped")
 
@@ -141,5 +158,3 @@ class ConnectionHandler:
         logging.info("Got data!")
         self.result_to_client_queue.put(data)
         logging.info("Data sent to client")
-        
-            

@@ -9,6 +9,7 @@ services:
       - testing_net
     depends_on:
       - genre_filter
+      - games_counter
     volumes:
       - ./common:/common
     environment:
@@ -40,8 +41,6 @@ services:
       context: ./games_counter
       dockerfile: Dockerfile
     image: games_counter:latest
-    depends_on:
-      - gateway
     networks:
       - testing_net
     environment:
@@ -57,6 +56,8 @@ services:
     build:
       context: ./genre_filter
     image: genre_filter:latest
+    depends_on:
+      - top10_indie_counter
     networks:
       - testing_net
     environment:
@@ -89,9 +90,6 @@ services:
     image: top10_indie_counter:latest
     networks:
       - testing_net
-    depends_on:
-      - range_filter
-      - gateway
     environment:
       - OUTPUT_EXCHANGES=["result_queue"]
       - INPUT_QUEUES={"indie_range_games_queue":"indie_range_games"}

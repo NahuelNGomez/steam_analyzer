@@ -66,7 +66,7 @@ class Middleware:
             if mensaje_str == 'fin\n\n':
                 eofCallback(body)
             else:
-                callback(body)
+                callback(mensaje_str)
             self.ack(method.delivery_tag)
 
         return callback_wrapper
