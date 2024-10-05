@@ -8,14 +8,13 @@ services:
     networks:
       - testing_net
     depends_on:
-      - filter_indie
+      - genre_filter
     volumes:
       - ./common:/common
     environment:
       - LOGGING_LEVEL=DEBUG
       - OUTPUT_EXCHANGES=["games"]
       - INPUT_QUEUES={"result_queue":"result_queue"}
-
 
   client:
     container_name: client
@@ -59,25 +58,26 @@ services:
   #     - ./games_counter/data:/data 
   #   entrypoint: python3 main.py
 
-  filter_indie:
-    container_name: filter_indie
+  genre_filter:
+    container_name: genre_filter
     build:
-      context: ./filter_indie
-    image: filter_indie:latest
+      context: ./genre_filter
+    image: genre_filter:latest
     networks:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["indie_games"]
       - INPUT_QUEUES={"games_queue":"games"}
       - LOGGING_LEVEL=DEBUG
+      - GENRE=Indie
     volumes:
       - ./common:/common
 
-  filter_range:
-    container_name: filter_range
+  range_filter:
+    container_name: range_filter
     build:
-      context: ./filter_range
-    image: filter_range:latest
+      context: ./range_filter
+    image: range_filter:latest
     networks:
       - testing_net
     environment:
@@ -96,7 +96,7 @@ services:
     networks:
       - testing_net
     depends_on:
-      filter_range:
+      range_filter:
         condition: service_started
     environment:
       - OUTPUT_EXCHANGES=["result_queue"]
