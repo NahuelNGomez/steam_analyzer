@@ -1,6 +1,23 @@
 import json
 import logging
+import re
 from common.middleware import Middleware
+
+APP_ID_POSITION = 0
+NAME_POSITION = 1
+PLAYTIME_POSITION = 28
+
+def split_complex_string(s):
+    pattern = r'''
+        (?:\[.*?\])   # Captura arrays entre corchetes
+        |             # O
+        (?:".*?")     # Captura texto entre comillas dobles
+        |             # O
+        (?:'.*?')     # Captura texto entre comillas simples
+        |             # O
+        (?:[^,]+)     # Captura cualquier cosa que no sea una coma
+    '''
+    return re.findall(pattern, s, re.VERBOSE)
 
 class Top10IndieCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
@@ -25,9 +42,9 @@ class Top10IndieCounter:
         Processes each message (game) received and adds it to the top 10 list if applicable.
         """
         try:
-            game_id = message.get("AppID")
-            name = message.get("Name")
-            playtime = message.get("Average playtime forever")  
+            game_id = message[APP_ID_POSITION]
+            name = message[NAME_POSITION][1:-1]
+            playtime = message[PLAYTIME_POSITION]
             playtime_hours = int(playtime) / 60
 
             print(f"Processing game: {name} ({playtime_hours} hours)...", flush=True)
@@ -55,7 +72,7 @@ class Top10IndieCounter:
         """
         Callback function to process messages.
         """
-        message = json.loads(data)
+        message =split_complex_string(data)
         logging.debug(f"Decoded message: {message}")
         self.process_game(message)
         logging.info(f"Processed message: {message}")
