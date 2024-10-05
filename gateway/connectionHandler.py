@@ -97,7 +97,7 @@ class ConnectionHandler:
                     data = self.result_to_client_queue.get(block=True)
                     if data is None:
                         break
-                    self.protocol.send_message(data)
+                    self.protocol.send_message(data.decode("utf-8"))
                 except OSError:
                     logging.error("Middleware closed")
                     break
