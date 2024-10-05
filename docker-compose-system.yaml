@@ -34,29 +34,21 @@ services:
       - ./client/config.ini:/client/config.ini
       - ./common:/common
 
-  # games_counter:
-  #   container_name: games_counter
-  #   build:
-  #     context: ./games_counter
-  #     dockerfile: Dockerfile
-  #   image: games_counter:latest
-  #   networks:
-  #     - testing_net
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
-  #   environment:
-  #     - rabbitmq_HOST=rabbitmq
-  #     - rabbitmq_PORT=5672
-  #     - rabbitmq_GAMES_QUEUE=games_queue
-  #     - rabbitmq_RESULTS_QUEUE=games_counter_results_queue
-  #     - rabbitmq_USER=admin
-  #     - rabbitmq_PASS=admin
-  #     - LOGGING_LEVEL=INFO
-  #   volumes:
-  #     - ./games_counter/config.ini:/games_counter/config.ini  
-  #     - ./games_counter/data:/data 
-  #   entrypoint: python3 main.py
+  games_counter:
+    container_name: games_counter
+    build:
+      context: ./games_counter
+      dockerfile: Dockerfile
+    image: games_counter:latest
+    networks:
+      - testing_net
+    environment:
+      - INPUT_QUEUES={"games_queue_counter":"games"}
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - ./common:/common
+    entrypoint: python3 main.py
 
   genre_filter:
     container_name: genre_filter
@@ -67,7 +59,7 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["indie_games"]
-      - INPUT_QUEUES={"games_queue":"games"}
+      - INPUT_QUEUES={"games_queue_filter":"games"}
       - LOGGING_LEVEL=DEBUG
       - GENRE=Indie
     volumes:

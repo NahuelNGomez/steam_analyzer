@@ -2,10 +2,21 @@
 
 import logging
 from collections import defaultdict
+from common.middleware import Middleware
+from datetime import datetime
+import json
 
 class GamesCounter:
-    def __init__(self):
+    def __init__(self, input_queues, output_exchanges, instance_id):
+        """
+        Inicializa el contador de juegos.
+        
+        :param input_queues: Diccionario de colas de entrada.
+        :param output_exchanges: Lista de exchanges de salida.
+        :param instance_id: ID de instancia para identificar colas únicas.
+        """
         self.platform_counts = defaultdict(int)
+        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
 
     def counterGames(self, game):
         try:
@@ -37,3 +48,33 @@ class GamesCounter:
     
     def get_platform_counts(self):
         return str(dict(self.platform_counts))
+
+    def _callBack(self, data):
+        """
+        Callback para procesar los mensajes recibidos.
+
+        :param data: Datos recibidos.
+        """
+        try:
+            game = json.loads(data)
+            logging.debug(f"Mensaje decodificado: {game}")
+
+            self.counterGames(game)
+        except Exception as e:
+            logging.error(f"Error en _callBack al procesar el mensaje: {e}")
+    
+    def _finCallBack(self, data):
+        """
+        Callback para manejar el mensaje de fin.
+
+        :param data: Datos recibidos.
+        """
+        print("gamesCounter sending data: ", self.platform_counts, flush=True)
+        self.middleware.send(json.dumps(self.platform_counts))
+    
+    
+    def start(self):
+        """
+        Inicia el middleware.
+        """
+        self.middleware.start()
