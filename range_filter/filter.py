@@ -1,8 +1,24 @@
 import json
 import logging
 from datetime import datetime
+import re
 
 from common.middleware import Middleware
+
+RELEASE_DATE_POSITION = 2
+
+
+def split_complex_string(s):
+    pattern = r'''
+        (?:\[.*?\])   # Captura arrays entre corchetes
+        |             # O
+        (?:".*?")     # Captura texto entre comillas dobles
+        |             # O
+        (?:'.*?')     # Captura texto entre comillas simples
+        |             # O
+        (?:[^,]+)     # Captura cualquier cosa que no sea una coma
+    '''
+    return re.findall(pattern, s, re.VERBOSE)
 
 class RangeFilter:
     def __init__(self, start_year, end_year, input_queues, output_exchanges, instance_id):
@@ -13,12 +29,12 @@ class RangeFilter:
         
         
     def _callBack(self, data):
-        message = json.loads(data)
+        message =split_complex_string(data)
         logging.debug(f"Mensaje decodificado: {message}")
 
         filtered_game = self.filter_by_range(message)
         if filtered_game:
-            self.middleware.send(json.dumps(filtered_game))
+            self.middleware.send(','.join(filtered_game))
             logging.info(f"Juego filtrado enviado:{filtered_game}")
         else:
             logging.info("Juego no cumple con el filtro de rango.")
@@ -29,7 +45,8 @@ class RangeFilter:
         Filtra juegos publicados entre start_year y end_year.
         """
         try:
-            release_date_str = message.get('Release date', '')
+            release_date_str = message[RELEASE_DATE_POSITION]
+            release_date_str = release_date_str[1:-1]
             release_year = self.extract_year(release_date_str)
             if self.start_year <= release_year <= self.end_year:
                 return message

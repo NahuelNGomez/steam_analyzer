@@ -1,7 +1,22 @@
 import json
 import logging
 from collections import defaultdict
+import re
 from common.middleware import Middleware
+
+GENRE_POSITION = 35
+
+def split_complex_string(s):
+    pattern = r'''
+        (?:\[.*?\])   # Captura arrays entre corchetes
+        |             # O
+        (?:".*?")     # Captura texto entre comillas dobles
+        |             # O
+        (?:'.*?')     # Captura texto entre comillas simples
+        |             # O
+        (?:[^,]+)     # Captura cualquier cosa que no sea una coma
+    '''
+    return re.findall(pattern, s, re.VERBOSE)
 
 class GenreFilter:
     def __init__(self, input_queues, output_exchanges, instance_id, genre):
@@ -24,9 +39,11 @@ class GenreFilter:
         :return: Diccionario del juego si cumple con el género, de lo contrario None.
         """
         try: 
-            genres_str = message.get('Genres', '')
+            genres_str = message[GENRE_POSITION]
+            genres_str = genres_str[1:-1]
+            print(f"Genres: {genres_str}", flush=True)
             genres = [genre.strip() for genre in genres_str.split(',')]
-            if self.genre in genres:
+            if self.genre in genres_str:
                 return message
             return None
         except Exception as e:
@@ -48,12 +65,12 @@ class GenreFilter:
         :param data: Datos recibidos.
         """
         try:
-            message = json.loads(data)
-            logging.debug(f"Mensaje decodificado: {message}")
+            result =split_complex_string(data)
+            logging.debug(f"Mensaje decodificado: {result}")
 
-            filtered_game = self.filter_games_by_genre(message)
+            filtered_game = self.filter_games_by_genre(result)
             if filtered_game:
-                self.middleware.send(json.dumps(filtered_game))
+                self.middleware.send(','.join(filtered_game))
                 logging.info(f"Juego filtrado enviado: {filtered_game}")
             else:
                 logging.info("Juego no cumple con el filtro de género.")
