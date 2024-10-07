@@ -22,9 +22,10 @@ class ConnectionHandler:
         self.client_socket = client_socket
         self.address = address
         self.protocol = Protocol(self.client_socket)
+        self.reviews_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
-        self.games_middleware_sender_thread = None
+        
         self.gamesHeader = []
         # Thread para manejar la conexión - No lo haría para entrega 1.
         self.thread = threading.Thread(target=self.handle_connection)
@@ -42,8 +43,21 @@ class ConnectionHandler:
             args=(input_queues,),
             name="games_middleware_receiver",
         )
+        self.review_middleware_sender_thread = threading.Thread(
+            target=self.__middleware_sender,
+            args=(self.reviews_from_client_queue, "reviews"),
+            name="reviews_middleware_sender",
+        )
+        self.review_middleware_receiver_thread = threading.Thread(
+            target=self._middleware_receiver,
+            args=(input_queues,),
+            name="reviews_middleware_receiver",
+        )
+        
         self.games_middleware_sender_thread.start()
         self.games_middleware_receiver_thread.start()
+        self.review_middleware_sender_thread.start()
+        self.review_middleware_receiver_thread.start()
 
         logging.info(f"Conexión establecida desde {self.address}")
         first = True
@@ -74,23 +88,31 @@ class ConnectionHandler:
                     continue
 
                 data_type = parts[0].strip().lower()
-                if data_type not in ["games", "fin"]: #["games", "reviews", "fin"]
+                if data_type not in ["games", "reviews", "fin"]: 
                     logging.warning(f"Tipo de dataset desconocido: {data_type}")
                     self.protocol.send_message(
                         f"Error: Tipo de dataset desconocido '{data_type}'"
                     )
                     continue
 
-                if data_type == "fin":
-                    self.protocol.send_message("OK - ACK de fin")
-                    self.games_from_client_queue.put("fin\n\n")
-                    break
                 try:
-                    list = parts[1].strip().split("\n")
-                    for row in list:
-                        self.games_from_client_queue.put(row)
-                    # Enviar una respuesta al cliente
-                    self.protocol.send_message("OK")
+                    if data_type == "fin":
+                        self.protocol.send_message("OK - ACK de fin")
+                        self.games_from_client_queue.put("fin\n\n")
+                        break
+
+                    if data_type == "reviews":
+                        review_list = parts[1].strip().split("\n")
+                        for row in review_list:
+                            self.reviews_from_client_queue.put(row)
+                    
+                    if data_type == "games":
+                        games_list = parts[1].strip().split("\n")
+                        for row in games_list:
+                            self.games_from_client_queue.put(row)
+                    
+                    self.protocol.send_message("OK") 
+                    
                 except Exception as e:
                     logging.error(f"Error al procesar el CSV: {e}")
                     self.protocol.send_message("Error processing data")

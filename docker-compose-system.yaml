@@ -10,6 +10,7 @@ services:
     depends_on:
       - genre_filter
       - games_counter
+      - positivity_filter
     volumes:
       - ./common:/common
     environment:
@@ -98,6 +99,44 @@ services:
       - ./top10_indie_counter/data:/data
       - ./common:/common
     entrypoint: python3 main.py
+
+  positivity_filter:
+    container_name: positivity_filter
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - INPUT_QUEUES={"reviews_queue":"reviews"}
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=1
+    volumes:
+      - ./common:/common
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 networks:
   testing_net:
