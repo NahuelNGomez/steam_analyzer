@@ -89,7 +89,12 @@ class GameReviewFilter:
             self.saveReviewInTxt(review)
             game = self.games[review_list[0]]
             value = ','.join(i for i in self.games if self.games[i] == game)
-            self.reviews_middleware.send(value + "," + game)
+            if ('shooter' in self.games_input_queue[1] ):
+                self.reviews_middleware.send(value + "," + game + "," + review_list[2] + "," + review_list[3] + "," + review_list[4] + "," + review_list[4]) #+ "," + review_list[5])
+            else:
+                self.reviews_middleware.send(value + "," + game)
+        
+            #self.reviews_middleware.send(value + "," + game)
             if len(review_list) == 6 and review_list[5] in self.requeued_reviews:
                 self.requeued_reviews.remove(review_list[5])
             

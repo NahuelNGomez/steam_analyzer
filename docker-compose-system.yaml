@@ -15,6 +15,8 @@ services:
       - negative_review_filter
       - indie_game_review_filter
       - shooter_game_review_filter
+      - language_filter
+      - shooter_name_accumulator
     volumes:
       - ./common:/common
     environment:
@@ -213,10 +215,36 @@ services:
       - ./common:/common
       - ./game_review_filter/data:/data
 
+  language_filter:
+    container_name: language_filter
+    build:
+      context: ./language_filter
+      dockerfile: Dockerfile
+    image: language_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["english_reviews"]
+      - INPUT_QUEUES={"games_reviews_shooter_queue":"games_reviews_shooter"}
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./common:/common
 
-
-
-
+  shooter_name_accumulator:
+    container_name: shooter_name_accumulator
+    build:
+      context: ./game_name_accumulator
+      dockerfile: Dockerfile
+    image: game_name_accumulator:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - INPUT_QUEUES={"shooter_english_reviews_queue":"english_reviews"}
+      - LOGGING_LEVEL=DEBUG
+      - REVIEWS_LOW_LIMIT = 10
+    volumes:
+      - ./common:/common
 
 
 

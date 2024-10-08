@@ -47,7 +47,7 @@ class Top5ReviewCounter:
         Callback function to process messages.
         """
     
-        message =split_complex_string(data)
+        message = split_complex_string(data)
         logging.debug(f"Decoded message: {data}")
         self.process_game(message)
         #logging.info(f"Processed message: {message}")
