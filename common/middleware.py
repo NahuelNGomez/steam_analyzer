@@ -59,8 +59,12 @@ class Middleware:
         for exchange in self.output_exchanges:
             self.channel.exchange_declare(exchange=exchange, exchange_type="fanout")
             
-    def send_to_requeue(self, queue: str, data: str):
+    def send_to_requeue_positive(self, queue: str, data: str):
         self.channel.basic_publish(exchange='', routing_key='positive_review_queue_1', body=data)
+        logging.debug("Sent to requeue %s: %s", queue, data)
+        
+    def send_to_requeue_negative(self, queue: str, data: str):
+        self.channel.basic_publish(exchange='', routing_key='negative_review_queue_1', body=data)
         logging.debug("Sent to requeue %s: %s", queue, data)
 
     def _create_callback_wrapper(self, callback, eofCallback):
@@ -74,7 +78,9 @@ class Middleware:
             else:
                 response = callback(mensaje_str)
             if response == 2:
-                self.send_to_requeue(method.routing_key, body)
+                self.send_to_requeue_positive(method.routing_key, body)
+            if response == 3:
+                self.send_to_requeue_negative(method.routing_key, body)
             self.ack(method.delivery_tag)
 
         return callback_wrapper

@@ -99,6 +99,7 @@ class ConnectionHandler:
                     if data_type == "fin":
                         self.protocol.send_message("OK - ACK de fin")
                         self.games_from_client_queue.put("fin\n\n")
+                        self.reviews_from_client_queue.put("fin\n\n")
                         break
 
                     if data_type == "reviews":

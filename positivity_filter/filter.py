@@ -32,6 +32,6 @@ class PositivityFilter:
             logging.error(f"Error in FilterPositivity callback: {e}")
             
     def _finCallback(self, message):
-        self.middleware.send_message(message)
+        self.middleware.send(message)
         logging.info("FilterPositivity finished")
         

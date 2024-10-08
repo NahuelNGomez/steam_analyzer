@@ -21,6 +21,7 @@ class GameReviewFilter:
         self.output_queues = output_queues
         self.instance_id = instance_id
         self.completed_games = False
+        self.completed_reviews = False
         self.requeued_reviews = []
 
         self.games: dict = {}
@@ -97,16 +98,19 @@ class GameReviewFilter:
                 if len(review_list) == 6 and (review_list[5] not in self.requeued_reviews):
                     self.requeued_reviews.append(review_list[5])
                 print(f"Juego no encontrado: {review_list[0]}Reencolando {self.requeued_reviews}", flush=True)
-                return 2
+                if ('shooter' in self.games_input_queue[1] ):
+                    return 3
+                else:
+                    return 2
             
             print(f"Juego no encontrado:- Se descarta {self.requeued_reviews}", flush=True)
             if len(review_list) == 6 and (review_list[5] in self.requeued_reviews):
                 self.requeued_reviews.remove(review_list[5])
-        if (self.requeued_reviews == []) and self.completed_games:
+        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
             self.reviews_middleware.send("fin\n\n")
 
     def handle_review_eof(self, message):
-        pass
+        self.completed_reviews = True
 
     def start(self):
         """

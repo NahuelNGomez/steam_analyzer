@@ -8,10 +8,13 @@ services:
     networks:
       - testing_net
     depends_on:
-      - genre_filter
+      - indie_filter
+      - shooter_filter
       - games_counter
-      - positivity_filter
-      - game_review_filter
+      - positive_review_filter
+      - negative_review_filter
+      - indie_game_review_filter
+      - shooter_game_review_filter
     volumes:
       - ./common:/common
     environment:
@@ -53,14 +56,14 @@ services:
       - ./common:/common
     entrypoint: python3 main.py
 
-  genre_filter:
-    container_name: genre_filter
+  indie_filter:
+    container_name: indie_filter
     build:
       context: ./genre_filter
     image: genre_filter:latest
     depends_on:
       - top10_indie_counter
-      - game_review_filter
+      - indie_game_review_filter
     networks:
       - testing_net
     environment:
@@ -70,6 +73,25 @@ services:
       - GENRE=Indie
     volumes:
       - ./common:/common
+
+  shooter_filter:
+    container_name: shooter_filter
+    build:
+      context: ./genre_filter
+    image: genre_filter:latest
+    depends_on:
+      - top10_indie_counter
+      - shooter_game_review_filter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["shooter_games"]
+      - INPUT_QUEUES={"games_queue_filter":"games"}
+      - INSTANCE_ID=2
+      - LOGGING_LEVEL=DEBUG
+      - GENRE=Shooter
+    volumes:
+      - ./common:/common  
 
   range_filter:
     container_name: range_filter
@@ -102,8 +124,8 @@ services:
       - ./common:/common
     entrypoint: python3 main.py
 
-  positivity_filter:
-    container_name: positivity_filter
+  positive_review_filter:
+    container_name: positive_review_filter
     build:
       context: ./positivity_filter
       dockerfile: Dockerfile
@@ -119,8 +141,26 @@ services:
     volumes:
       - ./common:/common
 
-  game_review_filter:
-    container_name: game_review_filter
+  negative_review_filter:
+    container_name: negative_review_filter
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["negative_reviews"]
+      - INPUT_QUEUES={"reviews_queue":"reviews"}
+      - INSTANCE_ID=2
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=-1
+    volumes:
+      - ./common:/common  
+
+  indie_game_review_filter:
+    container_name: indie_game_review_filter
     build:
       context: ./game_review_filter
       dockerfile: Dockerfile
@@ -130,13 +170,32 @@ services:
     networks:
       - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["games_reviews"]
+      - OUTPUT_EXCHANGES=["games_reviews_indie"]
       - INPUT_GAMES_QUEUE=["indie_games_queue","indie_games"]
       - INPUT_REVIEWS_QUEUE=["positive_review_queue","positive_reviews"]
       - LOGGING_LEVEL=DEBUG
     volumes:
       - ./common:/common
       - ./game_review_filter/data:/data
+
+  shooter_game_review_filter:
+    container_name: shooter_game_review_filter
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews_shooter"]
+      - INPUT_GAMES_QUEUE=["shooter_games_queue","shooter_games"]
+      - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data   
 
   game_review_positive_counter:
     container_name: game_review_positive_counter
@@ -148,7 +207,7 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["result_queue"]
-      - INPUT_QUEUES={"games_reviews_queue":"games_reviews"}
+      - INPUT_QUEUES={"games_reviews_queue":"games_reviews_indie"}
       - LOGGING_LEVEL=DEBUG
     volumes:
       - ./common:/common
