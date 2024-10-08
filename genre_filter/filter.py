@@ -43,7 +43,8 @@ class GenreFilter:
 
         :param data: Datos recibidos.
         """
-        self.middleware.send(data=data)
+        print("Fin de la transmisión, enviando data", data, flush=True)
+        self.middleware.send(data)
     
     def _callBack(self, data):
         """

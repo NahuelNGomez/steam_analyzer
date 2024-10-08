@@ -5,13 +5,14 @@ from common.middleware import Middleware
 from common.utils import split_complex_string
 
 class GameReviewFilter:
-    def __init__(self, input_queues, output_queue, join_key='app_id'):
+    def __init__(self, input_queues, output_queue, instance_id):
         """
         :param input_queues: Lista de colas de entrada (e.g., ['shooter_games_queue', 'positive_reviews_queue']).
         :param output_queue: Cola de salida (e.g., 'shooter_games_positive_reviews_queue').
         :param join_key: Clave para realizar el join (por defecto, 'app_id').
         """
-        self.middleware = Middleware(input_queues, [], output_queue, 0, self._callback, self._finCallback)
+        self.join_key='app_id'
+        self.middleware = Middleware(input_queues, [], output_queue, instance_id, self._callback, self._finCallback)
 
     def saveGameInTxt(self, game):
         """

@@ -10,7 +10,7 @@ def main():
                         format='%(asctime)s - %(levelname)s - %(message)s')
     input_queues: dict = json.loads(os.getenv("INPUT_QUEUES")) or {}
     output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []
-    instance_id = json.loads(os.getenv("INSTANCE_ID") or '1')
+    instance_id = '1'
     
     gameReviewFilter = GameReviewFilter(input_queues, output_exchanges, instance_id)
     gameReviewFilter.start()
