@@ -3,6 +3,7 @@ import logging
 from collections import defaultdict
 from common.middleware import Middleware
 from common.utils import split_complex_string
+from common.constants import REVIEWS_APP_ID_POS, REVIEWS_TEXT_POS
 
 class PercentileAccumulator:
     def __init__(self, input_queues, output_exchanges, instance_id, percentile=90):
@@ -76,7 +77,7 @@ class PercentileAccumulator:
         """
         logging.info("Fin de la transmisión, calculando percentil 90 de reseñas negativas")
         self.calculate_90th_percentile()
-        self.middleware.send(data)
+        #self.middleware.send(data)
     
     def _callBack(self, data):
         """

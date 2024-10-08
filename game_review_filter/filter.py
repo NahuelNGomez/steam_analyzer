@@ -111,7 +111,9 @@ class GameReviewFilter:
             print(f"Juego no encontrado:- Se descarta {self.requeued_reviews}", flush=True)
             if len(review_list) == 6 and (review_list[5] in self.requeued_reviews):
                 self.requeued_reviews.remove(review_list[5])
+                
         if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
+            print("Fin de la transmisión de reviews", flush=True)
             self.reviews_middleware.send("fin\n\n")
 
     def handle_review_eof(self, message):
