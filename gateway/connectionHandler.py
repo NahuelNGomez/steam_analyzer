@@ -102,15 +102,17 @@ class ConnectionHandler:
                         break
 
                     if data_type == "reviews":
-                        review_list = parts[1].strip().split("\n")
-                        for row in review_list:
-                            self.reviews_from_client_queue.put(row)
-                    
+                        # review_list = parts[1].strip().split("\n")
+                        # for row in review_list:
+                        #     self.reviews_from_client_queue.put(row)
+                        self.reviews_from_client_queue.put(parts[1].strip())
+                        
                     if data_type == "games":
-                        games_list = parts[1].strip().split("\n")
-                        for row in games_list:
-                            self.games_from_client_queue.put(row)
-                    
+                        # games_list = parts[1].strip().split("\n")
+                        # for row in games_list:
+                        #     self.games_from_client_queue.put(row)
+                        self.games_from_client_queue.put(parts[1].strip())
+
                     self.protocol.send_message("OK") 
                     
                 except Exception as e:

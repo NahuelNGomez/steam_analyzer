@@ -52,16 +52,19 @@ class GenreFilter:
         :param data: Datos recibidos.
         """
         try:
-            result = split_complex_string(data)
-            logging.debug(f"Mensaje decodificado: {result}")
+            batch = data.split('\n')
+            for row in batch:
+                result = split_complex_string(row)
+                logging.debug(f"Mensaje decodificado: {result}")
 
-            filtered_game = self.filter_games_by_genre(result)
-            if filtered_game:
-                self.middleware.send(','.join(filtered_game))
-                logging.info(f"Juego filtrado enviado: {filtered_game}")
-            else:
-                logging.info("Juego no cumple con el filtro de género.")
-                print("Juego no cumple con el filtro de género.", flush=True)
+                filtered_game = self.filter_games_by_genre(result)
+                if filtered_game:
+                    self.middleware.send(','.join(filtered_game))
+                    logging.info(f"Juego filtrado enviado: {filtered_game}")
+                else:
+                    logging.info("Juego no cumple con el filtro de género.")
+                    print("Juego no cumple con el filtro de género.", flush=True)
+        
         except Exception as e:
             logging.error(f"Error en _callback al procesar el mensaje: {e}")
 

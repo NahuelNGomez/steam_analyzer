@@ -62,12 +62,13 @@ class GamesCounter:
         :param data: Datos recibidos.
         """
         try:
-            result =split_complex_string(data)
-            
-            print("result: ", result, flush=True)
-            logging.debug(f"Mensaje decodificado: {result}")
-
-            self.counterGames(result)
+            batch = data.split('\n')
+            for row in batch:
+                result = split_complex_string(row)
+                print("result: ", result, flush=True)
+                logging.debug(f"Mensaje decodificado: {result}")
+                self.counterGames(result)
+                
         except Exception as e:
             logging.error(f"Error en _callBack al procesar el mensaje: {e}")
     

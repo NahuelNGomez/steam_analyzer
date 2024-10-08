@@ -15,12 +15,14 @@ class PositivityFilter:
         
     def _callback(self, message):
         try:
-            result_review = split_complex_string(message)
-            review_score = result_review[REVIEWS_SCORE_POS]
+            batch = message.split("\n")
+            for row in batch:
+                result_review = split_complex_string(row)
+                review_score = result_review[REVIEWS_SCORE_POS]
 
-            if int(review_score) == self.positivity:
-                print(f"Sending + review: {result_review}", flush=True)
-                self.middleware.send(",".join(result_review))
+                if int(review_score) == self.positivity:
+                    print(f"Sending + review: {result_review}", flush=True)
+                    self.middleware.send(",".join(result_review))
             
         except Exception as e:
             logging.error(f"Error in FilterPositivity callback: {e}")
