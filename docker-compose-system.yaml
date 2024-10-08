@@ -11,6 +11,7 @@ services:
       - genre_filter
       - games_counter
       - positivity_filter
+      - game_review_filter
     volumes:
       - ./common:/common
     environment:
@@ -59,6 +60,7 @@ services:
     image: genre_filter:latest
     depends_on:
       - top10_indie_counter
+      - game_review_filter
     networks:
       - testing_net
     environment:
@@ -117,6 +119,22 @@ services:
     volumes:
       - ./common:/common
 
+  game_review_filter:
+    container_name: game_review_filter
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews"]
+      - INPUT_QUEUES={"positive_review_queue":"positive_reviews", "indie_games_queue":"indie_games"}
+      - LOGGING_LEVEL=DEBUG
+
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
 
 
 
