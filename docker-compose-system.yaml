@@ -125,13 +125,31 @@ services:
       context: ./game_review_filter
       dockerfile: Dockerfile
     image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
     networks:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["games_reviews"]
-      - INPUT_QUEUES={"positive_review_queue":"positive_reviews", "indie_games_queue":"indie_games"}
+      - INPUT_GAMES_QUEUE=["indie_games_queue","indie_games"]
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue","positive_reviews"]
       - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
 
+  game_review_positive_counter:
+    container_name: game_review_positive_counter
+    build:
+      context: ./review_counter
+      dockerfile: Dockerfile
+    image: review_counter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - INPUT_QUEUES={"games_reviews_queue":"games_reviews"}
+      - LOGGING_LEVEL=DEBUG
     volumes:
       - ./common:/common
       - ./game_review_filter/data:/data

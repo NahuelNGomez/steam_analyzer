@@ -8,6 +8,7 @@ class PositivityFilter:
     def __init__(self, input_queue, positivity, output_exchange, instance_id):
         self.positivity = positivity
         self.middleware = Middleware(input_queue, [], output_exchange, instance_id, self._callback, self._finCallback)
+        self.counter = 0
 
     def start(self):
         self.middleware.start()
@@ -22,7 +23,10 @@ class PositivityFilter:
 
                 if int(review_score) == self.positivity:
                     print(f"Sending + review: {result_review}", flush=True)
-                    self.middleware.send(",".join(result_review))
+                    text = ",".join(result_review)
+                    text = text + ',' + str(self.counter)
+                    self.counter += 1
+                    self.middleware.send(text)
             
         except Exception as e:
             logging.error(f"Error in FilterPositivity callback: {e}")

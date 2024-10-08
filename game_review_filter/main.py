@@ -8,11 +8,11 @@ import configparser
 def main():
     logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),
                         format='%(asctime)s - %(levelname)s - %(message)s')
-    input_queues: dict = json.loads(os.getenv("INPUT_QUEUES")) or {}
+    input_game_queue = json.loads(os.getenv("INPUT_GAMES_QUEUE", "[]"))
+    input_review_queue = json.loads(os.getenv("INPUT_REVIEWS_QUEUE", "[]"))
     output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []
     instance_id = '1'
-    
-    gameReviewFilter = GameReviewFilter(input_queues, output_exchanges, instance_id)
+    gameReviewFilter = GameReviewFilter(input_game_queue,input_review_queue, output_exchanges, [], instance_id)
     gameReviewFilter.start()
 
 if __name__ == '__main__':
