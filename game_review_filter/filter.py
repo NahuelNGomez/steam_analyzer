@@ -9,8 +9,8 @@ from common.utils import split_complex_string
 class GameReviewFilter:
     def __init__(self, input_games_queue, input_reviews_queue, output_exchanges, output_queues, instance_id):
         """
-        :param input_queues: Lista de colas de entrada (e.g., ['shooter_games_queue', 'positive_reviews_queue']).
-        :param output_queue: Cola de salida (e.g., 'shooter_games_positive_reviews_queue').
+        :param input_queues: Lista de colas de entrada (e.g., ['action_games_queue', 'positive_reviews_queue']).
+        :param output_queue: Cola de salida (e.g., 'action_games_positive_reviews_queue').
         :param join_key: Clave para realizar el join (por defecto, 'app_id').
         """
         self.join_key = "app_id"
@@ -89,7 +89,7 @@ class GameReviewFilter:
             self.saveReviewInTxt(review)
             game = self.games[review_list[0]]
             value = ','.join(i for i in self.games if self.games[i] == game)
-            if ('shooter' in self.games_input_queue[1] ):
+            if ('action' in self.games_input_queue[1] ):
                 self.reviews_middleware.send(value + "," + game + "," + review_list[2] + "," + review_list[3] + "," + review_list[4] + "," + review_list[4]) #+ "," + review_list[5])
             else:
                 self.reviews_middleware.send(value + "," + game)
@@ -103,7 +103,7 @@ class GameReviewFilter:
                 if len(review_list) == 6 and (review_list[5] not in self.requeued_reviews):
                     self.requeued_reviews.append(review_list[5])
                 print(f"Juego no encontrado: {review_list[0]}Reencolando {self.requeued_reviews}", flush=True)
-                if ('shooter' in self.games_input_queue[1] ):
+                if ('action' in self.games_input_queue[1] ):
                     return 3
                 else:
                     return 2

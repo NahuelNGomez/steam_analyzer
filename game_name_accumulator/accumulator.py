@@ -29,7 +29,7 @@ class GameNamesAccumulator:
     
     def process_game(self, message):
         """
-        # Processes each message (game) received and adds it to the top 10 list if applicable.
+        # Processes each message (game) received and send the name if it has more than the low limit positive reviews.
         # """
         try:
             print("Games dict: ", self.games, flush=True)

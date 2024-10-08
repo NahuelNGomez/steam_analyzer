@@ -9,14 +9,15 @@ services:
       - testing_net
     depends_on:
       - indie_filter
-      - shooter_filter
+      - action_filter
       - games_counter
       - positive_review_filter
       - negative_review_filter
       - indie_game_review_filter
-      - shooter_game_review_filter
+      - action_game_review_filter
       - language_filter
-      - shooter_name_accumulator
+      - action_name_accumulator
+      - percentile_accumulator
     volumes:
       - ./common:/common
     environment:
@@ -76,22 +77,22 @@ services:
     volumes:
       - ./common:/common
 
-  shooter_filter:
-    container_name: shooter_filter
+  action_filter:
+    container_name: action_filter
     build:
       context: ./genre_filter
     image: genre_filter:latest
     depends_on:
       - top10_indie_counter
-      - shooter_game_review_filter
+      - action_game_review_filter
     networks:
       - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["shooter_games"]
+      - OUTPUT_EXCHANGES=["action_games"]
       - INPUT_QUEUES={"games_queue_filter":"games"}
       - INSTANCE_ID=2
       - LOGGING_LEVEL=DEBUG
-      - GENRE=Shooter
+      - GENRE=action
     volumes:
       - ./common:/common  
 
@@ -180,19 +181,20 @@ services:
       - ./common:/common
       - ./game_review_filter/data:/data
 
-  shooter_game_review_filter:
-    container_name: shooter_game_review_filter
+  action_game_review_filter:
+    container_name: action_game_review_filter
     build:
       context: ./game_review_filter
       dockerfile: Dockerfile
     image: game_review_filter:latest
     depends_on:
       - game_review_positive_counter
+      - percentile_accumulator
     networks:
       - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["games_reviews_shooter"]
-      - INPUT_GAMES_QUEUE=["shooter_games_queue","shooter_games"]
+      - OUTPUT_EXCHANGES=["games_reviews_action"]
+      - INPUT_GAMES_QUEUE=["action_games_queue","action_games"]
       - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
       - LOGGING_LEVEL=DEBUG
     volumes:
@@ -225,13 +227,13 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["english_reviews"]
-      - INPUT_QUEUES={"games_reviews_shooter_queue":"games_reviews_shooter"}
+      - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
       - LOGGING_LEVEL=DEBUG
     volumes:
       - ./common:/common
 
-  shooter_name_accumulator:
-    container_name: shooter_name_accumulator
+  action_name_accumulator:
+    container_name: action_name_accumulator
     build:
       context: ./game_name_accumulator
       dockerfile: Dockerfile
@@ -240,25 +242,28 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["result_queue"]
-      - INPUT_QUEUES={"shooter_english_reviews_queue":"english_reviews"}
+      - INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}
       - LOGGING_LEVEL=DEBUG
-      - REVIEWS_LOW_LIMIT = 10
+      - REVIEWS_LOW_LIMIT=10
     volumes:
       - ./common:/common
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
+  percentile_accumulator:
+    container_name: percentile_accumulator
+    build:
+      context: ./percentile_accumulator
+      dockerfile: Dockerfile
+    image: percentile_accumulator:latest
+    networks:
+      - testing_net    
+    environment:
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
+      - LOGGING_LEVEL=DEBUG
+      - PERCENTILE=90
+      - INSTANCE_ID=3
+    volumes:
+      - ./common:/common
 
 
 networks:
