@@ -43,13 +43,27 @@ class RangeFilter:
     def extract_year(self, release_date_str):
         """
         Extrae el año de una cadena de fecha en formato "MMM DD, YYYY" o "MMMM DD, YYYY".
+        Si la cadena de fecha no tiene un formato válido, intenta extraer solo el año.
         """
         try:
+            # Intentar con el formato corto del mes
             release_date = datetime.strptime(release_date_str, "%b %d, %Y")
             return release_date.year
         except ValueError:
-            release_date = datetime.strptime(release_date_str, "%B %d, %Y")
-            return release_date.year
+            try:
+                # Intentar con el formato largo del mes
+                release_date = datetime.strptime(release_date_str, "%B %d, %Y")
+                return release_date.year
+            except ValueError:
+                # Si no coincide con ningún formato, intentar extraer el año directamente
+                logging.warning(f"Formato de fecha inesperado: '{release_date_str}', intentando extraer el año.")
+                # Verificar si solo contiene un año
+                if release_date_str.strip().isdigit():
+                    return int(release_date_str.strip())
+                else:
+                    logging.error(f"No se pudo extraer el año de la fecha: '{release_date_str}'")
+                    raise
+
         
     def _finCallBack(self, data):
         print("rangeFilter sending data: ", data, flush=True)

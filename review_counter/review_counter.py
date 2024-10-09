@@ -3,6 +3,7 @@ import logging
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.constants import GAMES_APP_ID_POS, GAMES_NAME_POS, GAMES_AVERAGE_PLAYTIME_FOREVER_POS
+from datetime import datetime
 
 class Top5ReviewCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
@@ -17,12 +18,27 @@ class Top5ReviewCounter:
         self.games_dict = {}
 
     def get_games(self):
-
+        """
+        Returns the top 5 games with the most positive reviews.
+        """
         # Ordenar el diccionario por 'count' en orden descendente y obtener los 5 primeros
-        top_5_games = sorted(self.games_dict.items(), key=lambda x: x[1]['count'], reverse=True)[:5]
+        top_5_games = sorted(
+            self.games_dict.items(),
+            key=lambda x: x[1]['count'],
+            reverse=True
+        )[:5]
+        # Formatear la respuesta
+        return {
+            "top_5_indie_games_positive_reviews": [
+                {
+                    "rank": idx + 1,
+                    "name": game_data["name"],
+                    "positive_review_count": game_data["count"]
+                } for idx, (game_id, game_data) in enumerate(top_5_games)
+            ],
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        }
 
-        # Convertir la lista de tuplas de vuelta a un diccionario
-        return {game_id: game_data for game_id, game_data in top_5_games}
 
     def process_game(self, message):
         """
@@ -56,10 +72,11 @@ class Top5ReviewCounter:
         """
         Callback function for handling end of file (EOF) messages.
         """
-        logging.info("End of file received. Sending top 10 games data.")
-        top5_games = json.dumps(self.get_games())
+        logging.info("End of file received. Sending top 5 indie games positive reviews data.")
+        top5_games = json.dumps(self.get_games(), indent=4)
         self.middleware.send(top5_games)
-        logging.info("Top 5 games-review data sent.")
+        logging.info("Top 5 indie games positive reviews data sent.")
+
 
     def start(self):
         """
