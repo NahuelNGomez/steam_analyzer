@@ -75,11 +75,17 @@ class GamesCounter:
     def _finCallBack(self, data):
         """
         Callback para manejar el mensaje de fin.
-
-        :param data: Datos recibidos.
         """
-        print("gamesCounter sending data: ", self.platform_counts, flush=True)
-        self.middleware.send(json.dumps(self.platform_counts))
+        response = {
+            "supported_platforms": [
+                {"platform": "Windows", "game_count": self.platform_counts['Windows']},
+                {"platform": "Mac", "game_count": self.platform_counts['Mac']},
+                {"platform": "Linux", "game_count": self.platform_counts['Linux']}
+            ],
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        }
+        self.middleware.send(json.dumps(response, indent=4))
+
     
     
     def start(self):

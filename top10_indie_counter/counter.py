@@ -3,6 +3,7 @@ import logging
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.constants import GAMES_APP_ID_POS, GAMES_NAME_POS, GAMES_AVERAGE_PLAYTIME_FOREVER_POS
+from datetime import datetime
 
 class Top10IndieCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
@@ -20,7 +21,26 @@ class Top10IndieCounter:
         """
         Returns the top 10 games dictionary.
         """
-        return self.game_playtimes
+        # Ordenar los juegos por tiempo de juego descendente
+        sorted_games = sorted(
+            self.game_playtimes.items(),
+            key=lambda item: item[1]["tiempo"],
+            reverse=True
+        )
+        # Obtener los top 10
+        top10 = sorted_games[:10]
+        # Formatear la respuesta
+        return {
+            "top_10_indie_games_2010s": [
+                {
+                    "rank": idx + 1,
+                    "name": game["nombre"],
+                    "average_playtime_hours": round(game["tiempo"], 2)
+                } for idx, (game_id, game) in enumerate(top10)
+            ],
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        }
+
 
     def process_game(self, message):
         """
@@ -66,10 +86,11 @@ class Top10IndieCounter:
         """
         Callback function for handling end of file (EOF) messages.
         """
-        logging.info("End of file received. Sending top 10 games data.")
-        top10_games = json.dumps(self.get_games())
+        logging.info("End of file received. Sending top 10 indie games data.")
+        top10_games = json.dumps(self.get_games(), indent=4)
         self.middleware.send(top10_games)
-        logging.info("Top 10 games data sent.")
+        logging.info("Top 10 indie games data sent.")
+
 
     def start(self):
         """

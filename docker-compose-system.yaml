@@ -39,7 +39,7 @@ services:
       - LOGGING_LEVEL=INFO
       - rabbitmq_RESULTS_QUEUE=result_queue
     volumes:
-      - ./client/data:/data
+      - ./client/datasets:/datasets
       - ./client/config.ini:/client/config.ini
       - ./common:/common
 
@@ -264,7 +264,6 @@ services:
       - INSTANCE_ID=3
     volumes:
       - ./common:/common
-
 
 networks:
   testing_net:
