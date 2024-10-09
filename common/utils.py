@@ -1,8 +1,7 @@
 import re
 
 def split_complex_string(s):
-    # Usamos una expresión regular que captura comas, pero no dentro de arrays [] ni dentro de comillas
-    # Esto identifica bloques entre comillas o corchetes como un solo token
+    # Expresión regular que captura comas vacías o valores complejos (arrays o comillas)
     pattern = r'''
         (?:\[.*?\])   # Captura arrays entre corchetes
         |             # O
@@ -11,5 +10,10 @@ def split_complex_string(s):
         (?:'.*?')     # Captura texto entre comillas simples
         |             # O
         (?:[^,]+)     # Captura cualquier cosa que no sea una coma
+        |             # O
+        (?:,)         # Captura comas vacías
     '''
-    return re.findall(pattern, s, re.VERBOSE)
+
+    tokens = re.findall(pattern, s, re.VERBOSE)
+    
+    return result
