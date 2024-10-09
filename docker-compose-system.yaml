@@ -92,7 +92,7 @@ services:
       - INPUT_QUEUES={"games_queue_filter":"games"}
       - INSTANCE_ID=2
       - LOGGING_LEVEL=DEBUG
-      - GENRE=action
+      - GENRE=Action
     volumes:
       - ./common:/common  
 
@@ -244,7 +244,7 @@ services:
       - OUTPUT_EXCHANGES=["result_queue"]
       - INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}
       - LOGGING_LEVEL=DEBUG
-      - REVIEWS_LOW_LIMIT=10
+      - REVIEWS_LOW_LIMIT=5
     volumes:
       - ./common:/common
   

@@ -130,6 +130,7 @@ class GameReviewFilter:
         self.completed_reviews = True
         if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
             print("Fin de la transmisión de reviews", flush=True)
+            print("Fin de la transmisión de datos", flush=True)
             self.reviews_middleware.send("fin\n\n")
 
     def start(self):

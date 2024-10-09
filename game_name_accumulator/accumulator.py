@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import defaultdict
+from common.game_review import GameReview
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.constants import REVIEWS_APP_ID_POS, REVIEWS_TEXT_POS
@@ -27,26 +28,24 @@ class GameNamesAccumulator:
         self.middleware.start()
         logging.info("GameNamesAccumulator started")
     
-    def process_game(self, message):
+    def process_game(self, game):
         """
-        # Processes each message (game) received and send the name if it has more than the low limit positive reviews.
+        # Processes each game (game) received and send the name if it has more than the low limit positive reviews.
         # """
         try:
             print("Games dict: ", self.games, flush=True)
-            game_id = message[REVIEWS_APP_ID_POS]
+            game_id = game.game_id
             print(f"Game ID: {game_id}", flush=True)
-            text = message[REVIEWS_TEXT_POS][1:-1]
-            print(f"Game text: {text}", flush=True)
             if game_id in self.games:
                 self.games[game_id]['count'] += 1
             else:
                 if self.games[game_id] not in self.sent_games:
                     self.games[game_id] = {
-                        'name': message[1][1:-1],
+                        'name': game.game_name,
                         'count': 1
                     }
 
-            if self.games[game_id]['count'] >= self.reviews_low_limit and game_id not in self.sent_games:
+            if self.games[game_id]['count'] > self.reviews_low_limit and game_id not in self.sent_games:
                 self.middleware.send(json.dumps(self.games[game_id]))
                 self.sent_games.append(game_id)
                 self.games.pop(game_id)
@@ -79,9 +78,9 @@ class GameNamesAccumulator:
         :param data: Datos recibidos.
         """
         try:
-            result = split_complex_string(data)
-            logging.debug(f"Mensaje decodificado: {result}")
-            self.process_game(result)
+            game = GameReview.decode(json.loads(data))
+            logging.debug(f"Mensaje decodificado: {game}")
+            self.process_game(game)
             
         except Exception as e:
             logging.error(f"Error en GameNamesAccumulator callback: {e}")
