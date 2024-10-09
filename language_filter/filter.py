@@ -15,7 +15,6 @@ class LanguageFilter:
         :param instance_id: ID de instancia para identificar colas únicas.
         """
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
-    
 
     def start(self):
         """
