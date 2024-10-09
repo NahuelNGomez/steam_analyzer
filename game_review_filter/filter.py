@@ -2,6 +2,8 @@ import json
 import logging
 import os
 import threading
+from common.game import Game
+from common.game_review import GameReview
 from common.middleware import Middleware
 from common.utils import split_complex_string
 
@@ -71,8 +73,8 @@ class GameReviewFilter:
         Agrega un juego al diccionario de juegos.
         """
         try:
-            game = split_complex_string(game)
-            self.games[game[0]] = game[1]
+            game = Game.decode(json.loads(game))
+            self.games[game.id] = game.name
         except Exception as e:
             logging.error(f"Error al agregar juego: {e}")
 
@@ -84,7 +86,7 @@ class GameReviewFilter:
         self.completed_games = True
         
         if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
-            print("Fin de la transmisión de reviews", flush=True)
+            print("Fin de la transmisión de datos", flush=True)
             self.reviews_middleware.send("fin\n\n")
         
     def _add_review(self, review):
@@ -93,10 +95,14 @@ class GameReviewFilter:
             self.saveReviewInTxt(review)
             game = self.games[review_list[0]]
             value = ','.join(i for i in self.games if self.games[i] == game)
-            if ('action' in self.games_input_queue[1] ):
-                self.reviews_middleware.send(value + "," + game + "," + review_list[2] + "," + review_list[3] + "," + review_list[4] + "," + review_list[4]) #+ "," + review_list[5])
+            if ('action' in self.games_input_queue[1]):
+                game_review = GameReview(value, game, review_list[2])
+                game_str = json.dumps(game_review.getData())
+                self.reviews_middleware.send(game_str)
             else:
-                self.reviews_middleware.send(value + "," + game)
+                game_review = GameReview(value, game, None)
+                game_str = json.dumps(game_review.getData())
+                self.reviews_middleware.send(game_str)
         
             #self.reviews_middleware.send(value + "," + game)
             if len(review_list) == 6 and review_list[5] in self.requeued_reviews:
@@ -106,18 +112,18 @@ class GameReviewFilter:
             if not self.completed_games:
                 if len(review_list) == 6 and (review_list[5] not in self.requeued_reviews):
                     self.requeued_reviews.append(review_list[5])
-                print(f"Juego no encontrado: {review_list[0]}Reencolando {self.requeued_reviews}", flush=True)
+                print(f"Juego no encontrado: {review_list[0]}Reencolando ", flush=True)
                 if ('action' in self.games_input_queue[1] ):
                     return 3
                 else:
                     return 2
             
-            print(f"Juego no encontrado:- Se descarta {self.requeued_reviews}", flush=True)
+            print(f"Juego no encontrado:- Se descarta", flush=True)
             if len(review_list) == 6 and (review_list[5] in self.requeued_reviews):
                 self.requeued_reviews.remove(review_list[5])
                 
         if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
-            print("Fin de la transmisión de reviews", flush=True)
+            print("Fin de la transmisión de datos", flush=True)
             self.reviews_middleware.send("fin\n\n")
 
     def handle_review_eof(self, message):

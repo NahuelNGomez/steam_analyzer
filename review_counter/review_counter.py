@@ -1,5 +1,6 @@
 import json
 import logging
+from common.game_review import GameReview
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.constants import GAMES_APP_ID_POS, GAMES_NAME_POS, GAMES_AVERAGE_PLAYTIME_FOREVER_POS
@@ -21,13 +22,11 @@ class Top5ReviewCounter:
         """
         Returns the top 5 games with the most positive reviews.
         """
-        # Ordenar el diccionario por 'count' en orden descendente y obtener los 5 primeros
         top_5_games = sorted(
             self.games_dict.items(),
             key=lambda x: x[1]['count'],
             reverse=True
         )[:5]
-        # Formatear la respuesta
         return {
             "top_5_indie_games_positive_reviews": [
                 {
@@ -40,13 +39,13 @@ class Top5ReviewCounter:
         }
 
 
-    def process_game(self, message):
+    def process_game(self, game_review):
         """
-        # Processes each message (game) received and adds it to the top 10 list if applicable.
+        # Processes each game_review received and adds it to the top 10 list if applicable.
         # """
         try:
-            game_id = message[GAMES_APP_ID_POS]
-            name = message[GAMES_NAME_POS][1:-1]
+            game_id = game_review.game_id
+            name = game_review.game_name
             if game_id in self.games_dict:
                 self.games_dict[game_id]['count'] += 1
             else:
@@ -54,6 +53,8 @@ class Top5ReviewCounter:
                     'name': name,
                     'count': 1
                 }
+            print(f"Processing game: {name} ({self.games_dict[game_id]['count']} positive reviews)...", flush=True)
+            print("la lista actual es: ", self.games_dict)
 
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
@@ -63,9 +64,10 @@ class Top5ReviewCounter:
         Callback function to process messages.
         """
     
-        message = split_complex_string(data)
+        json_data = json.loads(data)
+        game_review = GameReview.decode(json_data)
         logging.debug(f"Decoded message: {data}")
-        self.process_game(message)
+        self.process_game(game_review)
         #logging.info(f"Processed message: {message}")
 
     def _eof_callback(self, data):

@@ -13,12 +13,14 @@ class PositivityFilter:
     def start(self):
         self.middleware.start()
         logging.info("FilterPositivity started")
+
         
     def _callback(self, message):
         try:
             batch = message.split("\n")
             for row in batch:
                 result_review = split_complex_string(row)
+                print(f"Reviewwwww: {result_review}", flush=True)
                 review_score = result_review[REVIEWS_SCORE_POS]
 
                 if int(review_score) == self.positivity:
@@ -26,6 +28,7 @@ class PositivityFilter:
                     text = ",".join(result_review)
                     text = text + ',' + str(self.counter)
                     self.counter += 1
+                    print("count->", self.counter,flush=True)
                     self.middleware.send(text)
             
         except Exception as e:

@@ -117,8 +117,6 @@ class ConnectionHandler:
                             game_str = json.dumps(game.getData())
                             finalList += f"{game_str}\n"
                         self.games_from_client_queue.put(finalList)
-                        print("Games por batches: ", finalList, flush=True)
-
                     self.protocol.send_message("OK") 
                     
                 except Exception as e:
