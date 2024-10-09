@@ -63,9 +63,10 @@ class PercentileAccumulator:
                 self.middleware.send(json.dumps({
                     'game_id': game_id,
                     'name': game_data['name'],
-                    'count': game_data['count'],
+                    'negative_count': game_data['count'],
                 }))
                 logging.info(f"Juego en el percentil 90 enviado: {game_data['name']}")
+            self.games.clear()
         except Exception as e:
             logging.error(f"Error al calcular el percentil 90: {e}")
     

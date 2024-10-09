@@ -31,21 +31,6 @@ class GameReviewFilter:
         self.games_receiver = threading.Thread(target=self._games_receiver)
         self.reviews_receiver = threading.Thread(target=self._reviews_receiver)
 
-    def saveGameInTxt(self, game):
-        """
-        Guarda el juego en la base de datos.
-        """
-        with open("data/gamesData.txt", "a") as file:
-            file.write(game + "\n")
-
-    def saveReviewInTxt(self, review):
-        """
-        Guarda el juego en la base de datos.
-        """
-        
-        with open("data/reviewsData.txt", "a") as file:
-            file.write(review + "\n")
-
     def _games_receiver(self):
         self.books_middleware = Middleware(
             input_queues={self.games_input_queue[0]: self.games_input_queue[1]},
@@ -92,7 +77,6 @@ class GameReviewFilter:
     def _add_review(self, review):
         review_list = split_complex_string(review)
         if review_list[0] in self.games:
-            self.saveReviewInTxt(review)
             game = self.games[review_list[0]]
             value = ','.join(i for i in self.games if self.games[i] == game)
             if ('action' in self.games_input_queue[1]):

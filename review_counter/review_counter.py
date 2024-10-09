@@ -53,9 +53,6 @@ class Top5ReviewCounter:
                     'name': name,
                     'count': 1
                 }
-            print(f"Processing game: {name} ({self.games_dict[game_id]['count']} positive reviews)...", flush=True)
-            print("la lista actual es: ", self.games_dict)
-
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
 
@@ -66,9 +63,7 @@ class Top5ReviewCounter:
     
         json_data = json.loads(data)
         game_review = GameReview.decode(json_data)
-        logging.debug(f"Decoded message: {data}")
         self.process_game(game_review)
-        #logging.info(f"Processed message: {message}")
 
     def _eof_callback(self, data):
         """
