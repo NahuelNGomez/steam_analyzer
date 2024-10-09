@@ -83,6 +83,10 @@ class GameReviewFilter:
         print("Fin de la transmisión de juegos", flush=True)
         self.completed_games = True
         
+        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
+            print("Fin de la transmisión de reviews", flush=True)
+            self.reviews_middleware.send("fin\n\n")
+        
     def _add_review(self, review):
         review_list = split_complex_string(review)
         if review_list[0] in self.games:
@@ -118,6 +122,9 @@ class GameReviewFilter:
 
     def handle_review_eof(self, message):
         self.completed_reviews = True
+        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
+            print("Fin de la transmisión de reviews", flush=True)
+            self.reviews_middleware.send("fin\n\n")
 
     def start(self):
         """

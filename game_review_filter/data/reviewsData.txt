@@ -1903,3 +1903,167 @@
 1732930,"Jolt Project","Nov 17, 2021",-1,1,150
 655370,"Train Bandit","Oct 12, 2017",-1,1,156
 1732930,"Jolt Project","Nov 17, 2021",-1,1,157
+655370,"Train Bandit","Oct 12, 2017",-1,1,4
+1732930,"Jolt Project","Nov 17, 2021",-1,1,5
+20200,"Galactic Bowling","Resenia en espaniol ",1,1,12
+655370,"Train Bandit","Oct 12, 2017",-1,1,11
+1732930,"Jolt Project","Nov 17, 2021",-1,1,12
+655370,"Train Bandit","Oct 12, 2017",1,1,13
+655370,"Train Bandit","Oct 12, 2017",-1,1,18
+1732930,"Jolt Project","Nov 17, 2021",-1,1,19
+1732930,"Jolt Project","Nov 17, 2021",1,1,14
+655370,"Train Bandit","Oct 12, 2017",-1,1,25
+1732930,"Jolt Project","Nov 17, 2021",-1,1,26
+655370,"Train Bandit","Oct 12, 2017",-1,1,32
+1355720,"juegoA","Jul 23, 2020",1,1,15
+1732930,"Jolt Project","Nov 17, 2021",-1,1,33
+1732930,"Jolt Project","Nov 17, 2021",-1,1,36
+1139950,"Two Weeks in Painland","Feb 3, 2020",1,1,16
+655370,"Train Bandit","Oct 12, 2017",-1,1,42
+1355722,"JuegoB","Jul 23, 2017",1,1,17
+1732930,"Jolt Project","Nov 17, 2021",-1,1,43
+655370,"Train Bandit","Oct 12, 2017",-1,1,49
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,18
+1732930,"Jolt Project","Nov 17, 2021",-1,1,50
+20200,"Galactic Bowling","Resenia en espaniol ",1,1,19
+655370,"Train Bandit","Oct 12, 2017",1,1,20
+1732930,"Jolt Project","Nov 17, 2021",1,1,21
+655370,"Train Bandit","Oct 12, 2017",-1,1,56
+1355720,"juegoA","Jul 23, 2020",1,1,22
+1732930,"Jolt Project","Nov 17, 2021",-1,1,57
+1139950,"Two Weeks in Painland","Feb 3, 2020",1,1,23
+655370,"Train Bandit","Oct 12, 2017",-1,1,63
+1355722,"JuegoB","Jul 23, 2017",1,1,24
+1355721,"JuegoC","Jul 23, 2018",1,1,25
+1732930,"Jolt Project","Nov 17, 2021",-1,1,64
+20200,"Galactic Bowling","Oct 21, 20038",1,1,26
+1732930,"Jolt Project","Nov 17, 2021",-1,1,67
+20200,"Galactic Bowling","Oct 21, 200642328",1,1,27
+20200,"Galactic Bowling","Oct 21, 2042208",1,1,28
+655370,"Train Bandit","Oct 12, 2017",-1,1,73
+20200,"Galactic Bowling","Oct 21, 204702338",1,1,29
+1732930,"Jolt Project","Nov 17, 2021",-1,1,74
+20200,"Galactic Bowling","Oct 21, 2028",1,1,30
+20200,"Galactic Bowling","Oct 21, 2002732",1,1,31
+20200,"Galactic Bowling","Oct 21, 20128",1,1,32
+655370,"Train Bandit","Oct 12, 2017",-1,1,80
+20200,"Galactic Bowling","Oct 21, 2007238",1,1,33
+1732930,"Jolt Project","Nov 17, 2021",-1,1,81
+20200,"Galactic Bowling","Resenia en espaniol ",1,1,34
+655370,"Train Bandit","Oct 12, 2017",1,1,35
+655370,"Train Bandit","Oct 12, 2017",-1,1,87
+1732930,"Jolt Project","Nov 17, 2021",1,1,36
+1732930,"Jolt Project","Nov 17, 2021",-1,1,88
+1355720,"juegoA","Jul 23, 2020",1,1,37
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,38
+655370,"Train Bandit","Oct 12, 2017",-1,1,94
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,39
+1732930,"Jolt Project","Nov 17, 2021",-1,1,95
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,40
+1732930,"Jolt Project","Nov 17, 2021",-1,1,98
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,41
+655370,"Train Bandit","Oct 12, 2017",-1,1,104
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,42
+1732930,"Jolt Project","Nov 17, 2021",-1,1,105
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,43
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,44
+655370,"Train Bandit","Oct 12, 2017",-1,1,111
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,45
+1732930,"Jolt Project","Nov 17, 2021",-1,1,112
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,46
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,47
+655370,"Train Bandit","Oct 12, 2017",-1,1,118
+1732930,"Jolt Project","Nov 17, 2021",-1,1,119
+655370,"Train Bandit","Oct 12, 2017",-1,1,125
+1732930,"Jolt Project","Nov 17, 2021",-1,1,126
+1732930,"Jolt Project","Nov 17, 2021",-1,1,129
+655370,"Train Bandit","Oct 12, 2017",-1,1,135
+1732930,"Jolt Project","Nov 17, 2021",-1,1,136
+655370,"Train Bandit","Oct 12, 2017",-1,1,142
+1732930,"Jolt Project","Nov 17, 2021",-1,1,143
+655370,"Train Bandit","Oct 12, 2017",-1,1,149
+1732930,"Jolt Project","Nov 17, 2021",-1,1,150
+655370,"Train Bandit","Oct 12, 2017",-1,1,156
+1732930,"Jolt Project","Nov 17, 2021",-1,1,157
+655370,"Train Bandit","Oct 12, 2017",-1,1,4
+1732930,"Jolt Project","Nov 17, 2021",-1,1,5
+655370,"Train Bandit","Oct 12, 2017",-1,1,11
+1732930,"Jolt Project","Nov 17, 2021",-1,1,12
+655370,"Train Bandit","Oct 12, 2017",-1,1,18
+1732930,"Jolt Project","Nov 17, 2021",-1,1,19
+655370,"Train Bandit","Oct 12, 2017",-1,1,25
+20200,"Galactic Bowling","Resenia en espaniol ",1,1,12
+1732930,"Jolt Project","Nov 17, 2021",-1,1,26
+655370,"Train Bandit","Oct 12, 2017",1,1,13
+655370,"Train Bandit","Oct 12, 2017",-1,1,32
+1732930,"Jolt Project","Nov 17, 2021",-1,1,33
+1732930,"Jolt Project","Nov 17, 2021",1,1,14
+1732930,"Jolt Project","Nov 17, 2021",-1,1,36
+1355720,"juegoA","Jul 23, 2020",1,1,15
+655370,"Train Bandit","Oct 12, 2017",-1,1,42
+1732930,"Jolt Project","Nov 17, 2021",-1,1,43
+1139950,"Two Weeks in Painland","Feb 3, 2020",1,1,16
+1355722,"JuegoB","Jul 23, 2017",1,1,17
+655370,"Train Bandit","Oct 12, 2017",-1,1,49
+1732930,"Jolt Project","Nov 17, 2021",-1,1,50
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,18
+655370,"Train Bandit","Oct 12, 2017",-1,1,56
+1732930,"Jolt Project","Nov 17, 2021",-1,1,57
+655370,"Train Bandit","Oct 12, 2017",-1,1,63
+1732930,"Jolt Project","Nov 17, 2021",-1,1,64
+1732930,"Jolt Project","Nov 17, 2021",-1,1,67
+20200,"Galactic Bowling","Resenia en espaniol ",1,1,19
+655370,"Train Bandit","Oct 12, 2017",1,1,20
+655370,"Train Bandit","Oct 12, 2017",-1,1,73
+1732930,"Jolt Project","Nov 17, 2021",1,1,21
+1732930,"Jolt Project","Nov 17, 2021",-1,1,74
+1355720,"juegoA","Jul 23, 2020",1,1,22
+1139950,"Two Weeks in Painland","Feb 3, 2020",1,1,23
+655370,"Train Bandit","Oct 12, 2017",-1,1,80
+1355722,"JuegoB","Jul 23, 2017",1,1,24
+1732930,"Jolt Project","Nov 17, 2021",-1,1,81
+1355721,"JuegoC","Jul 23, 2018",1,1,25
+20200,"Galactic Bowling","Oct 21, 20038",1,1,26
+655370,"Train Bandit","Oct 12, 2017",-1,1,87
+20200,"Galactic Bowling","Oct 21, 200642328",1,1,27
+1732930,"Jolt Project","Nov 17, 2021",-1,1,88
+20200,"Galactic Bowling","Oct 21, 2042208",1,1,28
+20200,"Galactic Bowling","Oct 21, 204702338",1,1,29
+655370,"Train Bandit","Oct 12, 2017",-1,1,94
+20200,"Galactic Bowling","Oct 21, 2028",1,1,30
+1732930,"Jolt Project","Nov 17, 2021",-1,1,95
+20200,"Galactic Bowling","Oct 21, 2002732",1,1,31
+1732930,"Jolt Project","Nov 17, 2021",-1,1,98
+20200,"Galactic Bowling","Oct 21, 20128",1,1,32
+20200,"Galactic Bowling","Oct 21, 2007238",1,1,33
+655370,"Train Bandit","Oct 12, 2017",-1,1,104
+1732930,"Jolt Project","Nov 17, 2021",-1,1,105
+20200,"Galactic Bowling","Resenia en espaniol ",1,1,34
+655370,"Train Bandit","Oct 12, 2017",1,1,35
+655370,"Train Bandit","Oct 12, 2017",-1,1,111
+1732930,"Jolt Project","Nov 17, 2021",1,1,36
+1732930,"Jolt Project","Nov 17, 2021",-1,1,112
+1355720,"juegoA","Jul 23, 2020",1,1,37
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,38
+655370,"Train Bandit","Oct 12, 2017",-1,1,118
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,39
+1732930,"Jolt Project","Nov 17, 2021",-1,1,119
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,40
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,41
+655370,"Train Bandit","Oct 12, 2017",-1,1,125
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,42
+1732930,"Jolt Project","Nov 17, 2021",-1,1,126
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,43
+1732930,"Jolt Project","Nov 17, 2021",-1,1,129
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,44
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,45
+1355722,"JuegoB","This will be more of a ''my experience with this game'' type of review, because saying things like ''great gameplay'' will not suit something I've experienced with Counter-Strike. Here you go:  I remember back in 2002 I was at a friend's house and he was playing a game. I didn't know the name of the game nor I had internet to find it. A few weeks passed by and another friend came over. He didn't have a computer, so he brought a disc with a game in it. He told me that it was one of the best games and from that very moment I knew that it is going to be the game I saw at the other friend's house. When I saw the Counter-Strike logo I was filled with gamegasm (?) and I was so happy. I was playing it hardcore. Made friends, clans, was involved in communities and even made two myself. Counter-Strike is my first game which I played competitively and it was a such an experience. Playing public servers with mods were very fun, but playing it competitively made it very intense and stressful. In a pleasant way, ofcourse. Looking at the current e-sport scene it might not seem like much but back then it was different.  Shooters these days try to be different, advanced in a way. Sometimes the most simple games like Counter-Strike are the ones that live to this day. Also, there are plenty of mods to keep your attention to this game. The gameplay is very simple - defend as a Counter-Terrorist, attack as a Terrorist to plant the bomb or save the hostages as a CT. I am sure most of you already know this and I doubt there are gamers that haven't heard or know the gameplay of Counter-Strike, so I am sharing here more of my experience.  I wish I could find my CS Anthology account which I've lost since 2008. So, I decided I am going to buy this game again and here you go - more than a thousand hours played. I still play it from time to time to this day and it brings back many great memories and I sometimes even stumble upon people I've played with years ago. I think Counter-Strike changed gaming in a major way and we wouldn't have many games like we have today, if this game wouldn't exist.   I am sure many of people already have played games like CS:GO but never the roots. I doubt any of you will play it for more than an hour, because it's much more simple and it differs a lot in my opinion from CS:GO and modern games. It's harder though.",1,1,46
+655370,"Train Bandit","Oct 12, 2017",-1,1,135
+1355721,"JuegoC","        Easy to learn, hard to master.          ",1,1,47
+1732930,"Jolt Project","Nov 17, 2021",-1,1,136
+655370,"Train Bandit","Oct 12, 2017",-1,1,142
+1732930,"Jolt Project","Nov 17, 2021",-1,1,143
+655370,"Train Bandit","Oct 12, 2017",-1,1,149
+1732930,"Jolt Project","Nov 17, 2021",-1,1,150
+655370,"Train Bandit","Oct 12, 2017",-1,1,156
+1732930,"Jolt Project","Nov 17, 2021",-1,1,157
