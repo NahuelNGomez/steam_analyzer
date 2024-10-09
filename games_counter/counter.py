@@ -4,6 +4,7 @@ import csv
 import io
 import logging
 from collections import defaultdict
+from common.game import Game
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.constants import GAMES_NAME_POS, GAMES_WINDOWS_POS, GAMES_MAC_POS, GAMES_LINUX_POS
@@ -21,13 +22,16 @@ class GamesCounter:
         """
         self.platform_counts = defaultdict(int)
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
+        self.total_games = 0
 
     def counterGames(self, game):
         try:
-            game_name = game[GAMES_NAME_POS]
-            windows = game[GAMES_WINDOWS_POS]
-            mac = game[GAMES_MAC_POS]
-            linux = game[GAMES_LINUX_POS]
+            game_name = game.name
+            windows = game.windows
+            mac = game.mac
+            linux = game.linux
+            self.total_games += 1
+            print(f"Total de juegos: {self.total_games}", flush=True)
             
             print(f"Juego: {game_name}, Windows: {windows}, Mac: {mac}, Linux: {linux}", flush=True)
 
@@ -64,10 +68,11 @@ class GamesCounter:
         try:
             batch = data.split('\n')
             for row in batch:
-                result = split_complex_string(row)
-                print("result: ", result, flush=True)
-                logging.debug(f"Mensaje decodificado: {result}")
-                self.counterGames(result)
+                json_row = json.loads(row)
+                game = Game.decode(json_row)
+                print("result: ", game, flush=True)
+                logging.debug(f"Mensaje decodificado: {game}")
+                self.counterGames(game)
                 
         except Exception as e:
             logging.error(f"Error en _callBack al procesar el mensaje: {e}")

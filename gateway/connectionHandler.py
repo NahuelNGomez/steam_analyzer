@@ -5,6 +5,7 @@ import logging
 import os
 from queue import Queue
 import re
+from common.game import Game
 from common.middleware import Middleware
 from common.protocol import Protocol
 from common.constants import MAX_QUEUE_SIZE
@@ -109,10 +110,14 @@ class ConnectionHandler:
                         self.reviews_from_client_queue.put(parts[1].strip())
                         
                     if data_type == "games":
-                        # games_list = parts[1].strip().split("\n")
-                        # for row in games_list:
-                        #     self.games_from_client_queue.put(row)
-                        self.games_from_client_queue.put(parts[1].strip())
+                        games_list = parts[1].strip().split("\n")
+                        finalList = ''
+                        for row in games_list:
+                            game = Game.from_csv_row(row)
+                            game_str = json.dumps(game.getData())
+                            finalList += f"{game_str}\n"
+                        self.games_from_client_queue.put(finalList)
+                        print("Games por batches: ", finalList, flush=True)
 
                     self.protocol.send_message("OK") 
                     
