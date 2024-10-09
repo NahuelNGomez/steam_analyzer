@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import defaultdict
+from common.game import Game
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.constants import GAMES_GENRES_POS
@@ -26,10 +27,8 @@ class GenreFilter:
         :return: Diccionario del juego si cumple con el género, de lo contrario None.
         """
         try: 
-            genres_str = message[GAMES_GENRES_POS]
-            genres_str = genres_str[1:-1]
+            genres_str = message.genres
             print(f"Genres: {genres_str}", flush=True)
-            genres = [genre.strip() for genre in genres_str.split(',')]
             if self.genre in genres_str:
                 return message
             return None
@@ -55,10 +54,11 @@ class GenreFilter:
         try:
             batch = data.split('\n')
             for row in batch:
-                result = split_complex_string(row)
-                logging.debug(f"Mensaje decodificado: {result}")
+                json_row = json.loads(row)
+                game = Game.decode(json_row)
+                logging.debug(f"Mensaje decodificado: {game}")
 
-                filtered_game = self.filter_games_by_genre(result)
+                filtered_game = self.filter_games_by_genre(game)
                 if filtered_game:
                     self.middleware.send(','.join(filtered_game))
                     logging.info(f"Juego filtrado enviado: {filtered_game}")

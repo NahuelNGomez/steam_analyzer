@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime
+from common.game import Game
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.constants import GAMES_RELEASE_DATE_POS
@@ -13,10 +14,11 @@ class RangeFilter:
         self.end_year = end_year
         
     def _callBack(self, data):
-        message =split_complex_string(data)
-        logging.debug(f"Mensaje decodificado: {message}")
+        json_row = json.loads(data)
+        game = Game.decode(json_row)
+        logging.debug(f"Mensaje decodificado: {game}")
 
-        filtered_game = self.filter_by_range(message)
+        filtered_game = self.filter_by_range(game)
         if filtered_game:
             self.middleware.send(','.join(filtered_game))
             logging.info(f"Juego filtrado enviado:{filtered_game}")
@@ -24,16 +26,15 @@ class RangeFilter:
             logging.info("Juego no cumple con el filtro de rango.")
             print("Juego no cumple con el filtro de rango.", flush=True)
 
-    def filter_by_range(self, message):
+    def filter_by_range(self, game):
         """
         Filtra juegos publicados entre start_year y end_year.
         """
         try:
-            release_date_str = message[GAMES_RELEASE_DATE_POS]
-            release_date_str = release_date_str[1:-1]
+            release_date_str = game.release_date
             release_year = self.extract_year(release_date_str)
             if self.start_year <= release_year <= self.end_year:
-                return message
+                return game
             return None
         except Exception as e:
             logging.error(f"Error en filter_by_range: {e}")
