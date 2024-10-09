@@ -20,7 +20,8 @@ class RangeFilter:
 
         filtered_game = self.filter_by_range(game)
         if filtered_game:
-            self.middleware.send(','.join(filtered_game))
+            game_str = json.dumps(filtered_game.getData())
+            self.middleware.send(game_str)
             logging.info(f"Juego filtrado enviado:{filtered_game}")
         else:
             logging.info("Juego no cumple con el filtro de rango.")

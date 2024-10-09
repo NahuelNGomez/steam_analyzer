@@ -50,10 +50,9 @@ class Top10IndieCounter:
         try:
             game_id = game.id
             name = game.name
-            playtime = game.apf
-            playtime_hours = int(playtime) / 60
+            playtime = int(game.apf)
 
-            print(f"Processing game: {name} ({playtime_hours} hours)...", flush=True)
+            print(f"Processing game: {name} ({playtime} hours)...", flush=True)
 
             menor_puesto = min(
                 (k for k, v in self.game_playtimes.items() if v["tiempo"] is not None),
@@ -67,9 +66,9 @@ class Top10IndieCounter:
             )
 
             if puesto_vacio is not None:
-                self.game_playtimes[puesto_vacio] = {"nombre": name, "tiempo": playtime_hours}
-            elif menor_puesto is not None and playtime_hours > self.game_playtimes[menor_puesto]["tiempo"]:
-                self.game_playtimes[menor_puesto] = {"nombre": name, "tiempo": playtime_hours}
+                self.game_playtimes[puesto_vacio] = {"nombre": name, "tiempo": playtime}
+            elif menor_puesto is not None and playtime > self.game_playtimes[menor_puesto]["tiempo"]:
+                self.game_playtimes[menor_puesto] = {"nombre": name, "tiempo": playtime}
 
         except Exception as e:
             logging.error(f"Error in process_game: {e}")

@@ -56,11 +56,13 @@ class GenreFilter:
             for row in batch:
                 json_row = json.loads(row)
                 game = Game.decode(json_row)
+                
                 logging.debug(f"Mensaje decodificado: {game}")
 
                 filtered_game = self.filter_games_by_genre(game)
                 if filtered_game:
-                    self.middleware.send(','.join(filtered_game))
+                    game_str = json.dumps(filtered_game.getData())
+                    self.middleware.send(game_str)
                     logging.info(f"Juego filtrado enviado: {filtered_game}")
                 else:
                     logging.info("Juego no cumple con el filtro de género.")
