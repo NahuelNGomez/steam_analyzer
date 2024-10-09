@@ -1,5 +1,6 @@
 import json
 import logging
+from common.game import Game
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.constants import GAMES_APP_ID_POS, GAMES_NAME_POS, GAMES_AVERAGE_PLAYTIME_FOREVER_POS
@@ -42,14 +43,14 @@ class Top10IndieCounter:
         }
 
 
-    def process_game(self, message):
+    def process_game(self, game):
         """
         Processes each message (game) received and adds it to the top 10 list if applicable.
         """
         try:
-            game_id = message[GAMES_APP_ID_POS]
-            name = message[GAMES_NAME_POS][1:-1]
-            playtime = message[GAMES_AVERAGE_PLAYTIME_FOREVER_POS]
+            game_id = game.id
+            name = game.name
+            playtime = game.apf
             playtime_hours = int(playtime) / 60
 
             print(f"Processing game: {name} ({playtime_hours} hours)...", flush=True)
@@ -77,10 +78,11 @@ class Top10IndieCounter:
         """
         Callback function to process messages.
         """
-        message =split_complex_string(data)
-        logging.debug(f"Decoded message: {message}")
-        self.process_game(message)
-        logging.info(f"Processed message: {message}")
+        json_row = json.loads(data)
+        game = Game.decode(json_row)
+        logging.debug(f"Decoded message: {game}")
+        self.process_game(game)
+        logging.info(f"Processed message: {game}")
 
     def _eof_callback(self, data):
         """
