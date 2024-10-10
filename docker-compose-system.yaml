@@ -12,6 +12,7 @@ services:
       - action_filter
       - games_counter
       - positive_review_filter
+      - positive_review_filter_2
       - negative_review_filter
       - indie_game_review_filter
       - action_game_review_filter
