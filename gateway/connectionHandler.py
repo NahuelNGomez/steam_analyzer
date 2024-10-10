@@ -114,8 +114,6 @@ class ConnectionHandler:
                         break
 
                     if data_type == "reviews":
-                        print("Llega una review batch", flush=True)
-
                         self.reviews_to_process_queue.put(parts[1])
                         # review_list = parts[1].strip().split("\n")
                         # finalList = ''
@@ -125,17 +123,35 @@ class ConnectionHandler:
                         #     finalList += f"{review_str}\n"
                         #     self.id_reviews += 1
                         # self.reviews_from_client_queue.put(finalList)
+
                         
                     if data_type == "games":
                         print("Llega un game batch", flush=True)
                         games_list = parts[1].strip().split("\n")
                         finalList = ''
+                        print("Datos recibidos para 'games':", flush=True)
+                        print(games_list, flush=True)
                         for row in games_list:
-                            game = Game.from_csv_row(row)
-                            game_str = json.dumps(game.getData())
-                            finalList += f"{game_str}\n"
+                            try:
+                                # Convertir a un objeto Game y procesar los datos
+                                game = Game.from_csv_row(row)
+                                if game.checkNanElements():
+                                    continue
+                                game_str = json.dumps(game.getData())
+                                finalList += f"{game_str}\n"
+                                print(f"Fila procesada y agregada a la lista final: {game_str}", flush=True)
+                            except Exception as e:
+                                print(f"Error al procesar la fila: {row}, error: {e}", flush=True)
+                                continue  # Continuar con la siguiente fila si ocurre un error
+                        if finalList:
+                            print("Enviando los siguientes datos a la cola:", flush=True)
+                            print(finalList, flush=True)
+                        else:
+                            print("No hay datos para enviar después del filtrado.", flush=True)
+                        # Enviar los juegos procesados a la cola
                         self.games_from_client_queue.put(finalList)
-                    self.protocol.send_message("OK") 
+                        self.protocol.send_message("OK")
+
                     
                 except Exception as e:
                     logging.error(f"Error al procesar el CSV: {e}")

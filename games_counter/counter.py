@@ -10,16 +10,8 @@ from common.utils import split_complex_string
 from common.constants import GAMES_NAME_POS, GAMES_WINDOWS_POS, GAMES_MAC_POS, GAMES_LINUX_POS
 from datetime import datetime
 import json
-
 class GamesCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
-        """
-        Inicializa el contador de juegos.
-        
-        :param input_queues: Diccionario de colas de entrada.
-        :param output_exchanges: Lista de exchanges de salida.
-        :param instance_id: ID de instancia para identificar colas únicas.
-        """
         self.platform_counts = defaultdict(int)
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
         self.total_games = 0
@@ -31,17 +23,21 @@ class GamesCounter:
             mac = game.mac
             linux = game.linux
             self.total_games += 1
-            print(f"Total de juegos: {self.total_games}", flush=True)
             
-            print(f"Juego: {game_name}, Windows: {windows}, Mac: {mac}, Linux: {linux}", flush=True)
+            # Mostrar los valores decodificados para Windows, Mac y Linux
+            print(f"Juego: {game_name}, Valores Originales -> Windows: {windows}, Mac: {mac}, Linux: {linux}", flush=True)
+            logging.info(f"Juego: {game_name}, Valores Originales -> Windows: {windows}, Mac: {mac}, Linux: {linux}")
 
-            if isinstance(windows, str):
-                windows = windows.lower() == 'true'
-            if isinstance(mac, str):
-                mac = mac.lower() == 'true'
-            if isinstance(linux, str):
-                linux = linux.lower() == 'true'
+            # Convertir a booleano de forma robusta
+            windows = self._convert_to_boolean(windows)
+            mac = self._convert_to_boolean(mac)
+            linux = self._convert_to_boolean(linux)
 
+            # Mostrar los valores convertidos para Windows, Mac y Linux
+            print(f"Juego: {game_name}, Valores Convertidos -> Windows: {windows}, Mac: {mac}, Linux: {linux}", flush=True)
+            logging.info(f"Juego: {game_name}, Valores Convertidos -> Windows: {windows}, Mac: {mac}, Linux: {linux}")
+
+            # Verificar si los valores ya eran booleanos
             if windows:
                 self.platform_counts['Windows'] += 1
                 logging.info(f"Juego '{game_name}' soporta Windows.")
@@ -54,10 +50,17 @@ class GamesCounter:
 
             logging.info(f"Conteo Actual: {dict(self.platform_counts)}")
         except Exception as e:
-            logging.error(f"Error al filtrar el juego: {e}")
+            logging.error(f"Error al filtrar el juego '{game_name}': {e}")
     
-    def get_platform_counts(self):
-        return str(dict(self.platform_counts))
+    def _convert_to_boolean(self, value):
+        """
+        Convierte un valor a booleano, considerando posibles valores de entrada como str o bool.
+        """
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in ['true', '1']
+        return False
 
     def _callBack(self, data):
         """
@@ -70,7 +73,6 @@ class GamesCounter:
             for row in batch:
                 json_row = json.loads(row)
                 game = Game.decode(json_row)
-                print("result: ", game, flush=True)
                 logging.debug(f"Mensaje decodificado: {game}")
                 self.counterGames(game)
                 
@@ -90,8 +92,6 @@ class GamesCounter:
             "generated_at": datetime.utcnow().isoformat() + "Z"
         }
         self.middleware.send(json.dumps(response, indent=4))
-
-    
     
     def start(self):
         """
