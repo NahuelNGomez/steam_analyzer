@@ -13,6 +13,8 @@ services:
       - games_counter
       - positive_review_filter
       - positive_review_filter_2
+      - positive_review_filter3
+      - positive_review_filter4
       - negative_review_filter
       - indie_game_review_filter
       - action_game_review_filter
@@ -24,6 +26,7 @@ services:
     environment:
       - LOGGING_LEVEL=DEBUG
       - OUTPUT_QUEUE=reviews_queue
+      - AMOUNT_OF_REVIEW_INSTANCE=2
       - OUTPUT_EXCHANGES=["games"]
       - INPUT_QUEUES={"result_queue_gateway":"result_queue"}
 
@@ -143,7 +146,43 @@ services:
       - INPUT_QUEUES={"reviews_queue":""}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
-      - INSTANCE_ID=5
+      - INSTANCE_ID=0
+    volumes:
+      - ./common:/common
+
+  positive_review_filter4:
+    container_name: positive_review_filter4
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - INPUT_QUEUES={"reviews_queue":""}
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=1
+      - INSTANCE_ID=0
+    volumes:
+      - ./common:/common
+
+  positive_review_filter3:
+    container_name: positive_review_filter3
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - INPUT_QUEUES={"reviews_queue":""}
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=1
+      - INSTANCE_ID=0
     volumes:
       - ./common:/common
 
@@ -161,7 +200,7 @@ services:
       - INPUT_QUEUES={"reviews_queue":""}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
-      - INSTANCE_ID=5
+      - INSTANCE_ID=0
     volumes:
       - ./common:/common
 
@@ -177,7 +216,7 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["negative_reviews"]
       - INPUT_QUEUES={"reviews_queue":"reviews"}
-      - INSTANCE_ID=2
+      - INSTANCE_ID=1
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=-1
     volumes:

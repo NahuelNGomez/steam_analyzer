@@ -67,7 +67,7 @@ class Middleware:
                     print(
                         f"Creating output queues for instance {queue}", flush=True
                     )
-                    self.channel.queue_declare(queue=f"{queue}_5", durable=True)
+                    self.channel.queue_declare(queue=f"{queue}_0", durable=True)
 
         for exchange in self.output_exchanges:
             self.channel.exchange_declare(exchange=exchange, exchange_type="fanout")
@@ -118,7 +118,7 @@ class Middleware:
     def send(self, data: str, instance_id: int = None):
         if self.amount_output_instances > 1:
             for queue in self.output_queues:
-                self.send_to_queue(f"{queue}_5", data)
+                self.send_to_queue(f"{queue}_0", data)
         for exchange in self.output_exchanges:
             print(f"Sent to exchange {exchange}", flush=True)
             self.channel.basic_publish(exchange=exchange, routing_key="", body=data)

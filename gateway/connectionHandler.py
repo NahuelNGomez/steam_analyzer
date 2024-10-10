@@ -20,7 +20,7 @@ output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []
 instance_id = os.getenv("INSTANCE_ID", 0)
 
 class ConnectionHandler:
-    def __init__(self, client_socket, address):
+    def __init__(self, client_socket, address, amount_of_review_instances):
         self.id_reviews = 0
         self.client_socket = client_socket
         self.address = address
@@ -29,8 +29,9 @@ class ConnectionHandler:
         self.reviews_to_process_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
+        self.amount_of_review_instances = amount_of_review_instances
         self.completed_games = False
-        
+            
         self.gamesHeader = []
         # Thread para manejar la conexión - No lo haría para entrega 1.
         self.thread = threading.Thread(target=self.handle_connection)
@@ -50,7 +51,7 @@ class ConnectionHandler:
         )
         self.review_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.reviews_from_client_queue, "reviews",["reviews_queue"],2),
+            args=(self.reviews_from_client_queue, "reviews",["reviews_queue"],self.amount_of_review_instances),
             name="reviews_middleware_sender",
         )
         self.review_middleware_receiver_thread = threading.Thread(

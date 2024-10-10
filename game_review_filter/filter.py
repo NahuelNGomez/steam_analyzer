@@ -74,17 +74,17 @@ class GameReviewFilter:
         """
         Agrega una review a la lista y escribe en el archivo cuando llega a 1000.
         """
-        review_cleaned = review.replace('\x00', '')
-        self.reviews_to_add.append(review_cleaned)
-        
-        # Usar lock antes de escribir en el archivo
-        if len(self.reviews_to_add) >= 1000:
-            name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
-            with self.file_lock:
+        with self.file_lock:
+            review_cleaned = review.replace('\x00', '')
+            self.reviews_to_add.append(review_cleaned)
+            
+            # Usar lock antes de escribir en el archivo
+            if len(self.reviews_to_add) >= 1000:
+                name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
                 with open(name, "a") as file:
                     for review_cleaned in self.reviews_to_add:
                         file.write(review_cleaned + "\n")
-            self.reviews_to_add = []
+                self.reviews_to_add = []
 
     def handle_game_eof(self, message):
         """
