@@ -196,6 +196,8 @@ class ConnectionHandler:
             finalList = ''
             for row in review_list:
                 review = Review.from_csv_row(self.id_reviews, row)
+                if review.checkNanElements():
+                    continue
                 review_str = json.dumps(review.getData())
                 finalList += f"{review_str}\n"
                 self.id_reviews += 1

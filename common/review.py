@@ -26,3 +26,15 @@ class Review():
             cleaned_fields[0], cleaned_fields[1], cleaned_fields[2],
             cleaned_fields[3], cleaned_fields[4]
         )
+    
+    def checkNanElements(self):
+        if self.id == None or self.id == "nan" or self.id == "" or self.id == None: 
+            return True
+        if self.game_id == "nan" or self.game_id == "" or self.game_id == None: 
+            return True
+        if self.app_name == "nan" or self.app_name== "" or self.app_name== None:
+            return True
+        if self.review_text == "nan" or self.review_text == "" or self.review_text == None:
+            return True
+        if self.review_score== "nan" or self.review_score== "" or self.review_score== None:
+            return True
