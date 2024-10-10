@@ -69,7 +69,6 @@ class GameNamesAccumulator:
         :param data: Datos recibidos.
         """
         logging.info("Fin de la transmisión, enviando data")
-        #self.middleware.send(data)
     
     def _callBack(self, data):
         """

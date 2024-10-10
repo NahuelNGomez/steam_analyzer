@@ -92,6 +92,7 @@ class GamesCounter:
             "generated_at": datetime.utcnow().isoformat() + "Z"
         }
         self.middleware.send(json.dumps(response, indent=4))
+        #self.middleware.send("Respuesta del contador de juegos enviada.")
     
     def start(self):
         """

@@ -24,7 +24,7 @@ services:
       - LOGGING_LEVEL=DEBUG
       - OUTPUT_QUEUE=reviews_queue
       - OUTPUT_EXCHANGES=["games"]
-      - INPUT_QUEUES={"result_queue":"result_queue"}
+      - INPUT_QUEUES={"result_queue_gateway":"result_queue"}
 
   client:
     container_name: client
