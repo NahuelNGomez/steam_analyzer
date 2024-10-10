@@ -1,1 +1,7 @@
 /datasets/
+*.log
+*.pyc
+__pycache__/
+*/__pycache__/
+/data2/
+/client/data/

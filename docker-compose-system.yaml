@@ -1,0 +1,273 @@
+name: tp1
+services:
+  gateway:
+    container_name: gateway
+    build:
+      context: ./gateway
+    image: gateway:latest
+    networks:
+      - testing_net
+    depends_on:
+      - indie_filter
+      - action_filter
+      - games_counter
+      - positive_review_filter
+      - negative_review_filter
+      - indie_game_review_filter
+      - action_game_review_filter
+      - language_filter
+      - action_name_accumulator
+      - percentile_accumulator
+    volumes:
+      - ./common:/common
+    environment:
+      - LOGGING_LEVEL=DEBUG
+      - OUTPUT_EXCHANGES=["games"]
+      - INPUT_QUEUES={"result_queue":"result_queue"}
+
+  client:
+    container_name: client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: client:latest
+    networks:
+      - testing_net
+    depends_on:
+      - gateway
+    environment:
+      - LOGGING_LEVEL=INFO
+      - rabbitmq_RESULTS_QUEUE=result_queue
+    volumes:
+      - ./client/datasets:/datasets
+      - ./client/config.ini:/client/config.ini
+      - ./common:/common
+
+  games_counter:
+    container_name: games_counter
+    build:
+      context: ./games_counter
+      dockerfile: Dockerfile
+    image: games_counter:latest
+    networks:
+      - testing_net
+    environment:
+      - INPUT_QUEUES={"games_queue_counter":"games"}
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - ./common:/common
+    entrypoint: python3 main.py
+
+  indie_filter:
+    container_name: indie_filter
+    build:
+      context: ./genre_filter
+    image: genre_filter:latest
+    depends_on:
+      - top10_indie_counter
+      - indie_game_review_filter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["indie_games"]
+      - INPUT_QUEUES={"games_queue_filter":"games"}
+      - LOGGING_LEVEL=DEBUG
+      - GENRE=Indie
+    volumes:
+      - ./common:/common
+
+  action_filter:
+    container_name: action_filter
+    build:
+      context: ./genre_filter
+    image: genre_filter:latest
+    depends_on:
+      - top10_indie_counter
+      - action_game_review_filter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["action_games"]
+      - INPUT_QUEUES={"games_queue_filter":"games"}
+      - INSTANCE_ID=2
+      - LOGGING_LEVEL=DEBUG
+      - GENRE=Action
+    volumes:
+      - ./common:/common  
+
+  range_filter:
+    container_name: range_filter
+    build:
+      context: ./range_filter
+    image: range_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["indie_range_games"]
+      - INPUT_QUEUES={"indie_games_queue":"indie_games"}
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./common:/common
+
+  top10_indie_counter:
+    container_name: top10_indie_counter
+    build:
+      context: ./top10_indie_counter
+      dockerfile: Dockerfile
+    image: top10_indie_counter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - INPUT_QUEUES={"indie_range_games_queue":"indie_range_games"}
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./top10_indie_counter/data:/data
+      - ./common:/common
+    entrypoint: python3 main.py
+
+  positive_review_filter:
+    container_name: positive_review_filter
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - INPUT_QUEUES={"reviews_queue":"reviews"}
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=1
+    volumes:
+      - ./common:/common
+
+  negative_review_filter:
+    container_name: negative_review_filter
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["negative_reviews"]
+      - INPUT_QUEUES={"reviews_queue":"reviews"}
+      - INSTANCE_ID=2
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=-1
+    volumes:
+      - ./common:/common  
+
+  indie_game_review_filter:
+    container_name: indie_game_review_filter
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews_indie"]
+      - INPUT_GAMES_QUEUE=["indie_games_queue","indie_games"]
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue","positive_reviews"]
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
+
+  action_game_review_filter:
+    container_name: action_game_review_filter
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
+      - percentile_accumulator
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews_action"]
+      - INPUT_GAMES_QUEUE=["action_games_queue","action_games"]
+      - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data   
+
+  game_review_positive_counter:
+    container_name: game_review_positive_counter
+    build:
+      context: ./review_counter
+      dockerfile: Dockerfile
+    image: review_counter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - INPUT_QUEUES={"games_reviews_queue":"games_reviews_indie"}
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
+
+  language_filter:
+    container_name: language_filter
+    build:
+      context: ./language_filter
+      dockerfile: Dockerfile
+    image: language_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["english_reviews"]
+      - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
+      - LOGGING_LEVEL=DEBUG
+    volumes:
+      - ./common:/common
+
+  action_name_accumulator:
+    container_name: action_name_accumulator
+    build:
+      context: ./game_name_accumulator
+      dockerfile: Dockerfile
+    image: game_name_accumulator:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}
+      - LOGGING_LEVEL=DEBUG
+      - REVIEWS_LOW_LIMIT=30
+    volumes:
+      - ./common:/common
+  
+  percentile_accumulator:
+    container_name: percentile_accumulator
+    build:
+      context: ./percentile_accumulator
+      dockerfile: Dockerfile
+    image: percentile_accumulator:latest
+    networks:
+      - testing_net    
+    environment:
+      - OUTPUT_EXCHANGES=["result_queue"]
+      - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
+      - LOGGING_LEVEL=DEBUG
+      - PERCENTILE=90
+      - INSTANCE_ID=3
+    volumes:
+      - ./common:/common
+
+networks:
+  testing_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.125.0/24
