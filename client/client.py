@@ -30,6 +30,7 @@ class Client:
                         protocol.send_message(message)
                         logging.debug(f"Enviado ({data_type}): {data[:50]}...")
                         batch.clear()  # Vaciar el batch para el siguiente conjunto de líneas
+                        protocol.receive_message()
 
                 # Enviar cualquier resto de líneas que no formó un batch completo
                 if batch:
@@ -37,6 +38,7 @@ class Client:
                     message = f"{data_type}\n\n{data}"
                     protocol.send_message(message)
                     logging.debug(f"Enviado ({data_type}): {data[:50]}...")
+                    protocol.receive_message()
 
         except FileNotFoundError:
             logging.error(f"Archivo no encontrado: {file_path}")

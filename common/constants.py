@@ -2,7 +2,7 @@
 MAX_BATCH_SIZE = 100
 
 # Queues
-MAX_QUEUE_SIZE = 10000000
+MAX_QUEUE_SIZE = 10000000000
 
 # Constantes numéricas para games.csv
 GAMES_APP_ID_POS = 0
