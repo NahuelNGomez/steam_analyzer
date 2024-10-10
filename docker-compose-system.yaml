@@ -142,6 +142,7 @@ services:
       - INPUT_QUEUES={"reviews_queue":"reviews"}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
+      - INSTANCE_ID=5
     volumes:
       - ./common:/common
 
@@ -159,7 +160,7 @@ services:
       - INPUT_QUEUES={"reviews_queue":"reviews"}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
-      - INSTANCE_ID=1
+      - INSTANCE_ID=5
     volumes:
       - ./common:/common
 

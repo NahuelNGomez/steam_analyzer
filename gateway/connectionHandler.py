@@ -40,7 +40,7 @@ class ConnectionHandler:
     def handle_connection(self):
         self.games_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.games_from_client_queue, "games",[]),
+            args=(self.games_from_client_queue, "games",[],1),
             name="games_middleware_sender",
         )
         self.games_middleware_receiver_thread = threading.Thread(
@@ -50,7 +50,7 @@ class ConnectionHandler:
         )
         self.review_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.reviews_from_client_queue, "reviews",["reviews_queue"]),
+            args=(self.reviews_from_client_queue, "reviews",["reviews_queue"],2),
             name="reviews_middleware_sender",
         )
         self.review_middleware_receiver_thread = threading.Thread(
@@ -135,7 +135,6 @@ class ConnectionHandler:
                         games_list = parts[1].strip().split("\n")
                         finalList = ''
                         print("Datos recibidos para 'games':", flush=True)
-                        print(games_list, flush=True)
                         for row in games_list:
                             try:
                                 # Convertir a un objeto Game y procesar los datos
@@ -150,7 +149,6 @@ class ConnectionHandler:
                                 continue  # Continuar con la siguiente fila si ocurre un error
                         if finalList:
                             print("Enviando los siguientes datos a la cola:", flush=True)
-                            print(finalList, flush=True)
                         else:
                             print("No hay datos para enviar después del filtrado.", flush=True)
                         # Enviar los juegos procesados a la cola
@@ -180,10 +178,10 @@ class ConnectionHandler:
             self.client_socket.close()
             logging.info("Conexión cerrada.")
 
-    def __middleware_sender(self, packet_queue, output_exchange, output_queues):
+    def __middleware_sender(self, packet_queue, output_exchange, output_queues, instances):
         logging.info("Middleware sender started")
         print("Middleware sender started", flush=True)
-        middleware = Middleware(output_exchanges=[output_exchange], output_queues=[output_queues], amount_output_instances=2)
+        middleware = Middleware(output_exchanges=[output_exchange], output_queues=output_queues, amount_output_instances=instances)
         while True:
             try:
                 packet = packet_queue.get(block=True)
@@ -202,7 +200,7 @@ class ConnectionHandler:
         logging.info("Middleware receiver started")
         print("Middleware receiver started", flush=True)
         middleware = Middleware(
-            input_queues, [], [], instance_id, self.get_data, self.get_data, "fanout"
+            input_queues, [], [], instance_id, self.get_data, self.get_data
         )
         middleware.start()
         logging.info("Middleware receiver stopped")
