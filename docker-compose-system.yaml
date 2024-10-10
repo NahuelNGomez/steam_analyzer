@@ -22,6 +22,7 @@ services:
       - ./common:/common
     environment:
       - LOGGING_LEVEL=DEBUG
+      - OUTPUT_QUEUE=reviews_queue
       - OUTPUT_EXCHANGES=["games"]
       - INPUT_QUEUES={"result_queue":"result_queue"}
 
@@ -141,6 +142,24 @@ services:
       - INPUT_QUEUES={"reviews_queue":"reviews"}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
+    volumes:
+      - ./common:/common
+
+  positive_review_filter_2:
+    container_name: positive_review_filter_2
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - INPUT_QUEUES={"reviews_queue":"reviews"}
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=1
+      - INSTANCE_ID=1
     volumes:
       - ./common:/common
 

@@ -25,6 +25,7 @@ class GameReviewFilter:
         self.instance_id = instance_id
         self.completed_games = False
         self.completed_reviews = False
+        self.sended_fin = False
         self.requeued_reviews = []
 
         self.games: dict = {}
@@ -39,7 +40,7 @@ class GameReviewFilter:
             eofCallback=self.handle_game_eof,
             output_queues=self.output_queues,  ## ???
             output_exchanges=self.output_exchanges,  ## ???
-            intance_id=self.instance_id,
+            intance_id=self.instance_id
         )
         self.books_middleware.start()
 
@@ -50,7 +51,7 @@ class GameReviewFilter:
             eofCallback=self.handle_review_eof,
             output_queues=self.output_queues,  ## ???
             output_exchanges=self.output_exchanges,  ## ???
-            intance_id=self.instance_id,
+            intance_id=self.instance_id
         )
         self.reviews_middleware.start()
 
@@ -71,7 +72,8 @@ class GameReviewFilter:
         print("Fin de la transmisión de juegos", flush=True)
         self.completed_games = True
         
-        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
+        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews and not self.sended_fin:
+            self.sended_fin = True
             print("Fin de la transmisión de datos", flush=True)
             self.reviews_middleware.send("fin\n\n")
         
@@ -106,13 +108,15 @@ class GameReviewFilter:
             if (review_list.id in self.requeued_reviews):
                 self.requeued_reviews.remove(review_list.id)
                 
-        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
+        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews and not self.sended_fin:
+            self.sended_fin = True
             print("Fin de la transmisión de datos", flush=True)
             self.reviews_middleware.send("fin\n\n")
 
     def handle_review_eof(self, message):
         self.completed_reviews = True
-        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
+        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews and not self.sended_fin:
+            self.sended_fin = True
             print("Fin de la transmisión de reviews", flush=True)
             print("Fin de la transmisión de datos", flush=True)
             self.reviews_middleware.send("fin\n\n")

@@ -29,6 +29,7 @@ class ConnectionHandler:
         self.reviews_to_process_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
+        self.completed_games = False
         
         self.gamesHeader = []
         # Thread para manejar la conexión - No lo haría para entrega 1.
@@ -39,7 +40,7 @@ class ConnectionHandler:
     def handle_connection(self):
         self.games_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.games_from_client_queue, "games"),
+            args=(self.games_from_client_queue, "games",[]),
             name="games_middleware_sender",
         )
         self.games_middleware_receiver_thread = threading.Thread(
@@ -49,7 +50,7 @@ class ConnectionHandler:
         )
         self.review_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.reviews_from_client_queue, "reviews"),
+            args=(self.reviews_from_client_queue, "reviews",["reviews_queue"]),
             name="reviews_middleware_sender",
         )
         self.review_middleware_receiver_thread = threading.Thread(
@@ -109,12 +110,16 @@ class ConnectionHandler:
                     if data_type == "fin":
                         print("Fin de la transmisión de datos", flush=True)
                         self.protocol.send_message("OK - ACK de fin")
-                        self.games_from_client_queue.put("fin\n\n")
+                        #self.games_from_client_queue.put("fin\n\n")
                         self.reviews_from_client_queue.put("fin\n\n")
                         break
 
                     if data_type == "reviews":
                         self.reviews_to_process_queue.put(parts[1])
+                        self.protocol.send_message("OK")
+                        if not self.completed_games:
+                            self.games_from_client_queue.put("fin\n\n")
+                            self.completed_games = True
                         # review_list = parts[1].strip().split("\n")
                         # finalList = ''
                         # for row in review_list:
@@ -160,7 +165,6 @@ class ConnectionHandler:
             logging.info(f"Fin del recibo de datos {self.address}")
             while True:
                 try:
-                    print("Esperando resultadossss", flush=True)
                     data = self.result_to_client_queue.get(block=True)
                     if data is None:
                         continue
@@ -176,15 +180,14 @@ class ConnectionHandler:
             self.client_socket.close()
             logging.info("Conexión cerrada.")
 
-    def __middleware_sender(self, packet_queue, output_exchange):
+    def __middleware_sender(self, packet_queue, output_exchange, output_queues):
         logging.info("Middleware sender started")
         print("Middleware sender started", flush=True)
-        middleware = Middleware(output_exchanges=[output_exchange])
+        middleware = Middleware(output_exchanges=[output_exchange], output_queues=[output_queues], amount_output_instances=2)
         while True:
             try:
                 packet = packet_queue.get(block=True)
                 if packet is None:
-                    # middleware.shutdown()
                     break
                 logging.debug(f"Enviando mensaje {packet}...")
                 middleware.send(data=packet)
@@ -199,7 +202,7 @@ class ConnectionHandler:
         logging.info("Middleware receiver started")
         print("Middleware receiver started", flush=True)
         middleware = Middleware(
-            input_queues, [], [], instance_id, self.get_data, self.get_data
+            input_queues, [], [], instance_id, self.get_data, self.get_data, "fanout"
         )
         middleware.start()
         logging.info("Middleware receiver stopped")

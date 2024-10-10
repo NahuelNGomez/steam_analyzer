@@ -17,7 +17,9 @@ class Middleware:
         intance_id: int = None,
         callback: Callable = None,
         eofCallback: Callable = None,
+        amount_output_instances: int = 1,
     ):
+        self.amount_output_instances = amount_output_instances
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq',port=5672))
         self.channel = self.connection.channel()
         self.input_queues: dict[str, str] = {}
@@ -28,6 +30,7 @@ class Middleware:
         self.eofCallback = eofCallback
         self._init_input_queues(input_queues)
         self._init_output_queues()
+       
 
     def _init_input_queues(self, input_queues):
         for queue, exchange in input_queues.items():
@@ -53,8 +56,15 @@ class Middleware:
                 self.input_queues[queue_name] = exchange
 
     def _init_output_queues(self):
+        print("Creating output queues", flush=True)
         for queue in self.output_queues:
             self.channel.queue_declare(queue=queue, durable=True)
+            
+        if (self.amount_output_instances > 1):
+            for i in range(self.amount_output_instances):
+                print(f"Creating output queues for instance {queue}_{i}", flush=True)
+                for queue in self.output_queues:
+                    self.channel.queue_declare(queue=f'{queue}_{i}')
 
         for exchange in self.output_exchanges:
             self.channel.exchange_declare(exchange=exchange, exchange_type="fanout")
