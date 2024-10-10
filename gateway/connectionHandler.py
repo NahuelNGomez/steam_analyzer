@@ -20,7 +20,7 @@ output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []
 instance_id = os.getenv("INSTANCE_ID", 0)
 
 class ConnectionHandler:
-    def __init__(self, client_socket, address, amount_of_review_instances):
+    def __init__(self, client_socket, address, amount_of_review_instances, amount_of_games_instances):
         self.id_reviews = 0
         self.client_socket = client_socket
         self.address = address
@@ -30,6 +30,7 @@ class ConnectionHandler:
         self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.amount_of_review_instances = amount_of_review_instances
+        self.amount_of_games_instances = amount_of_games_instances
         self.completed_games = False
             
         self.gamesHeader = []
@@ -41,7 +42,7 @@ class ConnectionHandler:
     def handle_connection(self):
         self.games_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.games_from_client_queue, "games",[],1),
+            args=(self.games_from_client_queue, "games",["games_queue"],self.amount_of_games_instances),
             name="games_middleware_sender",
         )
         self.games_middleware_receiver_thread = threading.Thread(

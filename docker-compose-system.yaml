@@ -9,6 +9,7 @@ services:
       - testing_net
     depends_on:
       - indie_filter
+      - indie_filter2
       - action_filter
       - games_counter
       - positive_review_filter
@@ -26,7 +27,8 @@ services:
     environment:
       - LOGGING_LEVEL=DEBUG
       - OUTPUT_QUEUE=reviews_queue
-      - AMOUNT_OF_REVIEW_INSTANCE=2
+      - AMOUNT_OF_REVIEW_INSTANCE=4 # POSITIVES
+      - AMOUNT_OF_GAMES_INSTANCE=2 # INDIE
       - OUTPUT_EXCHANGES=["games"]
       - INPUT_QUEUES={"result_queue_gateway":"result_queue"}
 
@@ -76,7 +78,27 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["indie_games"]
-      - INPUT_QUEUES={"games_queue_filter":"games"}
+      - INPUT_QUEUES={"games_queue":""}
+      - INSTANCE_ID=0
+      - LOGGING_LEVEL=DEBUG
+      - GENRE=Indie
+    volumes:
+      - ./common:/common
+
+  indie_filter2:
+    container_name: indie_filter2
+    build:
+      context: ./genre_filter
+    image: genre_filter:latest
+    depends_on:
+      - top10_indie_counter
+      - indie_game_review_filter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["indie_games"]
+      - INPUT_QUEUES={"games_queue":""}
+      - INSTANCE_ID=0
       - LOGGING_LEVEL=DEBUG
       - GENRE=Indie
     volumes:
@@ -95,7 +117,7 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["action_games"]
       - INPUT_QUEUES={"games_queue_filter":"games"}
-      - INSTANCE_ID=2
+      - INSTANCE_ID=1
       - LOGGING_LEVEL=DEBUG
       - GENRE=Action
     volumes:
