@@ -63,7 +63,7 @@ class PercentileAccumulator:
                 self.middleware.send(json.dumps({
                     'game_id': game_id,
                     'name': game_data['name'],
-                    'negative_count': game_data['count'],
+                    'negative_count_percentile': game_data['count'],
                 }))
                 logging.info(f"Juego en el percentil 90 enviado: {game_data['name']}")
             self.games.clear()
@@ -78,7 +78,7 @@ class PercentileAccumulator:
         """
         logging.info("Fin de la transmisión, calculando percentil 90 de reseñas negativas")
         self.calculate_90th_percentile()
-        #self.middleware.send(data)
+        #self.middleware.send(response)
     
     def _callBack(self, data):
         """

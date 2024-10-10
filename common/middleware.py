@@ -119,12 +119,10 @@ class Middleware:
         if self.amount_output_instances > 1:
             for queue in self.output_queues:
                 self.send_to_queue(f"{queue}_5", data)
-
-        if self.amount_output_instances <= 1:
-            for exchange in self.output_exchanges:
-                print(f"Sent to exchange {exchange}", flush=True)
-                self.channel.basic_publish(exchange=exchange, routing_key="", body=data)
-                logging.debug("Sent to exchange %s: %s", exchange, data)
+        for exchange in self.output_exchanges:
+            print(f"Sent to exchange {exchange}", flush=True)
+            self.channel.basic_publish(exchange=exchange, routing_key="", body=data)
+            logging.debug("Sent to exchange %s: %s", exchange, data)
 
     def send_to_queue(self, queue: str, data: str):
         self.channel.basic_publish(exchange="", routing_key=queue, body=data)

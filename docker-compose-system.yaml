@@ -139,7 +139,7 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":"reviews"}
+      - INPUT_QUEUES={"reviews_queue":""}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
       - INSTANCE_ID=5
@@ -157,7 +157,7 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":"reviews"}
+      - INPUT_QUEUES={"reviews_queue":""}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
       - INSTANCE_ID=5
