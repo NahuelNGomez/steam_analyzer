@@ -5,6 +5,7 @@ import threading
 from common.game import Game
 from common.game_review import GameReview
 from common.middleware import Middleware
+from common.review import Review
 from common.utils import split_complex_string
 
 
@@ -75,36 +76,35 @@ class GameReviewFilter:
             self.reviews_middleware.send("fin\n\n")
         
     def _add_review(self, review):
-        review_list = split_complex_string(review)
-        if review_list[0] in self.games:
-            game = self.games[review_list[0]]
-            value = ','.join(i for i in self.games if self.games[i] == game)
+        review_list = Review.decode(json.loads(review))
+        if review_list.game_id in self.games:
+            game = self.games[review_list.game_id]
             if ('action' in self.games_input_queue[1]):
-                game_review = GameReview(value, game, review_list[2])
+                game_review = GameReview(review_list.game_id, game, review_list.review_text)
                 game_str = json.dumps(game_review.getData())
                 self.reviews_middleware.send(game_str)
             else:
-                game_review = GameReview(value, game, None)
+                game_review = GameReview(review_list.game_id, game, None)
                 game_str = json.dumps(game_review.getData())
                 self.reviews_middleware.send(game_str)
         
             #self.reviews_middleware.send(value + "," + game)
-            if len(review_list) == 6 and review_list[5] in self.requeued_reviews:
-                self.requeued_reviews.remove(review_list[5])
+            if review_list.id in self.requeued_reviews:
+                self.requeued_reviews.remove(review_list.id)
             
         else:
             if not self.completed_games:
-                if len(review_list) == 6 and (review_list[5] not in self.requeued_reviews):
-                    self.requeued_reviews.append(review_list[5])
-                print(f"Juego no encontrado: {review_list[0]}Reencolando ", flush=True)
+                if review_list.id not in self.requeued_reviews:
+                    self.requeued_reviews.append(review_list.id)
+                print(f"Juego no encontrado: {review_list.id}Reencolando ", flush=True)
                 if ('action' in self.games_input_queue[1] ):
                     return 3
                 else:
                     return 2
             
             print(f"Juego no encontrado:- Se descarta", flush=True)
-            if len(review_list) == 6 and (review_list[5] in self.requeued_reviews):
-                self.requeued_reviews.remove(review_list[5])
+            if (review_list.id in self.requeued_reviews):
+                self.requeued_reviews.remove(review_list.id)
                 
         if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
             print("Fin de la transmisión de datos", flush=True)

@@ -9,6 +9,7 @@ from common.game import Game
 from common.middleware import Middleware
 from common.protocol import Protocol
 from common.constants import MAX_QUEUE_SIZE
+from common.review import Review
 from common.utils import split_complex_string
 import csv
 import io
@@ -20,10 +21,12 @@ instance_id = os.getenv("INSTANCE_ID", 0)
 
 class ConnectionHandler:
     def __init__(self, client_socket, address):
+        self.id_reviews = 0
         self.client_socket = client_socket
         self.address = address
         self.protocol = Protocol(self.client_socket)
         self.reviews_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
+        self.reviews_to_process_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         
@@ -54,11 +57,17 @@ class ConnectionHandler:
             args=(input_queues,),
             name="reviews_middleware_receiver",
         )
+
+        self.review_process = threading.Thread(
+            target=self.process_review,
+            name="process_review",
+        )
         
         self.games_middleware_sender_thread.start()
         self.games_middleware_receiver_thread.start()
         self.review_middleware_sender_thread.start()
         self.review_middleware_receiver_thread.start()
+        self.review_process.start()
 
         logging.info(f"Conexión establecida desde {self.address}")
         first = True
@@ -98,15 +107,26 @@ class ConnectionHandler:
 
                 try:
                     if data_type == "fin":
+                        print("Fin de la transmisión de datos", flush=True)
                         self.protocol.send_message("OK - ACK de fin")
                         self.games_from_client_queue.put("fin\n\n")
                         self.reviews_from_client_queue.put("fin\n\n")
                         break
 
                     if data_type == "reviews":
-                        self.reviews_from_client_queue.put(parts[1].strip())
+                        self.reviews_to_process_queue.put(parts[1])
+                        # review_list = parts[1].strip().split("\n")
+                        # finalList = ''
+                        # for row in review_list:
+                        #     review = Review.from_csv_row(self.id_reviews, row)
+                        #     review_str = json.dumps(review.getData())
+                        #     finalList += f"{review_str}\n"
+                        #     self.id_reviews += 1
+                        # self.reviews_from_client_queue.put(finalList)
+
                         
                     if data_type == "games":
+                        print("Llega un game batch", flush=True)
                         games_list = parts[1].strip().split("\n")
                         finalList = ''
                         print("Datos recibidos para 'games':", flush=True)
@@ -140,9 +160,10 @@ class ConnectionHandler:
             logging.info(f"Fin del recibo de datos {self.address}")
             while True:
                 try:
+                    print("Esperando resultadossss", flush=True)
                     data = self.result_to_client_queue.get(block=True)
                     if data is None:
-                        break
+                        continue
                     self.protocol.send_message(data)
                 except OSError:
                     logging.error("Middleware closed")
@@ -182,6 +203,22 @@ class ConnectionHandler:
         )
         middleware.start()
         logging.info("Middleware receiver stopped")
+
+
+    def process_review(self):
+        while True:
+            packet = self.reviews_to_process_queue.get(block=True)
+            review_list = packet.strip().split("\n")
+            finalList = ''
+            for row in review_list:
+                review = Review.from_csv_row(self.id_reviews, row)
+                if review.checkNanElements():
+                    continue
+                review_str = json.dumps(review.getData())
+                finalList += f"{review_str}\n"
+                self.id_reviews += 1
+            self.reviews_from_client_queue.put(finalList)
+            print("Review batch processed", flush=True)
 
     def get_data(self, data):
         logging.info("Got data!")
