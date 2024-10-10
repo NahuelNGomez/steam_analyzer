@@ -9,6 +9,7 @@ from common.game import Game
 from common.middleware import Middleware
 from common.protocol import Protocol
 from common.constants import MAX_QUEUE_SIZE
+from common.review import Review
 from common.utils import split_complex_string
 import csv
 import io
@@ -20,6 +21,7 @@ instance_id = os.getenv("INSTANCE_ID", 0)
 
 class ConnectionHandler:
     def __init__(self, client_socket, address):
+        self.id_reviews = 0
         self.client_socket = client_socket
         self.address = address
         self.protocol = Protocol(self.client_socket)
@@ -98,18 +100,25 @@ class ConnectionHandler:
 
                 try:
                     if data_type == "fin":
+                        print("Fin de la transmisión de datos", flush=True)
                         self.protocol.send_message("OK - ACK de fin")
                         self.games_from_client_queue.put("fin\n\n")
                         self.reviews_from_client_queue.put("fin\n\n")
                         break
 
                     if data_type == "reviews":
-                        # review_list = parts[1].strip().split("\n")
-                        # for row in review_list:
-                        #     self.reviews_from_client_queue.put(row)
-                        self.reviews_from_client_queue.put(parts[1].strip())
+                        print("Llega una review batch", flush=True)
+                        review_list = parts[1].strip().split("\n")
+                        finalList = ''
+                        for row in review_list:
+                            review = Review.from_csv_row(self.id_reviews, row)
+                            review_str = json.dumps(review.getData())
+                            finalList += f"{review_str}\n"
+                            self.id_reviews += 1
+                        self.reviews_from_client_queue.put(finalList)
                         
                     if data_type == "games":
+                        print("Llega un game batch", flush=True)
                         games_list = parts[1].strip().split("\n")
                         finalList = ''
                         for row in games_list:

@@ -24,7 +24,8 @@ class Game():
     def decode(fields: list):
         print("FIELDS PARA DECODE:", fields)
         
-        cleaned_fields = [field.strip('"') for field in fields]
+        # Ensure all fields are strings before applying strip
+        cleaned_fields = [str(field).strip('"') if isinstance(field, str) else field for field in fields]
         
         return Game(
             cleaned_fields[0], cleaned_fields[1], cleaned_fields[2],

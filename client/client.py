@@ -25,13 +25,12 @@ class Client:
                         continue
                     batch.append(line)
                     if len(batch) == MAX_BATCH_SIZE:  # Si alcanzamos el tamaño del batch
-                        # Unir las líneas en un solo string con doble salto de línea entre datos
                         data = ''.join(batch)
                         message = f"{data_type}\n\n{data}"
                         protocol.send_message(message)
                         logging.debug(f"Enviado ({data_type}): {data[:50]}...")
                         batch.clear()  # Vaciar el batch para el siguiente conjunto de líneas
-                
+
                 # Enviar cualquier resto de líneas que no formó un batch completo
                 if batch:
                     data = ''.join(batch)
@@ -48,6 +47,7 @@ class Client:
         try:
             message = "fin\n\n"
             protocol.send_message(message)
+            print("Fin de la transmisión de datos", flush=True)
             logging.debug(f"Enviado ({message})")
         except FileNotFoundError:
             logging.error(f"Error al enviar fin")
