@@ -58,7 +58,7 @@ class PercentileAccumulator:
             cutoff_index = int((total_games +1) * (self.percentile / 100))
             print("array completo sorted: ", sorted_games, flush=True)
             # Seleccionar los juegos dentro del percentil 90
-            top_percentile_games = sorted_games[cutoff_index-1:]
+            top_percentile_games = sorted_games[cutoff_index:] # 90% de los juegos?
             for game_id, game_data in top_percentile_games:
                 self.middleware.send(json.dumps({
                     'game_id': game_id,
