@@ -9,9 +9,13 @@ services:
       - testing_net
     depends_on:
       - indie_filter
+      - indie_filter2
       - action_filter
       - games_counter
       - positive_review_filter
+      - positive_review_filter_2
+      - positive_review_filter3
+      - positive_review_filter4
       - negative_review_filter
       - indie_game_review_filter
       - action_game_review_filter
@@ -22,8 +26,11 @@ services:
       - ./common:/common
     environment:
       - LOGGING_LEVEL=DEBUG
+      - OUTPUT_QUEUE=reviews_queue
+      - AMOUNT_OF_REVIEW_INSTANCE=4 # POSITIVES
+      - AMOUNT_OF_GAMES_INSTANCE=2 # INDIE
       - OUTPUT_EXCHANGES=["games"]
-      - INPUT_QUEUES={"result_queue":"result_queue"}
+      - INPUT_QUEUES={"result_queue_gateway":"result_queue"}
 
   client:
     container_name: client
@@ -71,7 +78,27 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["indie_games"]
-      - INPUT_QUEUES={"games_queue_filter":"games"}
+      - INPUT_QUEUES={"games_queue":""}
+      - INSTANCE_ID=0
+      - LOGGING_LEVEL=DEBUG
+      - GENRE=Indie
+    volumes:
+      - ./common:/common
+
+  indie_filter2:
+    container_name: indie_filter2
+    build:
+      context: ./genre_filter
+    image: genre_filter:latest
+    depends_on:
+      - top10_indie_counter
+      - indie_game_review_filter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["indie_games"]
+      - INPUT_QUEUES={"games_queue":""}
+      - INSTANCE_ID=0
       - LOGGING_LEVEL=DEBUG
       - GENRE=Indie
     volumes:
@@ -90,7 +117,7 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["action_games"]
       - INPUT_QUEUES={"games_queue_filter":"games"}
-      - INSTANCE_ID=2
+      - INSTANCE_ID=1
       - LOGGING_LEVEL=DEBUG
       - GENRE=Action
     volumes:
@@ -138,9 +165,64 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":"reviews"}
+      - INPUT_QUEUES={"reviews_queue":""}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
+      - INSTANCE_ID=0
+    volumes:
+      - ./common:/common
+
+  positive_review_filter4:
+    container_name: positive_review_filter4
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - INPUT_QUEUES={"reviews_queue":""}
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=1
+      - INSTANCE_ID=0
+    volumes:
+      - ./common:/common
+
+  positive_review_filter3:
+    container_name: positive_review_filter3
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - INPUT_QUEUES={"reviews_queue":""}
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=1
+      - INSTANCE_ID=0
+    volumes:
+      - ./common:/common
+
+  positive_review_filter_2:
+    container_name: positive_review_filter_2
+    build:
+      context: ./positivity_filter
+      dockerfile: Dockerfile
+    image:
+      positivity_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - INPUT_QUEUES={"reviews_queue":""}
+      - LOGGING_LEVEL=DEBUG
+      - POSITIVITY=1
+      - INSTANCE_ID=0
     volumes:
       - ./common:/common
 
@@ -156,7 +238,7 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["negative_reviews"]
       - INPUT_QUEUES={"reviews_queue":"reviews"}
-      - INSTANCE_ID=2
+      - INSTANCE_ID=1
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=-1
     volumes:

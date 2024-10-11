@@ -58,12 +58,12 @@ class PercentileAccumulator:
             cutoff_index = int((total_games +1) * (self.percentile / 100))
             print("array completo sorted: ", sorted_games, flush=True)
             # Seleccionar los juegos dentro del percentil 90
-            top_percentile_games = sorted_games[cutoff_index-1:]
+            top_percentile_games = sorted_games[cutoff_index:] # 90% de los juegos?
             for game_id, game_data in top_percentile_games:
                 self.middleware.send(json.dumps({
                     'game_id': game_id,
                     'name': game_data['name'],
-                    'negative_count': game_data['count'],
+                    'negative_count_percentile': game_data['count'],
                 }))
                 logging.info(f"Juego en el percentil 90 enviado: {game_data['name']}")
             self.games.clear()
@@ -78,7 +78,7 @@ class PercentileAccumulator:
         """
         logging.info("Fin de la transmisión, calculando percentil 90 de reseñas negativas")
         self.calculate_90th_percentile()
-        #self.middleware.send(data)
+        #self.middleware.send(response)
     
     def _callBack(self, data):
         """

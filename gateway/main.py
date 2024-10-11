@@ -1,4 +1,5 @@
 # gateway/main.py
+import os
 from queue import Queue
 import socket
 import logging
@@ -18,12 +19,14 @@ def start_server(config):
     server.listen(int(config['gateway_LISTEN_BACKLOG']))
     
     logging.info(f"Gateway escuchando en {config['gateway_IP']}:{config['gateway_PORT']}")
+    amount_of_review_instances = int(os.getenv("AMOUNT_OF_REVIEW_INSTANCE", 1))
+    amount_of_games_instances = int(os.getenv("AMOUNT_OF_GAMES_INSTANCE", 1))
     
     while True:
         print("Esperando conexión...", flush=True)
         client_sock, address = server.accept()
         logging.info(f"Conexión aceptada de {address[0]}:{address[1]}")
-        handler = ConnectionHandler(client_sock, address)
+        handler = ConnectionHandler(client_sock, address,amount_of_review_instances, amount_of_games_instances)
 
 def main():
     config = load_config()

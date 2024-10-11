@@ -25,9 +25,14 @@ class GameReviewFilter:
         self.instance_id = instance_id
         self.completed_games = False
         self.completed_reviews = False
-        self.requeued_reviews = []
+        self.sended_fin = False
+        self.reviews_to_add = []
+
+        #self.requeued_reviews = []
 
         self.games: dict = {}
+        
+        self.file_lock = threading.Lock()
 
         self.games_receiver = threading.Thread(target=self._games_receiver)
         self.reviews_receiver = threading.Thread(target=self._reviews_receiver)
@@ -39,7 +44,7 @@ class GameReviewFilter:
             eofCallback=self.handle_game_eof,
             output_queues=self.output_queues,  ## ???
             output_exchanges=self.output_exchanges,  ## ???
-            intance_id=self.instance_id,
+            intance_id=self.instance_id
         )
         self.books_middleware.start()
 
@@ -50,10 +55,11 @@ class GameReviewFilter:
             eofCallback=self.handle_review_eof,
             output_queues=self.output_queues,  ## ???
             output_exchanges=self.output_exchanges,  ## ???
-            intance_id=self.instance_id,
+            intance_id=self.instance_id
         )
         self.reviews_middleware.start()
-
+        
+        
     def _add_game(self, game):
         """
         Agrega un juego al diccionario de juegos.
@@ -64,6 +70,22 @@ class GameReviewFilter:
         except Exception as e:
             logging.error(f"Error al agregar juego: {e}")
 
+    def _add_review(self, review):
+        """
+        Agrega una review a la lista y escribe en el archivo cuando llega a 1000.
+        """
+        with self.file_lock:
+            review_cleaned = review.replace('\x00', '')
+            self.reviews_to_add.append(review_cleaned)
+            
+            # Usar lock antes de escribir en el archivo
+            if len(self.reviews_to_add) >= 1000:
+                name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
+                with open(name, "a") as file:
+                    for review_cleaned in self.reviews_to_add:
+                        file.write(review_cleaned + "\n")
+                self.reviews_to_add = []
+
     def handle_game_eof(self, message):
         """
         Maneja el mensaje de fin de juegos.
@@ -71,51 +93,56 @@ class GameReviewFilter:
         print("Fin de la transmisión de juegos", flush=True)
         self.completed_games = True
         
-        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
+        if self.completed_games and self.completed_reviews and not self.sended_fin:
+            self.sended_fin = True
             print("Fin de la transmisión de datos", flush=True)
-            self.reviews_middleware.send("fin\n\n")
-        
-    def _add_review(self, review):
-        review_list = Review.decode(json.loads(review))
-        if review_list.game_id in self.games:
-            game = self.games[review_list.game_id]
-            if ('action' in self.games_input_queue[1]):
-                game_review = GameReview(review_list.game_id, game, review_list.review_text)
-                game_str = json.dumps(game_review.getData())
-                self.reviews_middleware.send(game_str)
-            else:
-                game_review = GameReview(review_list.game_id, game, None)
-                game_str = json.dumps(game_review.getData())
-                self.reviews_middleware.send(game_str)
-        
-            #self.reviews_middleware.send(value + "," + game)
-            if review_list.id in self.requeued_reviews:
-                self.requeued_reviews.remove(review_list.id)
-            
-        else:
-            if not self.completed_games:
-                if review_list.id not in self.requeued_reviews:
-                    self.requeued_reviews.append(review_list.id)
-                print(f"Juego no encontrado: {review_list.id}Reencolando ", flush=True)
-                if ('action' in self.games_input_queue[1] ):
-                    return 3
-                else:
-                    return 2
-            
-            print(f"Juego no encontrado:- Se descarta", flush=True)
-            if (review_list.id in self.requeued_reviews):
-                self.requeued_reviews.remove(review_list.id)
-                
-        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
-            print("Fin de la transmisión de datos", flush=True)
+            self.process_reviews()
             self.reviews_middleware.send("fin\n\n")
 
     def handle_review_eof(self, message):
+        """
+        Maneja el mensaje de fin de reviews y asegura que todas las reviews se escriban en el archivo.
+        """
         self.completed_reviews = True
-        if (self.requeued_reviews == []) and self.completed_games and self.completed_reviews:
+        
+        # Usar lock antes de escribir en el archivo
+        name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
+        with self.file_lock:
+            with open(name, "a") as file:
+                for review in self.reviews_to_add:
+                    file.write(review + "\n")
+            self.reviews_to_add = []
+        
+        if self.completed_games and self.completed_reviews and not self.sended_fin:
+            self.sended_fin = True
             print("Fin de la transmisión de reviews", flush=True)
             print("Fin de la transmisión de datos", flush=True)
+            self.process_reviews()
             self.reviews_middleware.send("fin\n\n")
+        
+    def process_reviews(self):
+        """
+        Procesa las reviews y realiza el join con los juegos.
+        """
+        # Usar lock antes de leer y procesar el archivo
+        name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
+        with self.file_lock:
+            with open(name, "r") as file:
+                for line in file:
+                    review = Review.decode(json.loads(line))
+                    if review.game_id in self.games:
+                        game = self.games[review.game_id]
+                        if 'action' in self.games_input_queue[1]:
+                            game_review = GameReview(review.game_id, game, review.review_text)
+                            game_str = json.dumps(game_review.getData())
+                            self.reviews_middleware.send(game_str)
+                        else:
+                            game_review = GameReview(review.game_id, game, None)
+                            game_str = json.dumps(game_review.getData())
+                            self.reviews_middleware.send(game_str)
+                    else:
+                        print(f"Juego no encontrado: {review.game_id}. Descartado", flush=True)
+        print("Fin de la ejecución de reviews", flush=True)
 
     def start(self):
         """

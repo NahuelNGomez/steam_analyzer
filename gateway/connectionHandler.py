@@ -20,7 +20,7 @@ output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES")) or []
 instance_id = os.getenv("INSTANCE_ID", 0)
 
 class ConnectionHandler:
-    def __init__(self, client_socket, address):
+    def __init__(self, client_socket, address, amount_of_review_instances, amount_of_games_instances):
         self.id_reviews = 0
         self.client_socket = client_socket
         self.address = address
@@ -29,7 +29,10 @@ class ConnectionHandler:
         self.reviews_to_process_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
-        
+        self.amount_of_review_instances = amount_of_review_instances
+        self.amount_of_games_instances = amount_of_games_instances
+        self.completed_games = False
+            
         self.gamesHeader = []
         # Thread para manejar la conexión - No lo haría para entrega 1.
         self.thread = threading.Thread(target=self.handle_connection)
@@ -39,7 +42,7 @@ class ConnectionHandler:
     def handle_connection(self):
         self.games_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.games_from_client_queue, "games"),
+            args=(self.games_from_client_queue, "games",["games_queue"],self.amount_of_games_instances),
             name="games_middleware_sender",
         )
         self.games_middleware_receiver_thread = threading.Thread(
@@ -49,7 +52,7 @@ class ConnectionHandler:
         )
         self.review_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.reviews_from_client_queue, "reviews"),
+            args=(self.reviews_from_client_queue, "reviews",["reviews_queue"],self.amount_of_review_instances),
             name="reviews_middleware_sender",
         )
         self.review_middleware_receiver_thread = threading.Thread(
@@ -109,12 +112,16 @@ class ConnectionHandler:
                     if data_type == "fin":
                         print("Fin de la transmisión de datos", flush=True)
                         self.protocol.send_message("OK - ACK de fin")
-                        self.games_from_client_queue.put("fin\n\n")
+                        #self.games_from_client_queue.put("fin\n\n")
                         self.reviews_from_client_queue.put("fin\n\n")
                         break
 
                     if data_type == "reviews":
                         self.reviews_to_process_queue.put(parts[1])
+                        self.protocol.send_message("OK")
+                        if not self.completed_games:
+                            self.games_from_client_queue.put("fin\n\n")
+                            self.completed_games = True
                         # review_list = parts[1].strip().split("\n")
                         # finalList = ''
                         # for row in review_list:
@@ -130,7 +137,6 @@ class ConnectionHandler:
                         games_list = parts[1].strip().split("\n")
                         finalList = ''
                         print("Datos recibidos para 'games':", flush=True)
-                        print(games_list, flush=True)
                         for row in games_list:
                             try:
                                 # Convertir a un objeto Game y procesar los datos
@@ -145,7 +151,6 @@ class ConnectionHandler:
                                 continue  # Continuar con la siguiente fila si ocurre un error
                         if finalList:
                             print("Enviando los siguientes datos a la cola:", flush=True)
-                            print(finalList, flush=True)
                         else:
                             print("No hay datos para enviar después del filtrado.", flush=True)
                         # Enviar los juegos procesados a la cola
@@ -160,11 +165,13 @@ class ConnectionHandler:
             logging.info(f"Fin del recibo de datos {self.address}")
             while True:
                 try:
-                    print("Esperando resultadossss", flush=True)
                     data = self.result_to_client_queue.get(block=True)
                     if data is None:
                         continue
-                    self.protocol.send_message(data)
+                    if type(data) == str:
+                        self.protocol.send_message(data)
+                    else:
+                        self.protocol.send_message(data.decode())
                 except OSError:
                     logging.error("Middleware closed")
                     break
@@ -176,15 +183,14 @@ class ConnectionHandler:
             self.client_socket.close()
             logging.info("Conexión cerrada.")
 
-    def __middleware_sender(self, packet_queue, output_exchange):
+    def __middleware_sender(self, packet_queue, output_exchange, output_queues, instances):
         logging.info("Middleware sender started")
         print("Middleware sender started", flush=True)
-        middleware = Middleware(output_exchanges=[output_exchange])
+        middleware = Middleware(output_exchanges=[output_exchange], output_queues=output_queues, amount_output_instances=instances)
         while True:
             try:
                 packet = packet_queue.get(block=True)
                 if packet is None:
-                    # middleware.shutdown()
                     break
                 logging.debug(f"Enviando mensaje {packet}...")
                 middleware.send(data=packet)

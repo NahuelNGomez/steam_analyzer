@@ -3,10 +3,11 @@ import logging
 import time
 from typing import Callable
 
-RABBITMQ_HOST = 'rabbitmq'
+RABBITMQ_HOST = "rabbitmq"
 RABBITMQ_PORT = 5672
 
 REQUEUE = 2
+
 
 class Middleware:
     def __init__(
@@ -17,8 +18,12 @@ class Middleware:
         intance_id: int = None,
         callback: Callable = None,
         eofCallback: Callable = None,
+        amount_output_instances: int = 1,
     ):
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq',port=5672))
+        self.amount_output_instances = amount_output_instances
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host="rabbitmq", port=5672)
+        )
         self.channel = self.connection.channel()
         self.input_queues: dict[str, str] = {}
         self.output_queues = output_queues
@@ -53,27 +58,39 @@ class Middleware:
                 self.input_queues[queue_name] = exchange
 
     def _init_output_queues(self):
-        for queue in self.output_queues:
-            self.channel.queue_declare(queue=queue, durable=True)
+        print("Creating output queues", flush=True)
+        if self.amount_output_instances <= 1:
+            for queue in self.output_queues:
+                self.channel.queue_declare(queue=queue, durable=True)
+        if self.amount_output_instances > 1:
+                for queue in self.output_queues:
+                    print(
+                        f"Creating output queues for instance {queue}", flush=True
+                    )
+                    self.channel.queue_declare(queue=f"{queue}_0", durable=True)
 
         for exchange in self.output_exchanges:
             self.channel.exchange_declare(exchange=exchange, exchange_type="fanout")
-            
+
     def send_to_requeue_positive(self, queue: str, data: str):
-        self.channel.basic_publish(exchange='', routing_key='positive_review_queue_1', body=data)
+        self.channel.basic_publish(
+            exchange="", routing_key="positive_review_queue_1", body=data
+        )
         logging.debug("Sent to requeue %s: %s", queue, data)
-        
+
     def send_to_requeue_negative(self, queue: str, data: str):
-        self.channel.basic_publish(exchange='', routing_key='negative_review_queue_1', body=data)
+        self.channel.basic_publish(
+            exchange="", routing_key="negative_review_queue_1", body=data
+        )
         logging.debug("Sent to requeue %s: %s", queue, data)
 
     def _create_callback_wrapper(self, callback, eofCallback):
 
         def callback_wrapper(ch, method, properties, body):
             response = 0
-            print(f'[x] Recibido {body}', flush=True)
-            mensaje_str = body.decode('utf-8')
-            if mensaje_str == 'fin\n\n':
+            print(f"[x] Recibido {body}", flush=True)
+            mensaje_str = body.decode("utf-8")
+            if mensaje_str == "fin\n\n":
                 eofCallback(body)
             else:
                 response = callback(mensaje_str)
@@ -84,7 +101,7 @@ class Middleware:
             self.ack(method.delivery_tag)
 
         return callback_wrapper
-    
+
     def ack(self, delivery_tag):
         self.channel.basic_ack(delivery_tag=delivery_tag)
 
@@ -99,10 +116,14 @@ class Middleware:
             logging.debug("Connection closed")
 
     def send(self, data: str, instance_id: int = None):
-        suffix = f"_{instance_id}" if instance_id is not None else ""
-        for queue in self.output_queues:
-            self.send_to_queue(f"{queue}_{suffix}", data)
-
+        if self.amount_output_instances > 1:
+            for queue in self.output_queues:
+                self.send_to_queue(f"{queue}_0", data)
         for exchange in self.output_exchanges:
+            print(f"Sent to exchange {exchange}", flush=True)
             self.channel.basic_publish(exchange=exchange, routing_key="", body=data)
             logging.debug("Sent to exchange %s: %s", exchange, data)
+
+    def send_to_queue(self, queue: str, data: str):
+        self.channel.basic_publish(exchange="", routing_key=queue, body=data)
+        logging.debug("Sent to queue %s: %s", queue, data)
