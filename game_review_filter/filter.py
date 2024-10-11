@@ -143,7 +143,8 @@ class GameReviewFilter:
                     else:
                         print(f"Juego no encontrado: {review.game_id}. Descartado", flush=True)
         print("Fin de la ejecución de reviews", flush=True)
-
+        os.remove(name)
+        
     def start(self):
         """
         Inicia el proceso de join.

@@ -1,8 +1,10 @@
 import time
 import socket
 import logging
+import json
 from common.protocol import Protocol
 from common.constants import MAX_BATCH_SIZE
+import threading
 
 class Client:
     def __init__(self, boundary_ip, boundary_port, retries=5, delay=5):
@@ -10,7 +12,9 @@ class Client:
         self.boundary_port = boundary_port
         self.retries = retries
         self.delay = delay
-
+        self.responses = []  
+        self.lock = threading.Lock()  
+        
     def send_data(self, protocol, file_path, data_type):
         try:
             with open(file_path, "r", encoding="utf-8") as file:
@@ -72,6 +76,11 @@ class Client:
                     self.send_data(protocol, "data/sample_3333_por_ciento_review.csv", "reviews")
                     self.send_fin(protocol)
 
+                    # Iniciar un hilo para guardar respuestas periódicamente
+                    save_thread = threading.Thread(target=self.periodic_save_responses)
+                    save_thread.daemon = True
+                    save_thread.start()
+
                     # Escuchar respuestas del servidor después de enviar los datasets
                     logging.info("Esperando resultado del servidor...")
                     self.wait_for_result(protocol)
@@ -109,6 +118,8 @@ class Client:
                 response = protocol.receive_message()
                 if response:
                     logging.info(f"Respuesta recibida: {response}")
+                    with self.lock:
+                        self.responses.append(response)  # Almacenar la respuesta
                     if "close" in response:
                         break
                 else:
@@ -116,6 +127,25 @@ class Client:
                         "No se recibió respuesta, el servidor podría haber cerrado la conexión."
                     )
                     break
-
         except Exception as e:
             logging.error(f"Error al recibir datos del servidor: {e}")
+
+    def periodic_save_responses(self):
+        """
+        Guardar las respuestas en un archivo JSON periódicamente.
+        """
+        while True:
+            time.sleep(10)  # Guardar cada 10 segundos
+            self.save_responses_to_json()
+
+    def save_responses_to_json(self):
+        """
+        Guardar las respuestas en un archivo JSON.
+        """
+        try:
+            with self.lock:
+                with open("/results/responses.json", "w", encoding="utf-8") as json_file:
+                    json.dump(self.responses, json_file, indent=4, ensure_ascii=False)
+                    logging.info("Respuestas guardadas en /results/responses.json")
+        except Exception as e:
+            logging.error(f"Error al guardar respuestas en JSON: {e}")

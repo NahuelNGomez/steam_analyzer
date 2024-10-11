@@ -1,0 +1,69 @@
+1. Docker Metrics
+Para monitorear los contenedores Docker:
+
+Ver el uso de recursos de todos los contenedores:
+
+
+docker stats
+Muestra estadísticas en tiempo real del uso de CPU, memoria, red, y disco de los contenedores.
+
+Logs de un contenedor específico:
+
+
+docker logs <nombre_contenedor>
+Muestra los logs generados por el contenedor.
+
+Historial de CPU y Memoria de un contenedor específico:
+
+
+docker inspect <nombre_contenedor>
+Puedes obtener información sobre el historial del contenedor, incluyendo la configuración, el estado actual, y la utilización de recursos.
+
+2. Sistema Operativo (Linux) Metrics
+Para monitorear el uso de recursos del sistema operativo en el que se ejecutan los contenedores:
+
+Uso de CPU y RAM:
+top
+
+
+htop
+htop es una herramienta más amigable visualmente, y puede requerir instalación:
+
+
+sudo apt install htop
+Monitorear la actividad de red:
+
+
+iftop
+
+
+
+nload
+iftop y nload muestran información en tiempo real del tráfico de red.
+
+Estadísticas del disco:
+
+
+iostat -xz 1
+Requiere el paquete sysstat, que se puede instalar con:
+
+
+sudo apt install sysstat
+3. RabbitMQ Metrics
+Para monitorear RabbitMQ:
+
+Ver métricas desde la consola de administración: RabbitMQ tiene una consola web que puedes habilitar y utilizar para ver métricas como el número de mensajes en las colas, el throughput de mensajes, y el estado de los nodos. Para habilitar la consola de administración:
+
+
+rabbitmq-plugins enable rabbitmq_management
+Luego accede a la consola web a través de http://localhost:15672. Las credenciales por defecto son usuario: guest, contraseña: guest.
+
+Monitorear desde la CLI de RabbitMQ: Puedes usar comandos de RabbitMQ para obtener métricas sobre colas, exchanges, y otros:
+
+
+rabbitmqctl list_queues
+
+
+
+rabbitmqctl status
+Esto te dará un resumen del estado de RabbitMQ, incluyendo estadísticas del nodo, las colas, y el rendimiento.

@@ -47,7 +47,8 @@ services:
       - ./client/datasets:/datasets
       - ./client/config.ini:/client/config.ini
       - ./common:/common
-
+      - ./results:/results
+      
   games_counter:
     container_name: games_counter
     build:

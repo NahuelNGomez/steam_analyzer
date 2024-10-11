@@ -1,0 +1,113 @@
+[
+    {
+        "supported_platforms": [
+            {
+                "platform": "Windows",
+                "game_count": 922
+            },
+            {
+                "platform": "Mac",
+                "game_count": 181
+            },
+            {
+                "platform": "Linux",
+                "game_count": 120
+            }
+        ],
+        "generated_at": "2024-10-11T23:41:23.076363"
+    },
+    {
+        "top_10_indie_games_2010s": [
+            {
+                "rank": 1,
+                "name": "Time of Dragons",
+                "average_playtime_hours": 27080
+            },
+            {
+                "rank": 2   ,
+                "name": "War of Rights",
+                "average_playtime_hours": 2857
+            },
+            {
+                "rank": 3,
+                "name": "Gurgamoth",
+                "average_playtime_hours": 1631
+            },
+            {
+                "rank": 4,
+                "name": "Prison Architect",
+                "average_playtime_hours": 1481
+            },
+            {
+                "rank": 5,
+                "name": "Princess & Conquest",
+                "average_playtime_hours": 1430
+            },
+            {
+                "rank": 6,
+                "name": "House Flipper",
+                "average_playtime_hours": 1313
+            },
+            {
+                "rank": 7,
+                "name": "Voxelgram",
+                "average_playtime_hours": 1208
+            },
+            {
+                "rank": 8,
+                "name": "Magicite",
+                "average_playtime_hours": 763
+            },
+            {
+                "rank": 9,
+                "name": "The Room Three",
+                "average_playtime_hours": 574
+            },
+            {
+                "rank": 10,
+                "name": "Legend of Grimrock 2",
+                "average_playtime_hours": 564
+            }
+        ],
+        "generated_at": "2024-10-11T23:41:23.077897"
+    },
+    {
+        "top_5_indie_games_positive_reviews": [
+            {
+                "rank": 1,
+                "name": "Prison Architect",
+                "positive_review_count": 1497
+            },
+            {
+                "rank": 2,
+                "name": "Magicite",
+                "positive_review_count": 378
+            },
+            { 
+                "rank": 3,
+                "name": "Trine Enchanted Edition",
+                "positive_review_count": 279
+            },
+            {
+                "rank": 4,
+                "name": "Robot Roller-Derby Disco Dodgeball",
+                "positive_review_count": 225
+            },
+            {
+                "rank": 5,
+                "name": "Legend of Grimrock 2",
+                "positive_review_count": 108
+            }
+    ]},
+    {
+        "action_games_above_5000_negative_reviews": [],
+        "generated_at": "2024-10-11T23:41:23.079179"
+    },
+    {
+        "game_id": "258970",
+        "name": "Gauntlet\u2122 Slayer Edition",
+        "negative_count_percentile": 90,
+        "generated_at": "2024-10-11T23:41:23.079243"
+    }
+]
+

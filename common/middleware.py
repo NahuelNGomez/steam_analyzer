@@ -8,7 +8,6 @@ RABBITMQ_PORT = 5672
 
 REQUEUE = 2
 
-
 class Middleware:
     def __init__(
         self,
@@ -21,9 +20,7 @@ class Middleware:
         amount_output_instances: int = 1,
     ):
         self.amount_output_instances = amount_output_instances
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host="rabbitmq", port=5672)
-        )
+        self.connection = self._connect_with_retries()
         self.channel = self.connection.channel()
         self.input_queues: dict[str, str] = {}
         self.output_queues = output_queues
@@ -33,6 +30,22 @@ class Middleware:
         self.eofCallback = eofCallback
         self._init_input_queues(input_queues)
         self._init_output_queues()
+
+    def _connect_with_retries(self, retries=5, delay=5):
+        for attempt in range(retries):
+            try:
+                connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT)
+                )
+                logging.info("Successfully connected to RabbitMQ")
+                return connection
+            except pika.exceptions.AMQPConnectionError as e:
+                logging.warning(f"Connection attempt {attempt + 1} failed: {e}")
+                if attempt < retries - 1:
+                    time.sleep(delay)
+                else:
+                    logging.error("Max retries reached. Could not connect to RabbitMQ.")
+                    raise
 
     def _init_input_queues(self, input_queues):
         for queue, exchange in input_queues.items():
