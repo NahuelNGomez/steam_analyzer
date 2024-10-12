@@ -10,7 +10,7 @@ from common.utils import split_complex_string
 
 
 class GameReviewFilter:
-    def __init__(self, input_games_queue, input_reviews_queue, output_exchanges, output_queues, instance_id):
+    def __init__(self, input_games_queue, input_reviews_queue, output_exchanges, output_queues, instance_id, previous_review_nodes):
         """
         :param input_queues: Lista de colas de entrada (e.g., ['action_games_queue', 'positive_reviews_queue']).
         :param output_queue: Cola de salida (e.g., 'action_games_positive_reviews_queue').
@@ -27,7 +27,8 @@ class GameReviewFilter:
         self.completed_reviews = False
         self.sended_fin = False
         self.reviews_to_add = []
-        self.counter_reviews = 0
+        self.previous_review_nodes = previous_review_nodes
+        self.nodes_completed = 0
 
         #self.requeued_reviews = []
 
@@ -78,7 +79,6 @@ class GameReviewFilter:
         with self.file_lock:
             review_cleaned = review.replace('\x00', '')
             self.reviews_to_add.append(review_cleaned)
-            self.counter_reviews += 1
             # Usar lock antes de escribir en el archivo
             if len(self.reviews_to_add) >= 1000:
                 name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
@@ -117,9 +117,9 @@ class GameReviewFilter:
         Maneja el mensaje de fin de reviews y asegura que todas las reviews se escriban en el archivo.
         """
         self.completed_reviews = True
-        print(f"Total de reviews: {self.counter_reviews}", flush=True)
-        print("MENSAJE DE FIN ", message, flush=True)
-        if (self.counter_reviews == int(message[5:7])):
+        self.nodes_completed += 1
+
+        if (self.nodes_completed == self.previous_review_nodes):
             self.sended_fin = True
             self.save_last_reviews()
             self.process_reviews()

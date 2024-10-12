@@ -237,6 +237,7 @@ services:
       - OUTPUT_EXCHANGES=["games_reviews_indie"]
       - INPUT_GAMES_QUEUE=["indie_games_queue","indie_games"]
       - INPUT_REVIEWS_QUEUE=["positive_review_queue","positive_reviews"]
+      - PREVIOUS_REVIEW_NODES=4
       - LOGGING_LEVEL=DEBUG
     volumes:
       - ./common:/common
@@ -257,6 +258,7 @@ services:
       - OUTPUT_EXCHANGES=["games_reviews_action"]
       - INPUT_GAMES_QUEUE=["action_games_queue","action_games"]
       - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
+      - PREVIOUS_REVIEW_NODES=1
       - LOGGING_LEVEL=DEBUG
     volumes:
       - ./common:/common

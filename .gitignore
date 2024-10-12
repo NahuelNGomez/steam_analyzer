@@ -5,3 +5,5 @@ __pycache__/
 */__pycache__/
 /data2/
 /client/data/
+
+/game_review_filter/data/

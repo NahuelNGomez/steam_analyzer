@@ -208,6 +208,8 @@ class ConnectionHandler:
                     print(f"Sending to {routing}", flush=True)
                     middleware.send(data=packet, routing_key=routing)
                     self.next_instance = (self.next_instance % 4) + 1
+                else:
+                    middleware.send(packet)
                 
                 logging.debug(f"Dispatched message {packet}")
                 
