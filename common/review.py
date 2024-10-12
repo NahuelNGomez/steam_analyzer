@@ -18,7 +18,7 @@ class Review():
     
     @staticmethod
     def decode(fields: list):
-        print("FIELDS PARA DECODE:", fields)
+        #print("FIELDS PARA DECODE:", fields)
         
         cleaned_fields = [field.strip('"') if isinstance(field, str) else field for field in fields]
         

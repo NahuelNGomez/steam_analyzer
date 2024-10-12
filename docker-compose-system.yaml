@@ -144,7 +144,7 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":""}
+      - INPUT_QUEUES={"to_positive_review_1":"to_positive_review"}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
       - INSTANCE_ID=0
@@ -162,7 +162,7 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":""}
+      - INPUT_QUEUES={"to_positive_review_4":"to_positive_review"}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
       - INSTANCE_ID=0
@@ -180,7 +180,7 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":""}
+      - INPUT_QUEUES={"to_positive_review_3":"to_positive_review"}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
       - INSTANCE_ID=0
@@ -198,7 +198,7 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":""}
+      - INPUT_QUEUES={"to_positive_review_2":"to_positive_review"}
       - LOGGING_LEVEL=DEBUG
       - POSITIVITY=1
       - INSTANCE_ID=0

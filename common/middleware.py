@@ -18,7 +18,11 @@ class Middleware:
         callback: Callable = None,
         eofCallback: Callable = None,
         amount_output_instances: int = 1,
+        exchange_output_type: str = "fanout",
+        exchange_input_type: str = "fanout",
     ):
+        self.exchange_output_type = exchange_output_type
+        self.echange_input_type = exchange_input_type   
         self.amount_output_instances = amount_output_instances
         self.connection = self._connect_with_retries()
         self.channel = self.connection.channel()
@@ -54,7 +58,7 @@ class Middleware:
             self.channel.queue_declare(queue=queue_name, durable=True)
             if exchange:
                 self.channel.exchange_declare(
-                    exchange=exchange, exchange_type="fanout"
+                    exchange=exchange, exchange_type=self.echange_input_type
                 )  # Cambiar a una variable
                 print(f"Binding {queue_name} to {exchange}", flush=True)
                 self.channel.queue_bind(exchange=exchange, queue=queue_name)
@@ -83,7 +87,7 @@ class Middleware:
                     self.channel.queue_declare(queue=f"{queue}_0", durable=True)
 
         for exchange in self.output_exchanges:
-            self.channel.exchange_declare(exchange=exchange, exchange_type="fanout")
+            self.channel.exchange_declare(exchange=exchange, exchange_type=self.exchange_output_type)
 
     def send_to_requeue_positive(self, queue: str, data: str):
         self.channel.basic_publish(
@@ -103,7 +107,7 @@ class Middleware:
             response = 0
             print(f"[x] Recibido {body}", flush=True)
             mensaje_str = body.decode("utf-8")
-            if mensaje_str == "fin\n\n":
+            if mensaje_str in "fin\n\n":
                 eofCallback(body)
             else:
                 response = callback(mensaje_str)
@@ -128,13 +132,13 @@ class Middleware:
         except pika.exceptions.ConnectionClosedByBroker:
             logging.debug("Connection closed")
 
-    def send(self, data: str, instance_id: int = None):
+    def send(self, data: str, instance_id: int = None, routing_key: str = ""):
         if self.amount_output_instances > 1:
             for queue in self.output_queues:
                 self.send_to_queue(f"{queue}_0", data)
         for exchange in self.output_exchanges:
             print(f"Sent to exchange {exchange}", flush=True)
-            self.channel.basic_publish(exchange=exchange, routing_key="", body=data)
+            self.channel.basic_publish(exchange=exchange, routing_key=routing_key, body=data)
             logging.debug("Sent to exchange %s: %s", exchange, data)
 
     def send_to_queue(self, queue: str, data: str):

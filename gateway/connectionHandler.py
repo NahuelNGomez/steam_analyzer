@@ -26,11 +26,13 @@ class ConnectionHandler:
         self.address = address
         self.protocol = Protocol(self.client_socket)
         self.reviews_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
+        self.reviews_from_client_queue_to_positive = Queue(maxsize=MAX_QUEUE_SIZE)
         self.reviews_to_process_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.amount_of_review_instances = amount_of_review_instances
         self.completed_games = False
+        self.next_instance = 0
             
         self.gamesHeader = []
         # Thread para manejar la conexión - No lo haría para entrega 1.
@@ -41,7 +43,7 @@ class ConnectionHandler:
     def handle_connection(self):
         self.games_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.games_from_client_queue, "games",[],1),
+            args=(self.games_from_client_queue, "games",[],1, 'fanout'),
             name="games_middleware_sender",
         )
         self.games_middleware_receiver_thread = threading.Thread(
@@ -51,13 +53,18 @@ class ConnectionHandler:
         )
         self.review_middleware_sender_thread = threading.Thread(
             target=self.__middleware_sender,
-            args=(self.reviews_from_client_queue, "reviews",["reviews_queue"],self.amount_of_review_instances),
+            args=(self.reviews_from_client_queue, "reviews",[],1, 'direct'),
             name="reviews_middleware_sender",
         )
         self.review_middleware_receiver_thread = threading.Thread(
             target=self._middleware_receiver,
             args=(input_queues,),
             name="reviews_middleware_receiver",
+        )
+        self.review_middleware_sender_thread_positive = threading.Thread(
+            target=self.__middleware_sender,
+            args=(self.reviews_from_client_queue_to_positive, "to_positive_review",[],1,'direct'),
+            name="reviews_middleware_sender",
         )
 
         self.review_process = threading.Thread(
@@ -69,6 +76,7 @@ class ConnectionHandler:
         self.games_middleware_receiver_thread.start()
         self.review_middleware_sender_thread.start()
         self.review_middleware_receiver_thread.start()
+        self.review_middleware_sender_thread_positive.start()
         self.review_process.start()
 
         logging.info(f"Conexión establecida desde {self.address}")
@@ -113,6 +121,8 @@ class ConnectionHandler:
                         self.protocol.send_message("OK - ACK de fin")
                         #self.games_from_client_queue.put("fin\n\n")
                         self.reviews_from_client_queue.put("fin\n\n")
+                        #self.reviews_to_process_queue.put("fin\n\n")
+                        self._fin_sender()
                         break
 
                     if data_type == "reviews":
@@ -121,15 +131,6 @@ class ConnectionHandler:
                         if not self.completed_games:
                             self.games_from_client_queue.put("fin\n\n")
                             self.completed_games = True
-                        # review_list = parts[1].strip().split("\n")
-                        # finalList = ''
-                        # for row in review_list:
-                        #     review = Review.from_csv_row(self.id_reviews, row)
-                        #     review_str = json.dumps(review.getData())
-                        #     finalList += f"{review_str}\n"
-                        #     self.id_reviews += 1
-                        # self.reviews_from_client_queue.put(finalList)
-
                         
                     if data_type == "games":
                         print("Llega un game batch", flush=True)
@@ -181,18 +182,33 @@ class ConnectionHandler:
         finally:
             self.client_socket.close()
             logging.info("Conexión cerrada.")
-
-    def __middleware_sender(self, packet_queue, output_exchange, output_queues, instances):
+            
+    def _fin_sender(self):
+        middleware = Middleware(output_exchanges=['to_positive_review'], output_queues=['to_positive_review_1_0','to_positive_review_2_0','to_positive_review_3_0','to_positive_review_4_0'], amount_output_instances=1, exchange_output_type='direct')
+       # middleware.send("fin\n\n")
+        for i in range(4):
+            routing = f"to_positive_review_{i+1}_0"
+            print(f"Sending to FIN{routing}", flush=True)
+            middleware.send("fin\n\n", routing_key=f"to_positive_review_{i+1}_0")
+        
+    def __middleware_sender(self, packet_queue, output_exchange, output_queues, instances,output_type):
         logging.info("Middleware sender started")
         print("Middleware sender started", flush=True)
-        middleware = Middleware(output_exchanges=[output_exchange], output_queues=output_queues, amount_output_instances=instances)
+        middleware = Middleware(output_exchanges=[output_exchange], output_queues=output_queues, amount_output_instances=instances, exchange_output_type=output_type)
         while True:
             try:
                 packet = packet_queue.get(block=True)
                 if packet is None:
                     break
                 logging.debug(f"Enviando mensaje {packet}...")
-                middleware.send(data=packet)
+                if output_exchange == 'reviews':
+                    middleware.send(data=packet, routing_key='reviews_queue_1')
+                if output_exchange == 'to_positive_review':
+                    routing = f"to_positive_review_{self.next_instance}_0"
+                    print(f"Sending to {routing}", flush=True)
+                    middleware.send(data=packet, routing_key=routing)
+                    self.next_instance = (self.next_instance % 4) + 1
+                
                 logging.debug(f"Dispatched message {packet}")
                 
             except OSError:
@@ -213,6 +229,11 @@ class ConnectionHandler:
     def process_review(self):
         while True:
             packet = self.reviews_to_process_queue.get(block=True)
+            # if packet == "fin\n\n":
+            #     packet = packet + str(self.id_reviews) + "\n\n"
+            #     self.reviews_from_client_queue.put(packet)
+            #     self._fin_sender('review_fin')
+
             review_list = packet.strip().split("\n")
             finalList = ''
             for row in review_list:
@@ -223,6 +244,7 @@ class ConnectionHandler:
                 finalList += f"{review_str}\n"
                 self.id_reviews += 1
             self.reviews_from_client_queue.put(finalList)
+            self.reviews_from_client_queue_to_positive.put(finalList)
             print("Review batch processed", flush=True)
 
     def get_data(self, data):

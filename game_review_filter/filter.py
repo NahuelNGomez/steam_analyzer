@@ -27,6 +27,7 @@ class GameReviewFilter:
         self.completed_reviews = False
         self.sended_fin = False
         self.reviews_to_add = []
+        self.counter_reviews = 0
 
         #self.requeued_reviews = []
 
@@ -77,7 +78,7 @@ class GameReviewFilter:
         with self.file_lock:
             review_cleaned = review.replace('\x00', '')
             self.reviews_to_add.append(review_cleaned)
-            
+            self.counter_reviews += 1
             # Usar lock antes de escribir en el archivo
             if len(self.reviews_to_add) >= 1000:
                 name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
@@ -98,27 +99,38 @@ class GameReviewFilter:
             print("Fin de la transmisión de datos", flush=True)
             self.process_reviews()
             self.reviews_middleware.send("fin\n\n")
-
-    def handle_review_eof(self, message):
+    
+    def save_last_reviews(self):
         """
-        Maneja el mensaje de fin de reviews y asegura que todas las reviews se escriban en el archivo.
+        Guarda las reviews restantes en el archivo.
         """
-        self.completed_reviews = True
-        
-        # Usar lock antes de escribir en el archivo
         name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
         with self.file_lock:
             with open(name, "a") as file:
                 for review in self.reviews_to_add:
                     file.write(review + "\n")
             self.reviews_to_add = []
-        
-        if self.completed_games and self.completed_reviews and not self.sended_fin:
+    
+    
+    def handle_review_eof(self, message):
+        """
+        Maneja el mensaje de fin de reviews y asegura que todas las reviews se escriban en el archivo.
+        """
+        self.completed_reviews = True
+        print(f"Total de reviews: {self.counter_reviews}", flush=True)
+        print("MENSAJE DE FIN ", message, flush=True)
+        if (self.counter_reviews == int(message[5:7])):
             self.sended_fin = True
-            print("Fin de la transmisión de reviews", flush=True)
-            print("Fin de la transmisión de datos", flush=True)
+            self.save_last_reviews()
             self.process_reviews()
             self.reviews_middleware.send("fin\n\n")
+        
+        # if self.completed_games and self.completed_reviews and not self.sended_fin:
+        #     self.sended_fin = True
+        #     print("Fin de la transmisión de reviews", flush=True)
+        #     print("Fin de la transmisión de datos", flush=True)
+        #     self.process_reviews()
+        #     self.reviews_middleware.send("fin\n\n")
         
     def process_reviews(self):
         """
@@ -141,7 +153,8 @@ class GameReviewFilter:
                             game_str = json.dumps(game_review.getData())
                             self.reviews_middleware.send(game_str)
                     else:
-                        print(f"Juego no encontrado: {review.game_id}. Descartado", flush=True)
+                        #print(f"Juego no encontrado: {review.game_id}. Descartado", flush=True)
+                        pass
         print("Fin de la ejecución de reviews", flush=True)
         os.remove(name)
         

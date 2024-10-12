@@ -19,7 +19,7 @@ def main():
     instance_id = json.loads(os.getenv("INSTANCE_ID") or '0')
     positivity = int(os.getenv("POSITIVITY"))
     
-    positivityFilter = PositivityFilter(input_queues, positivity, output_exchanges, instance_id)
+    positivityFilter = PositivityFilter(input_queues, positivity, output_exchanges, instance_id,'direct')
     positivityFilter.start()
 
 if __name__ == '__main__':
