@@ -44,8 +44,8 @@ services:
       - LOGGING_LEVEL=INFO
       - rabbitmq_RESULTS_QUEUE=result_queue
     volumes:
-      #- ./client/data:/data
-      - ./client/datasets:/datasets
+      - ./client/data:/data
+      #- ./client/datasets:/datasets
       - ./client/config.ini:/client/config.ini
       - ./common:/common
       - ./results:/results
