@@ -43,5 +43,11 @@ class Game():
             return True
         if self.genres == "nan" or self.genres == "" or self.genres == None:
             return True
+        if self.id == "nan" or self.id == "" or self.id == None:
+            return True
+        if self.release_date == "nan" or self.release_date == "" or self.release_date == None:
+            return True
+        if self.name == "nan" or self.name == "" or self.name == None:
+            return True
         
         
