@@ -148,7 +148,6 @@ class ConnectionHandler:
                                 finalList += f"{game_str}\n"
                                 
                             except Exception as e:
-                                #print(f"Error al procesar la fila: {row}, error: {e}", flush=True)
                                 logging.error(f"Error al procesar la fila: {row}, error: {e}")
                                 continue  # Continuar con la siguiente fila si ocurre un error
                         if finalList:

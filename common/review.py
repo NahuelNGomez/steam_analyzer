@@ -15,7 +15,7 @@ class Review():
     
     def getData(self):
         return [self.game_id, self.app_name, self.review_text, self.review_score, self.id]
-    
+        
     @staticmethod
     def decode(fields: list):
         
@@ -30,8 +30,6 @@ class Review():
         if self.id == None or self.id == "nan" or self.id == "" or self.id == None: 
             return True
         if self.game_id == "nan" or self.game_id == "" or self.game_id == None: 
-            return True
-        if self.app_name == "nan" or self.app_name== "" or self.app_name== None:
             return True
         if self.review_text == "nan" or self.review_text == "" or self.review_text == None:
             return True

@@ -69,6 +69,10 @@ class GameReviewFilter:
         try:
             game = Game.decode(json.loads(game))
             self.games[game.id] = game.name
+            if (game.id == '352460'):
+                logging.info(f"Juego agregado: {game.id}")
+                logging.info(f"Juego agregado: {game.name}")
+                logging.info(f"Juego agregado: {self.games[game.id]}")
         except Exception as e:
             logging.error(f"Error al agregar juego: {e}")
 
@@ -136,6 +140,9 @@ class GameReviewFilter:
             with open(name, "r") as file:
                 for line in file:
                     review = Review.decode(json.loads(line))
+                    # if(review.game_id == '352460'):
+                    #     logging.info(f"Juego procesado y enviandolo 352460: {game}")
+                    #     logging.info(f"Juego procesado 352460: {review.review_text}")
                     if review.game_id in self.games:
                         game = self.games[review.game_id]
                         if 'action' in self.games_input_queue[1]:

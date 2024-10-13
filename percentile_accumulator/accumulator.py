@@ -34,6 +34,8 @@ class PercentileAccumulator:
         """
         try:
             game_id = game.game_id
+            if (game_id == "352460"):
+                print("12213123->", game, flush=True)
             if game_id in self.games:
                 self.games[game_id]['count'] += 1
             else:
@@ -82,8 +84,8 @@ class PercentileAccumulator:
                 'negative_count_percentile': negative_count_percentile_list
             }))
             print("2->", self.games["352460"], flush=True)
-            print("1->", self.games["278080"], flush=True)
-            print("l->", len(self.games), flush=True)
+            print("1->", self.games["10"], flush=True)
+            print("1->", self.games["49540"], flush=True)
             print("c->", cutoff_index, flush=True)
 
             self.games.clear()
