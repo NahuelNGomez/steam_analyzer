@@ -81,6 +81,10 @@ class GameNamesAccumulator:
                 'game_exceeding_limit': []
             }
             self.middleware.send(json.dumps(message))
+        message2 ={
+            "final_check_low_limit": True
+        }
+        self.middleware.send(json.dumps(message2))
     
     def _callBack(self, data):
         """

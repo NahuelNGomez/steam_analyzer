@@ -72,8 +72,8 @@
     {
         "negative_count_percentile": [
             {
-                "app_id": "258970",
-                "Name": "Gauntlet™ Slayer Edition"
+                "game_id": "258970",
+                "name": "Gauntlet™ Slayer Edition"
             }
         ]
     },

@@ -76,8 +76,8 @@ class Client:
                     )
                     
                     # Enviar datasets una vez
-                    self.send_data(protocol, "data/sample_10_por_ciento_games.csv", "games")
-                    self.send_data(protocol, "data/sample_10_por_ciento_review.csv", "reviews")
+                    self.send_data(protocol, "data/sample_1_por_ciento_games.csv", "games")
+                    self.send_data(protocol, "data/sample_1_por_ciento_review.csv", "reviews")
                     # self.send_data(protocol, "datasets/games.csv", "games")
                     # self.send_data(protocol, "datasets/dataset.csv", "reviews")
                     self.send_fin(protocol)
@@ -129,7 +129,6 @@ class Client:
                     with self.lock:
                         if ("ACK de fin" in response) or ("close" in response) or ("OK\n\n" in response):
                             logging.info("Fin de la transmisión de resultados")
-                            continue
                         try:
                             json_response = json.loads(response)
                             self.responses.append(json_response)
@@ -143,6 +142,7 @@ class Client:
                         "No se recibió respuesta, el servidor podría haber cerrado la conexión."
                     )
                     break
+            self.save_responses_to_json()
         except Exception as e:
             logging.error(f"Error al recibir datos del servidor: {e}")
 

@@ -34,6 +34,7 @@ class ConnectionHandler:
         self.amount_of_review_instances = amount_of_review_instances
         self.completed_games = False
         self.next_instance = 0
+        self.remaining_responses = 5
             
         self.gamesHeader = []
         self.shutdown_event = threading.Event()
@@ -268,10 +269,33 @@ class ConnectionHandler:
                 continue
             except Exception as e:
                 logging.error(f"Error en process_review: {e}")
+                
+    def checkData(data):
+        data = data
 
     def get_data(self, data):
-        self.result_to_client_queue.put(data)
+        
         logging.info("Data sent to client")
+        json_response = json.loads(data)
+        if not 'final_check_low_limit' in json_response:
+            self.result_to_client_queue.put(data)
+        if 'supported_platforms' in json_response:
+            logging.info("JSON contains 'supported_platforms'")
+            self.remaining_responses -= 1
+        if 'top_10_indie_games_2010s' in json_response:
+            logging.info("JSON contains 'top_10_indie_games_2010s'")
+            self.remaining_responses -= 1
+        if 'top_5_indie_games_positive_reviews' in json_response:
+            logging.info("JSON contains 'top_5_indie_games_positive_reviews'")
+            self.remaining_responses -= 1
+        if 'negative_count_percentile' in json_response:
+            logging.info("JSON contains 'negative_count_percentile'")
+            self.remaining_responses -= 1
+        if 'final_check_low_limit' in json_response:
+            logging.info("JSON contains 'final_check_low_limit'")
+            self.remaining_responses -= 1
+        if self.remaining_responses == 0:
+            self.result_to_client_queue.put("close\n\n")
 
     def shutdown(self):
         if not self.shutdown_event.is_set():
