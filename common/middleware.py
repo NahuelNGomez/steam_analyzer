@@ -33,7 +33,7 @@ class Middleware:
         self.intance_id = intance_id
         self.callback = callback
         self.eofCallback = eofCallback
-        self.auto_ack = False
+        self.auto_ack = True
         self._init_input_queues(input_queues)
         self._init_output_queues()
 
@@ -62,7 +62,7 @@ class Middleware:
                 self.channel.exchange_declare(
                     exchange=exchange, exchange_type=self.echange_input_type
                 )  # Cambiar a una variable
-                print(f"Binding {queue_name} to {exchange}", flush=True)
+                logging.info(f"Binding {queue_name} to {exchange}")
                 self.channel.queue_bind(exchange=exchange, queue=queue_name)
 
             callback_wrapper = self._create_callback_wrapper(
@@ -77,15 +77,13 @@ class Middleware:
                 self.input_queues[queue_name] = exchange
 
     def _init_output_queues(self):
-        print("Creating output queues", flush=True)
+        logging.info("Creating output queues")
         if self.amount_output_instances <= 1:
             for queue in self.output_queues:
                 self.channel.queue_declare(queue=queue, durable=True)
         if self.amount_output_instances > 1:
                 for queue in self.output_queues:
-                    print(
-                        f"Creating output queues for instance {queue}", flush=True
-                    )
+                    logging.info(f"Creating output queues {queue}_0")
                     self.channel.queue_declare(queue=f"{queue}_0", durable=True)
 
         for exchange in self.output_exchanges:
@@ -107,9 +105,9 @@ class Middleware:
 
         def callback_wrapper(ch, method, properties, body):
             response = 0
-            print(f"[x] Recibido {body}", flush=True)
+            logging.debug("Received %s", body)
             mensaje_str = body.decode("utf-8")
-            if mensaje_str in "fin\n\n":
+            if "fin\n\n" in mensaje_str:
                 eofCallback(body)
             else:
                 response = callback(mensaje_str)
@@ -136,7 +134,6 @@ class Middleware:
             for queue in self.output_queues:
                 self.send_to_queue(f"{queue}_0", data)
         for exchange in self.output_exchanges:
-            print(f"Sent to exchange {exchange}", flush=True)
             self.channel.basic_publish(exchange=exchange, routing_key=routing_key, body=data)
             logging.debug("Sent to exchange %s: %s", exchange, data)
 

@@ -52,8 +52,6 @@ class Top10IndieCounter:
             name = game.name
             playtime = int(game.apf)
 
-            print(f"Processing game: {name} ({playtime} hours)...", flush=True)
-
             menor_puesto = min(
                 (k for k, v in self.game_playtimes.items() if v["tiempo"] is not None),
                 key=lambda k: self.game_playtimes[k]["tiempo"],

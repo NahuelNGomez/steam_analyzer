@@ -53,7 +53,7 @@ class Client:
         try:
             message = "fin\n\n"
             protocol.send_message(message)
-            print("Fin de la transmisión de datos", flush=True)
+            logging.info("Fin de la transmisión de datos")
             logging.debug(f"Enviado ({message})")
         except FileNotFoundError:
             logging.error(f"Error al enviar fin")
@@ -72,8 +72,10 @@ class Client:
                     )
                     
                     # Enviar datasets una vez
-                    self.send_data(protocol, "data/sample_10_por_ciento_games.csv", "games")
-                    self.send_data(protocol, "data/sample_10_por_ciento_review.csv", "reviews")
+                    # self.send_data(protocol, "data/sample_10_por_ciento_games.csv", "games")
+                    # self.send_data(protocol, "data/sample_10_por_ciento_review.csv", "reviews")
+                    self.send_data(protocol, "datasets/games.csv", "games")
+                    self.send_data(protocol, "datasets/dataset.csv", "reviews")
                     self.send_fin(protocol)
 
                     # Iniciar un hilo para guardar respuestas periódicamente

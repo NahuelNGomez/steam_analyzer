@@ -22,7 +22,6 @@ class Game():
     
     @staticmethod
     def decode(fields: list):
-        #print("FIELDS PARA DECODE:", fields)
         
         # Ensure all fields are strings before applying strip
         cleaned_fields = [str(field).strip('"') if isinstance(field, str) else field for field in fields]

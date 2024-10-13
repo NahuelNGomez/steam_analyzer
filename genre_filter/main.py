@@ -5,12 +5,6 @@ import time
 from filter import GenreFilter
 import configparser
 
-def send_message(queue, message, connection):
-    channel = connection.channel()
-    channel.queue_declare(queue=queue, durable=True)
-    channel.basic_publish(exchange='', routing_key=queue, body=message)
-    print(f'genreFilter envió {message} a la cola {queue}.', flush=True)
-    
 def main():
     logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),
                         format='%(asctime)s - %(levelname)s - %(message)s')

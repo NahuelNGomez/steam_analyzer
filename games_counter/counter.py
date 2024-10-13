@@ -23,19 +23,11 @@ class GamesCounter:
             mac = game.mac
             linux = game.linux
             self.total_games += 1
-            
-            # Mostrar los valores decodificados para Windows, Mac y Linux
-            print(f"Juego: {game_name}, Valores Originales -> Windows: {windows}, Mac: {mac}, Linux: {linux}", flush=True)
-            logging.info(f"Juego: {game_name}, Valores Originales -> Windows: {windows}, Mac: {mac}, Linux: {linux}")
 
             # Convertir a booleano de forma robusta
             windows = self._convert_to_boolean(windows)
             mac = self._convert_to_boolean(mac)
             linux = self._convert_to_boolean(linux)
-
-            # Mostrar los valores convertidos para Windows, Mac y Linux
-            print(f"Juego: {game_name}, Valores Convertidos -> Windows: {windows}, Mac: {mac}, Linux: {linux}", flush=True)
-            logging.info(f"Juego: {game_name}, Valores Convertidos -> Windows: {windows}, Mac: {mac}, Linux: {linux}")
 
             # Verificar si los valores ya eran booleanos
             if windows:
@@ -48,7 +40,6 @@ class GamesCounter:
                 self.platform_counts['Linux'] += 1
                 logging.info(f"Juego '{game_name}' soporta Linux.")
 
-            logging.info(f"Conteo Actual: {dict(self.platform_counts)}")
         except Exception as e:
             logging.error(f"Error al filtrar el juego '{game_name}': {e}")
     
@@ -73,7 +64,6 @@ class GamesCounter:
             for row in batch:
                 json_row = json.loads(row)
                 game = Game.decode(json_row)
-                logging.debug(f"Mensaje decodificado: {game}")
                 self.counterGames(game)
                 
         except Exception as e:

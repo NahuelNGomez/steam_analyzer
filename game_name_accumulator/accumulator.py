@@ -33,9 +33,7 @@ class GameNamesAccumulator:
         # Processes each game (game) received and send the name if it has more than the low limit positive reviews.
         # """
         try:
-            print("Games dict: ", self.games, flush=True)
             game_id = game.game_id
-            print(f"Game ID: {game_id}", flush=True)
             if game_id in self.games:
                 self.games[game_id]['count'] += 1
             else:
@@ -49,7 +47,6 @@ class GameNamesAccumulator:
                 self.middleware.send(json.dumps(self.games[game_id]))
                 self.sent_games.append(game_id)
                 self.games.pop(game_id)
-                print(f"Game sent: {game_id}", flush=True)
             
         except Exception as e:
             logging.error(f"Error in process_game: {e}")

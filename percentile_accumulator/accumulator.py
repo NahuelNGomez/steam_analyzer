@@ -33,9 +33,7 @@ class PercentileAccumulator:
         Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas.
         """
         try:
-            print("Games dict: ", self.games, flush=True)
             game_id = game.game_id
-            print(f"Game ID: {game_id}", flush=True)
             if game_id in self.games:
                 self.games[game_id]['count'] += 1
             else:
@@ -50,13 +48,11 @@ class PercentileAccumulator:
         """
         Calcula los juegos dentro del percentil 90 de reseñas negativas.
         """
-        print("array completo: ", self.games, flush=True)
         try:
             # Ordenar los juegos por la cantidad de reseñas negativas de forma descendente
             sorted_games = sorted(self.games.items(), key=lambda x: x[1]['count'], reverse=False)
             total_games = len(sorted_games)
             cutoff_index = int((total_games +1) * (self.percentile / 100))
-            print("array completo sorted: ", sorted_games, flush=True)
             # Seleccionar los juegos dentro del percentil 90
             top_percentile_games = sorted_games[cutoff_index:] # 90% de los juegos?
             for game_id, game_data in top_percentile_games:

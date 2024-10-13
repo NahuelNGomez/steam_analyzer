@@ -4,12 +4,6 @@ import os
 import time
 from filter import PositivityFilter
 import configparser
-
-def send_message(queue, message, connection):
-    channel = connection.channel()
-    channel.queue_declare(queue=queue, durable=True)
-    channel.basic_publish(exchange='', routing_key=queue, body=message)
-    print(f'positivityFilter envió {message} a la cola {queue}.', flush=True)
     
 def main():
     logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),

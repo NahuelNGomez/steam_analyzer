@@ -91,12 +91,12 @@ class GameReviewFilter:
         """
         Maneja el mensaje de fin de juegos.
         """
-        print("Fin de la transmisión de juegos", flush=True)
+        logging.info("Fin de la transmisión de juegos")
         self.completed_games = True
         
         if self.completed_games and self.completed_reviews and not self.sended_fin:
             self.sended_fin = True
-            print("Fin de la transmisión de datos", flush=True)
+            logging.info("Fin de la transmisión de datos")
             self.process_reviews()
             self.reviews_middleware.send("fin\n\n")
     
@@ -119,18 +119,12 @@ class GameReviewFilter:
         self.completed_reviews = True
         self.nodes_completed += 1
 
-        if (self.nodes_completed == self.previous_review_nodes):
+        if (self.nodes_completed == self.previous_review_nodes) and not self.sended_fin:
             self.sended_fin = True
             self.save_last_reviews()
             self.process_reviews()
             self.reviews_middleware.send("fin\n\n")
         
-        # if self.completed_games and self.completed_reviews and not self.sended_fin:
-        #     self.sended_fin = True
-        #     print("Fin de la transmisión de reviews", flush=True)
-        #     print("Fin de la transmisión de datos", flush=True)
-        #     self.process_reviews()
-        #     self.reviews_middleware.send("fin\n\n")
         
     def process_reviews(self):
         """
@@ -153,9 +147,8 @@ class GameReviewFilter:
                             game_str = json.dumps(game_review.getData())
                             self.reviews_middleware.send(game_str)
                     else:
-                        #print(f"Juego no encontrado: {review.game_id}. Descartado", flush=True)
                         pass
-        print("Fin de la ejecución de reviews", flush=True)
+        logging.info("Fin de la ejecución de reviews")
         os.remove(name)
         
     def start(self):

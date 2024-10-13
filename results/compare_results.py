@@ -1,13 +1,14 @@
 import json
 import difflib
 import os
+import logging
 
 def load_json(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     except Exception as e:
-        print(f"Error al cargar el archivo {file_path}: {e}")
+        logging.error(f"Error al cargar el archivo {file_path}: {e}")
         return None
 
 def clean_responses(responses):
@@ -49,7 +50,7 @@ def main():
     json2 = load_json(file2)
 
     if json1 is None or json2 is None:
-        print("No se pudo cargar uno o ambos archivos JSON")
+        logging.error("No se pudo cargar uno o ambos archivos JSON")
         return
 
     # Limpiar y preparar los datos de responses.json
@@ -60,7 +61,7 @@ def main():
 
     # Mostrar diferencias
     if differences:
-        print("\nDiferencias encontradas:")
+        logging.info("Diferencias encontradas:")
         for line in differences:
             print(line)
     else:

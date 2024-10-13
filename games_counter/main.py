@@ -9,12 +9,6 @@ from collections import defaultdict
 from counter import GamesCounter
 import configparser
 
-def send_message(queue, message, connection):
-    channel = connection.channel()
-    channel.queue_declare(queue=queue, durable=True)
-    channel.basic_publish(exchange='', routing_key=queue, body=message)
-    print(f'games counter envió result por la queue.', flush=True)
-    
 def main():
     logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),
                         format='%(asctime)s - %(levelname)s - %(message)s')

@@ -95,7 +95,8 @@ class ConnectionHandler:
                 # Separar tipo de dataset y contenido usando doble salto de línea
                 parts = data.split("\n\n", 1)
                 if len(parts) < 2:
-                    print("Error: Formato de datos incorrecto:", parts, flush=True)
+                    #print("Error: Formato de datos incorrecto:", parts, flush=True)
+                    logging.info("Error: Formato de datos incorrecto.")
                     logging.warning("Datos recibidos en formato incorrecto.")
                     self.protocol.send_message("Error: Formato de datos incorrecto")
                     continue
@@ -103,7 +104,8 @@ class ConnectionHandler:
                 if first:
                     first = False
                     self.gamesHeader = parts[1].strip().split("\n")
-                    print("Header: ", self.gamesHeader, flush=True)
+                    #print("Header: ", self.gamesHeader, flush=True)
+                    logging.info("Header recibido {}".format(self.gamesHeader))
                     self.protocol.send_message("OK")
                     continue
 
@@ -117,7 +119,8 @@ class ConnectionHandler:
 
                 try:
                     if data_type == "fin":
-                        print("Fin de la transmisión de datos", flush=True)
+                        #print("Fin de la transmisión de datos", flush=True)
+                        logging.info("Fin de la transmisión de datos")
                         self.protocol.send_message("OK - ACK de fin")
                         #self.games_from_client_queue.put("fin\n\n")
                         self.reviews_from_client_queue.put("fin\n\n")
@@ -133,10 +136,8 @@ class ConnectionHandler:
                             self.completed_games = True
                         
                     if data_type == "games":
-                        print("Llega un game batch", flush=True)
                         games_list = parts[1].strip().split("\n")
                         finalList = ''
-                        print("Datos recibidos para 'games':", flush=True)
                         for row in games_list:
                             try:
                                 # Convertir a un objeto Game y procesar los datos
@@ -145,19 +146,20 @@ class ConnectionHandler:
                                     continue
                                 game_str = json.dumps(game.getData())
                                 finalList += f"{game_str}\n"
-                                print(f"Fila procesada y agregada a la lista final: {game_str}", flush=True)
+                                
                             except Exception as e:
-                                print(f"Error al procesar la fila: {row}, error: {e}", flush=True)
+                                #print(f"Error al procesar la fila: {row}, error: {e}", flush=True)
+                                logging.error(f"Error al procesar la fila: {row}, error: {e}")
                                 continue  # Continuar con la siguiente fila si ocurre un error
                         if finalList:
-                            print("Enviando los siguientes datos a la cola:", flush=True)
+                            #print("Enviando los siguientes datos a la cola:", flush=True)
+                            logging.info(f"Enviando los siguientes datos a la cola: {finalList}")
                         else:
-                            print("No hay datos para enviar después del filtrado.", flush=True)
+                           # print("No hay datos para enviar después del filtrado.", flush=True)
+                            logging.info("No hay datos para enviar después del filtrado.")
                         # Enviar los juegos procesados a la cola
                         self.games_from_client_queue.put(finalList)
                         self.protocol.send_message("OK")
-
-                    
                 except Exception as e:
                     logging.error(f"Error al procesar el CSV: {e}")
                     self.protocol.send_message("Error processing data")
@@ -188,12 +190,13 @@ class ConnectionHandler:
        # middleware.send("fin\n\n")
         for i in range(4):
             routing = f"to_positive_review_{i+1}_0"
-            print(f"Sending to FIN{routing}", flush=True)
+            #print(f"Sending to FIN{routing}", flush=True)
+            logging.info(f"Sending to FIN {routing}")
             middleware.send("fin\n\n", routing_key=f"to_positive_review_{i+1}_0")
         
     def __middleware_sender(self, packet_queue, output_exchange, output_queues, instances,output_type):
         logging.info("Middleware sender started")
-        print("Middleware sender started", flush=True)
+        #print("Middleware sender started", flush=True)
         middleware = Middleware(output_exchanges=[output_exchange], output_queues=output_queues, amount_output_instances=instances, exchange_output_type=output_type)
         while True:
             try:
@@ -205,7 +208,7 @@ class ConnectionHandler:
                     middleware.send(data=packet, routing_key='reviews_queue_1')
                 if output_exchange == 'to_positive_review':
                     routing = f"to_positive_review_{self.next_instance}_0"
-                    print(f"Sending to {routing}", flush=True)
+                    #print(f"Sending to {routing}", flush=True)
                     middleware.send(data=packet, routing_key=routing)
                     self.next_instance = (self.next_instance % 4) + 1
                 else:
@@ -220,22 +223,15 @@ class ConnectionHandler:
 
     def _middleware_receiver(self, input_queues):
         logging.info("Middleware receiver started")
-        print("Middleware receiver started", flush=True)
         middleware = Middleware(
             input_queues, [], [], instance_id, self.get_data, self.get_data
         )
         middleware.start()
         logging.info("Middleware receiver stopped")
 
-
     def process_review(self):
         while True:
             packet = self.reviews_to_process_queue.get(block=True)
-            # if packet == "fin\n\n":
-            #     packet = packet + str(self.id_reviews) + "\n\n"
-            #     self.reviews_from_client_queue.put(packet)
-            #     self._fin_sender('review_fin')
-
             review_list = packet.strip().split("\n")
             finalList = ''
             for row in review_list:
@@ -247,9 +243,8 @@ class ConnectionHandler:
                 self.id_reviews += 1
             self.reviews_from_client_queue.put(finalList)
             self.reviews_from_client_queue_to_positive.put(finalList)
-            print("Review batch processed", flush=True)
+            logging.info("Review batch processed")
 
     def get_data(self, data):
-        logging.info("Got data!")
         self.result_to_client_queue.put(data)
         logging.info("Data sent to client")

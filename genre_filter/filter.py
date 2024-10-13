@@ -28,7 +28,6 @@ class GenreFilter:
         """
         try: 
             genres_str = message.genres
-            print(f"Genres: {genres_str}", flush=True)
             if self.genre in genres_str:
                 return message
             return None
@@ -42,7 +41,7 @@ class GenreFilter:
 
         :param data: Datos recibidos.
         """
-        print("Fin de la transmisión, enviando data", data, flush=True)
+        logging.info("Fin de la transmisión, enviando data")
         self.middleware.send(data)
     
     def _callBack(self, data):
@@ -66,7 +65,6 @@ class GenreFilter:
                     logging.info(f"Juego filtrado enviado: {filtered_game}")
                 else:
                     logging.info("Juego no cumple con el filtro de género.")
-                    print("Juego no cumple con el filtro de género.", flush=True)
         
         except Exception as e:
             logging.error(f"Error en _callback al procesar el mensaje: {e}")
