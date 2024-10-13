@@ -27,11 +27,10 @@ class Review():
         )
     
     def checkNanElements(self):
-        if self.id == None or self.id == "nan" or self.id == "" or self.id == None: 
+        if self.game_id == "": 
             return True
-        if self.game_id == "nan" or self.game_id == "" or self.game_id == None: 
+        if self.review_text == "":
             return True
-        if self.review_text == "nan" or self.review_text == "" or self.review_text == None:
+        if self.review_score== "":
             return True
-        if self.review_score== "nan" or self.review_score== "" or self.review_score== None:
-            return True
+        return False

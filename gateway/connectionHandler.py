@@ -151,8 +151,6 @@ class ConnectionHandler:
                                 # Convertir a un objeto Game y procesar los datos
                                 game = Game.from_csv_row(row)
                                 if game.checkNanElements():
-                                    self.filtrados += 1
-                                    print(f"Juegos filtrados: {self.filtrados}", flush=True)
                                     continue
                                 game_str = json.dumps(game.getData())
                                 finalList += f"{game_str}\n"
@@ -263,6 +261,9 @@ class ConnectionHandler:
                 for row in review_list:
                     review = Review.from_csv_row(self.id_reviews, row)
                     if review.checkNanElements():
+                        self.filtrados += 1
+                        print(f"reviews filtradas: {self.filtrados}", flush=True)
+                        print(f"review filtrada: {review}", flush=True)   
                         continue
                     review_str = json.dumps(review.getData())
                     finalList += f"{review_str}\n"
