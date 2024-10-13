@@ -53,5 +53,5 @@ class LanguageFilter:
         :param data: Datos recibidos.
         """
         logging.info("LanguageFilter finished")
-        #self.middleware.send(data)
+        self.middleware.send(data)
         

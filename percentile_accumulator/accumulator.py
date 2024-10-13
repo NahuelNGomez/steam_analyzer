@@ -52,16 +52,25 @@ class PercentileAccumulator:
             # Ordenar los juegos por la cantidad de reseñas negativas de forma descendente
             sorted_games = sorted(self.games.items(), key=lambda x: x[1]['count'], reverse=False)
             total_games = len(sorted_games)
-            cutoff_index = int((total_games +1) * (self.percentile / 100))
+            cutoff_index = int((total_games + 1) * (self.percentile / 100))
             # Seleccionar los juegos dentro del percentil 90
-            top_percentile_games = sorted_games[cutoff_index:] # 90% de los juegos?
+            top_percentile_games = sorted_games[cutoff_index:]  # 90% de los juegos
+
+            # Crear una lista de juegos con el formato deseado
+            negative_count_percentile_list = []
+
             for game_id, game_data in top_percentile_games:
-                self.middleware.send(json.dumps({
+                game_entry = {
                     'game_id': game_id,
-                    'name': game_data['name'],
-                    'negative_count_percentile': game_data['count'],
-                }))
-                logging.info(f"Juego en el percentil 90 enviado: {game_data['name']}")
+                    'name': game_data['name']
+                }
+                negative_count_percentile_list.append(game_entry)
+                logging.info(f"Juego en el percentil 90 añadido: {game_data['name']}")
+
+            # Enviar la lista completa al middleware
+            self.middleware.send(json.dumps({
+                'negative_count_percentile': negative_count_percentile_list
+            }))
             self.games.clear()
         except Exception as e:
             logging.error(f"Error al calcular el percentil 90: {e}")

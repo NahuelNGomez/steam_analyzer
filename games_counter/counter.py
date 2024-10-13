@@ -78,8 +78,7 @@ class GamesCounter:
                 {"platform": "Windows", "game_count": self.platform_counts['Windows']},
                 {"platform": "Mac", "game_count": self.platform_counts['Mac']},
                 {"platform": "Linux", "game_count": self.platform_counts['Linux']}
-            ],
-            "generated_at": datetime.utcnow().isoformat() + "Z"
+            ]
         }
         self.middleware.send(json.dumps(response, indent=4))
         #self.middleware.send("Respuesta del contador de juegos enviada.")

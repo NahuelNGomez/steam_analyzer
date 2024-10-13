@@ -34,8 +34,7 @@ class Top5ReviewCounter:
                     "name": game_data["name"],
                     "positive_review_count": game_data["count"]
                 } for idx, (game_id, game_data) in enumerate(top_5_games)
-            ],
-            "generated_at": datetime.utcnow().isoformat() + "Z"
+            ]
         }
 
 

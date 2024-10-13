@@ -72,7 +72,7 @@ class Client:
                     )
                     
                     # Enviar datasets una vez
-                    self.send_data(protocol, "data/sample_10_por_ciento_games_2.csv", "games")
+                    self.send_data(protocol, "data/sample_1_por_ciento_games.csv", "games")
                     self.send_data(protocol, "data/sample_1_por_ciento_review.csv", "reviews")
                     # self.send_data(protocol, "datasets/games.csv", "games")
                     # self.send_data(protocol, "datasets/dataset.csv", "reviews")
@@ -121,7 +121,12 @@ class Client:
                 if response:
                     logging.info(f"Respuesta recibida: {response}")
                     with self.lock:
-                        self.responses.append(response)  # Almacenar la respuesta
+                        if ("ACK de fin" in response) or ("close" in response) or ("OK\n\n" in response):
+                            logging.info("Fin de la transmisión de resultados")
+                            continue
+                        json_response = json.loads(response)
+                        self.responses.append(json_response)
+                        
                     if "close" in response:
                         break
                 else:

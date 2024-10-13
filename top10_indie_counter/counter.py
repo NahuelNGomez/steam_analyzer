@@ -38,8 +38,7 @@ class Top10IndieCounter:
                     "name": game["nombre"],
                     "average_playtime_hours": round(game["tiempo"], 2)
                 } for idx, (game_id, game) in enumerate(top10)
-            ],
-            "generated_at": datetime.utcnow().isoformat() + "Z"
+            ]
         }
 
 

@@ -106,7 +106,7 @@ class ConnectionHandler:
                     self.gamesHeader = parts[1].strip().split("\n")
                     #print("Header: ", self.gamesHeader, flush=True)
                     logging.info("Header recibido {}".format(self.gamesHeader))
-                    self.protocol.send_message("OK")
+                    self.protocol.send_message("OK\n\n")
                     continue
 
                 data_type = parts[0].strip().lower()
@@ -130,7 +130,7 @@ class ConnectionHandler:
 
                     if data_type == "reviews":
                         self.reviews_to_process_queue.put(parts[1])
-                        self.protocol.send_message("OK")
+                        self.protocol.send_message("OK\n\n")
                         if not self.completed_games:
                             self.games_from_client_queue.put("fin\n\n")
                             self.completed_games = True
@@ -159,7 +159,7 @@ class ConnectionHandler:
                             logging.info("No hay datos para enviar después del filtrado.")
                         # Enviar los juegos procesados a la cola
                         self.games_from_client_queue.put(finalList)
-                        self.protocol.send_message("OK")
+                        self.protocol.send_message("OK\n\n")
                 except Exception as e:
                     logging.error(f"Error al procesar el CSV: {e}")
                     self.protocol.send_message("Error processing data")

@@ -20,6 +20,7 @@ class GameNamesAccumulator:
         self.reviews_low_limit = reviews_low_limit
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
         self._callBack, self._finCallBack)
+        self.datasent = False
 
     def start(self):
         """
@@ -30,8 +31,9 @@ class GameNamesAccumulator:
     
     def process_game(self, game):
         """
-        # Processes each game (game) received and send the name if it has more than the low limit positive reviews.
-        # """
+        Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas.
+        Si el número de reseñas supera el límite definido, envía el nombre del juego.
+        """
         try:
             game_id = game.game_id
             if game_id in self.games:
@@ -44,10 +46,18 @@ class GameNamesAccumulator:
                     }
 
             if self.games[game_id]['count'] > self.reviews_low_limit and game_id not in self.sent_games:
-                self.middleware.send(json.dumps(self.games[game_id]))
+                message = {
+                    'game_exceeding_limit': [
+                        {
+                            'game_name': self.games[game_id]['name']
+                        }
+                    ]
+                }
+                self.middleware.send(json.dumps(message))
                 self.sent_games.append(game_id)
                 self.games.pop(game_id)
-            
+                self.datasent = True
+
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
     
@@ -66,6 +76,11 @@ class GameNamesAccumulator:
         :param data: Datos recibidos.
         """
         logging.info("Fin de la transmisión, enviando data")
+        if not self.datasent:
+            message = {
+                'game_exceeding_limit': []
+            }
+            self.middleware.send(json.dumps(message))
     
     def _callBack(self, data):
         """

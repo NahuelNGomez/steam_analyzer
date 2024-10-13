@@ -13,8 +13,7 @@
                 "platform": "Linux",
                 "game_count": 120
             }
-        ],
-        "generated_at": "2024-10-11T23:41:23.076363"
+        ]
     },
     {
         "top_10_indie_games_2010s": [
@@ -24,7 +23,7 @@
                 "average_playtime_hours": 27080
             },
             {
-                "rank": 2   ,
+                "rank": 2,
                 "name": "War of Rights",
                 "average_playtime_hours": 2857
             },
@@ -68,46 +67,46 @@
                 "name": "Legend of Grimrock 2",
                 "average_playtime_hours": 564
             }
-        ],
-        "generated_at": "2024-10-11T23:41:23.077897"
+        ]
+    },
+    {
+        "negative_count_percentile": [
+            {
+                "game_id": "258970",
+                "name": "Gauntlet\u2122 Slayer Edition"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": []
     },
     {
         "top_5_indie_games_positive_reviews": [
             {
                 "rank": 1,
                 "name": "Prison Architect",
-                "positive_review_count": 1497
+                "positive_review_count": 167
             },
             {
                 "rank": 2,
                 "name": "Magicite",
-                "positive_review_count": 378
+                "positive_review_count": 42
             },
-            { 
+            {
                 "rank": 3,
                 "name": "Trine Enchanted Edition",
-                "positive_review_count": 279
+                "positive_review_count": 31
             },
             {
                 "rank": 4,
                 "name": "Robot Roller-Derby Disco Dodgeball",
-                "positive_review_count": 225
+                "positive_review_count": 25
             },
             {
                 "rank": 5,
                 "name": "Legend of Grimrock 2",
-                "positive_review_count": 108
+                "positive_review_count": 12
             }
-    ]},
-    {
-        "action_games_above_5000_negative_reviews": [],
-        "generated_at": "2024-10-11T23:41:23.079179"
-    },
-    {
-        "game_id": "258970",
-        "name": "Gauntlet\u2122 Slayer Edition",
-        "negative_count_percentile": 90,
-        "generated_at": "2024-10-11T23:41:23.079243"
+        ]
     }
 ]
-

@@ -59,6 +59,14 @@ Luego se debe levantar el servidor y el cliente:
 make docker-compose-up
 ```
 
+
+
+Comparador de resultados
+```bash
+diff -w responses.json serial_queries_1_results.json
+```
+
+$ diff -w responses.json serial_queries_1_results.json
 ---
 
 ## Introducción
