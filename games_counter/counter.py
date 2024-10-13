@@ -17,12 +17,13 @@ class GamesCounter:
         self.total_games = 0
 
     def counterGames(self, game):
+        self.total_games += 1
         try:
             game_name = game.name
             windows = game.windows
             mac = game.mac
             linux = game.linux
-            self.total_games += 1
+            
 
             # Convertir a booleano de forma robusta
             windows = self._convert_to_boolean(windows)
@@ -32,13 +33,13 @@ class GamesCounter:
             # Verificar si los valores ya eran booleanos
             if windows:
                 self.platform_counts['Windows'] += 1
-                logging.info(f"Juego '{game_name}' soporta Windows.")
+                #logging.info(f"Juego '{game_name}' soporta Windows.")
             if mac:
                 self.platform_counts['Mac'] += 1
-                logging.info(f"Juego '{game_name}' soporta Mac.")
+                #logging.info(f"Juego '{game_name}' soporta Mac.")
             if linux:
                 self.platform_counts['Linux'] += 1
-                logging.info(f"Juego '{game_name}' soporta Linux.")
+                #logging.info(f"Juego '{game_name}' soporta Linux.")
 
         except Exception as e:
             logging.error(f"Error al filtrar el juego '{game_name}': {e}")
@@ -62,9 +63,13 @@ class GamesCounter:
         try:
             batch = data.split('\n')
             for row in batch:
-                json_row = json.loads(row)
-                game = Game.decode(json_row)
-                self.counterGames(game)
+                try:
+                    json_row = json.loads(row)
+                    game = Game.decode(json_row)
+                    self.counterGames(game)
+                    print(f"Juego '{game.name}' procesado.", flush=True)
+                except Exception as e:
+                    logging.error(f"Error al procesar la fila '{row}': {e}")
                 
         except Exception as e:
             logging.error(f"Error en _callBack al procesar el mensaje: {e}")
@@ -80,6 +85,7 @@ class GamesCounter:
                 {"platform": "Linux", "game_count": self.platform_counts['Linux']}
             ]
         }
+        print("CANTIDAD DE JUEGOS TOTALES: ", self.total_games, flush=True)
         self.middleware.send(json.dumps(response, indent=4))
         #self.middleware.send("Respuesta del contador de juegos enviada.")
     

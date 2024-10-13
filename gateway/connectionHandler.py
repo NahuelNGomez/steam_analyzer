@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from queue import Queue, Empty
+import sys
 from common.game import Game
 from common.middleware import Middleware
 from common.protocol import Protocol
@@ -35,6 +36,8 @@ class ConnectionHandler:
         self.completed_games = False
         self.next_instance = 0
         self.remaining_responses = 5
+        self.filtrados = 0
+        csv.field_size_limit(sys.maxsize)
             
         self.gamesHeader = []
         self.shutdown_event = threading.Event()
@@ -148,6 +151,8 @@ class ConnectionHandler:
                                 # Convertir a un objeto Game y procesar los datos
                                 game = Game.from_csv_row(row)
                                 if game.checkNanElements():
+                                    self.filtrados += 1
+                                    print(f"Juegos filtrados: {self.filtrados}", flush=True)
                                     continue
                                 game_str = json.dumps(game.getData())
                                 finalList += f"{game_str}\n"

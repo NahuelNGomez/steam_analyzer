@@ -3,15 +3,821 @@
         "supported_platforms": [
             {
                 "platform": "Windows",
-                "game_count": 922
+                "game_count": 92534
             },
             {
                 "platform": "Mac",
-                "game_count": 181
+                "game_count": 17703
             },
             {
                 "platform": "Linux",
-                "game_count": 120
+                "game_count": 12307
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "PAYDAY 2"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "DayZ"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Rust"
+            }
+        ]
+    },
+    {
+        "negative_count_percentile": [
+            {
+                "game_id": "440",
+                "name": "Team Fortress 2"
+            },
+            {
+                "game_id": "550",
+                "name": "Left 4 Dead 2"
+            },
+            {
+                "game_id": "570",
+                "name": "Dota 2"
+            },
+            {
+                "game_id": "1250",
+                "name": "Killing Floor"
+            },
+            {
+                "game_id": "2870",
+                "name": "X Rebirth"
+            },
+            {
+                "game_id": "8870",
+                "name": "BioShock Infinite"
+            },
+            {
+                "game_id": "9480",
+                "name": "Saints Row 2"
+            },
+            {
+                "game_id": "10180",
+                "name": "Call of Duty®: Modern Warfare® 2 (2009)"
+            },
+            {
+                "game_id": "12120",
+                "name": "Grand Theft Auto: San Andreas"
+            },
+            {
+                "game_id": "12210",
+                "name": "Grand Theft Auto IV: The Complete Edition"
+            },
+            {
+                "game_id": "17080",
+                "name": "Tribes: Ascend"
+            },
+            {
+                "game_id": "20900",
+                "name": "The Witcher: Enhanced Edition Director's Cut"
+            },
+            {
+                "game_id": "24200",
+                "name": "DC Universe™ Online"
+            },
+            {
+                "game_id": "24960",
+                "name": "Battlefield: Bad Company™ 2"
+            },
+            {
+                "game_id": "32500",
+                "name": "STAR WARS™: The Force Unleashed™ II"
+            },
+            {
+                "game_id": "42680",
+                "name": "Call of Duty®: Modern Warfare® 3"
+            },
+            {
+                "game_id": "48700",
+                "name": "Mount & Blade: Warband"
+            },
+            {
+                "game_id": "49520",
+                "name": "Borderlands 2"
+            },
+            {
+                "game_id": "49540",
+                "name": "Aliens: Colonial Marines Collection"
+            },
+            {
+                "game_id": "57900",
+                "name": "Duke Nukem Forever"
+            },
+            {
+                "game_id": "104900",
+                "name": "ORION: Prelude"
+            },
+            {
+                "game_id": "105600",
+                "name": "Terraria"
+            },
+            {
+                "game_id": "107410",
+                "name": "Arma 3"
+            },
+            {
+                "game_id": "113200",
+                "name": "The Binding of Isaac"
+            },
+            {
+                "game_id": "113400",
+                "name": "APB Reloaded"
+            },
+            {
+                "game_id": "200210",
+                "name": "Realm of the Mad God Exalt"
+            },
+            {
+                "game_id": "202970",
+                "name": "Call of Duty®: Black Ops II"
+            },
+            {
+                "game_id": "203140",
+                "name": "Hitman: Absolution™"
+            },
+            {
+                "game_id": "203160",
+                "name": "Tomb Raider"
+            },
+            {
+                "game_id": "203290",
+                "name": "America's Army: Proving Grounds"
+            },
+            {
+                "game_id": "204100",
+                "name": "Max Payne 3"
+            },
+            {
+                "game_id": "204300",
+                "name": "Awesomenauts - the 2D moba"
+            },
+            {
+                "game_id": "206420",
+                "name": "Saints Row IV"
+            },
+            {
+                "game_id": "208650",
+                "name": "Batman™: Arkham Knight"
+            },
+            {
+                "game_id": "209160",
+                "name": "Call of Duty®: Ghosts"
+            },
+            {
+                "game_id": "209870",
+                "name": "Blacklight: Retribution"
+            },
+            {
+                "game_id": "211400",
+                "name": "Deadlight"
+            },
+            {
+                "game_id": "211420",
+                "name": "DARK SOULS™: Prepare To Die™ Edition"
+            },
+            {
+                "game_id": "211820",
+                "name": "Starbound"
+            },
+            {
+                "game_id": "214490",
+                "name": "Alien: Isolation"
+            },
+            {
+                "game_id": "218230",
+                "name": "PlanetSide 2"
+            },
+            {
+                "game_id": "218620",
+                "name": "PAYDAY 2"
+            },
+            {
+                "game_id": "219640",
+                "name": "Chivalry: Medieval Warfare"
+            },
+            {
+                "game_id": "220240",
+                "name": "Far Cry 3"
+            },
+            {
+                "game_id": "221100",
+                "name": "DayZ"
+            },
+            {
+                "game_id": "222880",
+                "name": "Insurgency"
+            },
+            {
+                "game_id": "223710",
+                "name": "Cry of Fear"
+            },
+            {
+                "game_id": "224260",
+                "name": "No More Room in Hell"
+            },
+            {
+                "game_id": "227940",
+                "name": "Heroes & Generals"
+            },
+            {
+                "game_id": "228380",
+                "name": "Wreckfest"
+            },
+            {
+                "game_id": "230410",
+                "name": "Warframe"
+            },
+            {
+                "game_id": "232090",
+                "name": "Killing Floor 2"
+            },
+            {
+                "game_id": "233720",
+                "name": "Surgeon Simulator"
+            },
+            {
+                "game_id": "234140",
+                "name": "Mad Max"
+            },
+            {
+                "game_id": "235540",
+                "name": "Warhammer: End Times - Vermintide"
+            },
+            {
+                "game_id": "235600",
+                "name": "Tom Clancy’s Splinter Cell Blacklist"
+            },
+            {
+                "game_id": "236110",
+                "name": "Dungeon Defenders II"
+            },
+            {
+                "game_id": "236390",
+                "name": "War Thunder"
+            },
+            {
+                "game_id": "236510",
+                "name": "Takedown: Red Sabre"
+            },
+            {
+                "game_id": "236870",
+                "name": "HITMAN™"
+            },
+            {
+                "game_id": "237870",
+                "name": "Planet Explorers"
+            },
+            {
+                "game_id": "239140",
+                "name": "Dying Light"
+            },
+            {
+                "game_id": "239160",
+                "name": "Thief"
+            },
+            {
+                "game_id": "241540",
+                "name": "State of Decay"
+            },
+            {
+                "game_id": "241560",
+                "name": "The Crew™"
+            },
+            {
+                "game_id": "242760",
+                "name": "The Forest"
+            },
+            {
+                "game_id": "242860",
+                "name": "Verdun"
+            },
+            {
+                "game_id": "243470",
+                "name": "Watch_Dogs™"
+            },
+            {
+                "game_id": "244850",
+                "name": "Space Engineers"
+            },
+            {
+                "game_id": "247730",
+                "name": "Nether: Resurrected"
+            },
+            {
+                "game_id": "250400",
+                "name": "How to Survive"
+            },
+            {
+                "game_id": "250420",
+                "name": "8BitMMO"
+            },
+            {
+                "game_id": "251570",
+                "name": "7 Days to Die"
+            },
+            {
+                "game_id": "252490",
+                "name": "Rust"
+            },
+            {
+                "game_id": "252950",
+                "name": "Rocket League®"
+            },
+            {
+                "game_id": "253710",
+                "name": "theHunter Classic"
+            },
+            {
+                "game_id": "254700",
+                "name": "Resident Evil 4"
+            },
+            {
+                "game_id": "258180",
+                "name": "Deus Ex: The Fall"
+            },
+            {
+                "game_id": "261640",
+                "name": "Borderlands: The Pre-Sequel"
+            },
+            {
+                "game_id": "265300",
+                "name": "Lords Of The Fallen™"
+            },
+            {
+                "game_id": "265550",
+                "name": "Dead Rising 3 Apocalypse Edition"
+            },
+            {
+                "game_id": "265630",
+                "name": "Fistful of Frags"
+            },
+            {
+                "game_id": "271590",
+                "name": "Grand Theft Auto V"
+            },
+            {
+                "game_id": "273110",
+                "name": "Counter-Strike Nexon: Studio"
+            },
+            {
+                "game_id": "273350",
+                "name": "Evolve Stage 2"
+            },
+            {
+                "game_id": "275850",
+                "name": "No Man's Sky"
+            },
+            {
+                "game_id": "285900",
+                "name": "Gang Beasts"
+            },
+            {
+                "game_id": "287700",
+                "name": "METAL GEAR SOLID V: THE PHANTOM PAIN"
+            },
+            {
+                "game_id": "289650",
+                "name": "Assassin's Creed® Unity"
+            },
+            {
+                "game_id": "291480",
+                "name": "Warface"
+            },
+            {
+                "game_id": "291550",
+                "name": "Brawlhalla"
+            },
+            {
+                "game_id": "292730",
+                "name": "Call of Duty®: Infinite Warfare"
+            },
+            {
+                "game_id": "298240",
+                "name": "War Trigger 3"
+            },
+            {
+                "game_id": "298900",
+                "name": "Space Hulk: Deathwing"
+            },
+            {
+                "game_id": "299360",
+                "name": "Block N Load"
+            },
+            {
+                "game_id": "299740",
+                "name": "Miscreated"
+            },
+            {
+                "game_id": "301520",
+                "name": "Robocraft"
+            },
+            {
+                "game_id": "302830",
+                "name": "BLOCKADE 3D"
+            },
+            {
+                "game_id": "303390",
+                "name": "Dead Bits"
+            },
+            {
+                "game_id": "304050",
+                "name": "Trove"
+            },
+            {
+                "game_id": "306130",
+                "name": "The Elder Scrolls® Online"
+            },
+            {
+                "game_id": "307780",
+                "name": "Mortal Kombat X"
+            },
+            {
+                "game_id": "310950",
+                "name": "Street Fighter V"
+            },
+            {
+                "game_id": "311210",
+                "name": "Call of Duty®: Black Ops III"
+            },
+            {
+                "game_id": "322500",
+                "name": "SUPERHOT"
+            },
+            {
+                "game_id": "333930",
+                "name": "Dirty Bomb®"
+            },
+            {
+                "game_id": "335300",
+                "name": "DARK SOULS™ II: Scholar of the First Sin"
+            },
+            {
+                "game_id": "335330",
+                "name": "Brick-Force"
+            },
+            {
+                "game_id": "337000",
+                "name": "Deus Ex: Mankind Divided"
+            },
+            {
+                "game_id": "344760",
+                "name": "Reign Of Kings"
+            },
+            {
+                "game_id": "346110",
+                "name": "ARK: Survival Evolved"
+            },
+            {
+                "game_id": "351290",
+                "name": "SURVIVAL: Postapocalypse Now"
+            },
+            {
+                "game_id": "355840",
+                "name": "Survarium"
+            },
+            {
+                "game_id": "359320",
+                "name": "Elite Dangerous"
+            },
+            {
+                "game_id": "359550",
+                "name": "Tom Clancy's Rainbow Six® Siege"
+            },
+            {
+                "game_id": "360430",
+                "name": "Mafia III: Definitive Edition"
+            },
+            {
+                "game_id": "364360",
+                "name": "Total War: WARHAMMER"
+            },
+            {
+                "game_id": "365590",
+                "name": "Tom Clancy’s The Division™"
+            },
+            {
+                "game_id": "374320",
+                "name": "DARK SOULS™ III"
+            },
+            {
+                "game_id": "375230",
+                "name": "Warhammer 40,000: Eternal Crusade"
+            },
+            {
+                "game_id": "379720",
+                "name": "DOOM"
+            },
+            {
+                "game_id": "381210",
+                "name": "Dead by Daylight"
+            },
+            {
+                "game_id": "391460",
+                "name": "WARMODE"
+            },
+            {
+                "game_id": "393380",
+                "name": "Squad"
+            },
+            {
+                "game_id": "394230",
+                "name": "Battleborn"
+            },
+            {
+                "game_id": "403640",
+                "name": "Dishonored 2"
+            },
+            {
+                "game_id": "407530",
+                "name": "ARK: Survival Of The Fittest"
+            },
+            {
+                "game_id": "409710",
+                "name": "BioShock™ Remastered"
+            },
+            {
+                "game_id": "412400",
+                "name": "GASP"
+            },
+            {
+                "game_id": "427730",
+                "name": "Who's Your Daddy?!"
+            },
+            {
+                "game_id": "433850",
+                "name": "Z1 Battle Royale"
+            },
+            {
+                "game_id": "437220",
+                "name": "The Culling"
+            },
+            {
+                "game_id": "444090",
+                "name": "Paladins®"
+            },
+            {
+                "game_id": "555570",
+                "name": "Infestation: The New Z"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Dota 2"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Robocraft"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Heroes & Generals"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "No Man's Sky"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Grand Theft Auto V"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Batman™: Arkham Knight"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Call of Duty®: Black Ops III"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Tom Clancy’s The Division™"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Z1 Battle Royale"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "ARK: Survival Evolved"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Evolve Stage 2"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Nether: Resurrected"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "7 Days to Die"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Grand Theft Auto IV: The Complete Edition"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Space Engineers"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "theHunter Classic"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Killing Floor 2"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Dead by Daylight"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "APB Reloaded"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Dirty Bomb®"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Chivalry: Medieval Warfare"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Paladins®"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Call of Duty®: Ghosts"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "BLOCKADE 3D"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Starbound"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Mortal Kombat X"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Tom Clancy's Rainbow Six® Siege"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Warframe"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Left 4 Dead 2"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "War Thunder"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Arma 3"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "DARK SOULS™: Prepare To Die™ Edition"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Total War: WARHAMMER"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Rocket League®"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "Trove"
             }
         ]
     },
@@ -19,93 +825,110 @@
         "top_10_indie_games_2010s": [
             {
                 "rank": 1,
+                "name": "Relive",
+                "average_playtime_hours": 68357
+            },
+            {
+                "rank": 2,
+                "name": "拯救大魔王2 Rescue the Great Demon 2",
+                "average_playtime_hours": 49555
+            },
+            {
+                "rank": 3,
+                "name": "Out of the Park Baseball 20",
+                "average_playtime_hours": 34798
+            },
+            {
+                "rank": 4,
+                "name": "时之回廊/Corridor of time",
+                "average_playtime_hours": 33343
+            },
+            {
+                "rank": 5,
+                "name": "Clicker Heroes 2",
+                "average_playtime_hours": 31708
+            },
+            {
+                "rank": 6,
                 "name": "Time of Dragons",
                 "average_playtime_hours": 27080
             },
             {
-                "rank": 2,
-                "name": "War of Rights",
-                "average_playtime_hours": 2857
-            },
-            {
-                "rank": 3,
-                "name": "Gurgamoth",
-                "average_playtime_hours": 1631
-            },
-            {
-                "rank": 4,
-                "name": "Prison Architect",
-                "average_playtime_hours": 1481
-            },
-            {
-                "rank": 5,
-                "name": "Princess & Conquest",
-                "average_playtime_hours": 1430
-            },
-            {
-                "rank": 6,
-                "name": "House Flipper",
-                "average_playtime_hours": 1313
-            },
-            {
                 "rank": 7,
-                "name": "Voxelgram",
-                "average_playtime_hours": 1208
+                "name": "Project AURA",
+                "average_playtime_hours": 26827
             },
             {
                 "rank": 8,
-                "name": "Magicite",
-                "average_playtime_hours": 763
+                "name": "Midas Gold Plus",
+                "average_playtime_hours": 19196
             },
             {
                 "rank": 9,
-                "name": "The Room Three",
-                "average_playtime_hours": 574
+                "name": "Beasts of Bermuda",
+                "average_playtime_hours": 17147
             },
             {
                 "rank": 10,
-                "name": "Legend of Grimrock 2",
-                "average_playtime_hours": 564
+                "name": "Rust",
+                "average_playtime_hours": 16623
             }
         ]
     },
     {
-        "negative_count_percentile": [
+        "game_exceeding_limit": [
             {
-                "game_id": "258970",
-                "name": "Gauntlet™ Slayer Edition"
+                "game_name": "PlanetSide 2"
             }
         ]
     },
     {
-        "game_exceeding_limit": []
+        "game_exceeding_limit": [
+            {
+                "game_name": "Counter-Strike Nexon: Studio"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "The Culling"
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "No More Room in Hell"
+            }
+        ]
     },
     {
         "top_5_indie_games_positive_reviews": [
             {
                 "rank": 1,
-                "name": "Prison Architect",
-                "positive_review_count": 167
+                "name": "Terraria",
+                "positive_review_count": 808
             },
             {
                 "rank": 2,
-                "name": "Magicite",
-                "positive_review_count": 42
+                "name": "Rust",
+                "positive_review_count": 585
             },
             {
                 "rank": 3,
-                "name": "Trine Enchanted Edition",
-                "positive_review_count": 31
+                "name": "Rocket League®",
+                "positive_review_count": 476
             },
             {
                 "rank": 4,
-                "name": "Robot Roller-Derby Disco Dodgeball",
-                "positive_review_count": 25
+                "name": "Undertale",
+                "positive_review_count": 473
             },
             {
                 "rank": 5,
-                "name": "Legend of Grimrock 2",
-                "positive_review_count": 12
+                "name": "Starbound",
+                "positive_review_count": 382
             }
         ]
     }
