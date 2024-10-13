@@ -26,12 +26,14 @@ class Middleware:
         self.amount_output_instances = amount_output_instances
         self.connection = self._connect_with_retries()
         self.channel = self.connection.channel()
+        self.channel.basic_qos(prefetch_count=100)
         self.input_queues: dict[str, str] = {}
         self.output_queues = output_queues
         self.output_exchanges = output_exchanges
         self.intance_id = intance_id
         self.callback = callback
         self.eofCallback = eofCallback
+        self.auto_ack = False
         self._init_input_queues(input_queues)
         self._init_output_queues()
 
@@ -68,7 +70,7 @@ class Middleware:
             )
 
             self.channel.basic_consume(
-                queue=queue_name, on_message_callback=callback_wrapper, auto_ack=False
+                queue=queue_name, on_message_callback=callback_wrapper, auto_ack=self.auto_ack
             )
 
             if queue_name not in self.input_queues:
@@ -111,11 +113,8 @@ class Middleware:
                 eofCallback(body)
             else:
                 response = callback(mensaje_str)
-            if response == 2:
-                self.send_to_requeue_positive(method.routing_key, body)
-            if response == 3:
-                self.send_to_requeue_negative(method.routing_key, body)
-            self.ack(method.delivery_tag)
+            if not self.auto_ack:
+                self.ack(method.delivery_tag)
 
         return callback_wrapper
 

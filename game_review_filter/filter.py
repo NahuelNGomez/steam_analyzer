@@ -80,7 +80,7 @@ class GameReviewFilter:
             review_cleaned = review.replace('\x00', '')
             self.reviews_to_add.append(review_cleaned)
             # Usar lock antes de escribir en el archivo
-            if len(self.reviews_to_add) >= 1000:
+            if len(self.reviews_to_add) >= 2000:
                 name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
                 with open(name, "a") as file:
                     for review_cleaned in self.reviews_to_add:
