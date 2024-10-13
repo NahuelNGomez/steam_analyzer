@@ -72,8 +72,8 @@ class Client:
                     )
                     
                     # Enviar datasets una vez
-                    self.send_data(protocol, "data/sample_1_por_ciento_games.csv", "games")
-                    self.send_data(protocol, "data/sample_1_por_ciento_review.csv", "reviews")
+                    self.send_data(protocol, "data/sample_10_por_ciento_games.csv", "games")
+                    self.send_data(protocol, "data/sample_10_por_ciento_review.csv", "reviews")
                     # self.send_data(protocol, "datasets/games.csv", "games")
                     # self.send_data(protocol, "datasets/dataset.csv", "reviews")
                     self.send_fin(protocol)

@@ -49,12 +49,19 @@ class PercentileAccumulator:
         Calcula los juegos dentro del percentil 90 de reseñas negativas.
         """
         try:
-            # Ordenar los juegos por la cantidad de reseñas negativas de forma descendente
+            # Ordenar los juegos por la cantidad de reseñas negativas de forma ascendente (de menor a mayor)
             sorted_games = sorted(self.games.items(), key=lambda x: x[1]['count'], reverse=False)
             total_games = len(sorted_games)
             cutoff_index = int((total_games + 1) * (self.percentile / 100))
-            # Seleccionar los juegos dentro del percentil 90
-            top_percentile_games = sorted_games[cutoff_index:]  # 90% de los juegos
+            
+            # Si el total de juegos es menor al cutoff, ajustar el índice
+            cutoff_index = min(cutoff_index, total_games - 1)
+            
+            # Obtener el valor del count del juego que marca el corte
+            cutoff_count = sorted_games[cutoff_index][1]['count']
+
+            # Seleccionar todos los juegos dentro del percentil 90 (incluyendo los que tienen el mismo count)
+            top_percentile_games = [game for game in sorted_games if game[1]['count'] >= cutoff_count]
 
             # Crear una lista de juegos con el formato deseado
             negative_count_percentile_list = []
@@ -67,10 +74,18 @@ class PercentileAccumulator:
                 negative_count_percentile_list.append(game_entry)
                 logging.info(f"Juego en el percentil 90 añadido: {game_data['name']}")
 
+            # Ordenar la lista de juegos por game_id tratado como número antes de enviarla
+            negative_count_percentile_list = sorted(negative_count_percentile_list, key=lambda x: int(x['game_id']))
+
             # Enviar la lista completa al middleware
             self.middleware.send(json.dumps({
                 'negative_count_percentile': negative_count_percentile_list
             }))
+            print("2->", self.games["352460"], flush=True)
+            print("1->", self.games["278080"], flush=True)
+            print("l->", len(self.games), flush=True)
+            print("c->", cutoff_index, flush=True)
+
             self.games.clear()
         except Exception as e:
             logging.error(f"Error al calcular el percentil 90: {e}")

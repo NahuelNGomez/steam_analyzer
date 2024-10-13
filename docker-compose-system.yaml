@@ -308,7 +308,7 @@ services:
       - OUTPUT_EXCHANGES=["result_queue"]
       - INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}
       - LOGGING_LEVEL=INFO
-      - REVIEWS_LOW_LIMIT=30
+      - REVIEWS_LOW_LIMIT=5000
     volumes:
       - ./common:/common
   
