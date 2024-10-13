@@ -2,9 +2,10 @@ import time
 import socket
 import logging
 import json
+import threading
 from common.protocol import Protocol
 from common.constants import MAX_BATCH_SIZE
-import threading
+
 
 class Client:
     def __init__(self, boundary_ip, boundary_port, retries=5, delay=5):
@@ -12,9 +13,10 @@ class Client:
         self.boundary_port = boundary_port
         self.retries = retries
         self.delay = delay
-        self.responses = []  
-        self.lock = threading.Lock()  
-        
+        self.responses = []
+        self.lock = threading.Lock()
+        self.shutdown_event = threading.Event()
+
     def send_data(self, protocol, file_path, data_type):
         try:
             with open(file_path, "r", encoding="utf-8") as file:
@@ -22,10 +24,14 @@ class Client:
                 first = True
                 protocol.send_message(data_type)
                 for line in file:
+                    if self.shutdown_event.is_set():
+                        logging.info("Señal de cierre recibida. Deteniendo envío de datos.")
+                        return
                     if first:
                         first = False
                         message = f"{data_type}\n\n{line}"
                         protocol.send_message(message)
+                        logging.debug(f"Enviado (inicio {data_type}): {line[:50]}...")
                         continue
                     batch.append(line)
                     if len(batch) == MAX_BATCH_SIZE:  # Si alcanzamos el tamaño del batch
@@ -54,15 +60,13 @@ class Client:
             message = "fin\n\n"
             protocol.send_message(message)
             logging.info("Fin de la transmisión de datos")
-            logging.debug(f"Enviado ({message})")
-        except FileNotFoundError:
-            logging.error(f"Error al enviar fin")
+            logging.debug(f"Enviado ({message.strip()})")
         except Exception as e:
-            logging.error(f"Error al enviar datos: {e}")
+            logging.error(f"Error al enviar fin: {e}")
 
     def start(self):
         attempt = 0
-        while attempt < self.retries:
+        while attempt < self.retries and not self.shutdown_event.is_set():
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.connect((self.boundary_ip, int(self.boundary_port)))
@@ -79,7 +83,7 @@ class Client:
                     self.send_fin(protocol)
 
                     # Iniciar un hilo para guardar respuestas periódicamente
-                    save_thread = threading.Thread(target=self.periodic_save_responses)
+                    save_thread = threading.Thread(target=self.periodic_save_responses, name="SaveThread")
                     save_thread.daemon = True
                     save_thread.start()
 
@@ -107,16 +111,18 @@ class Client:
                     f"Error en el cliente: {e}. Intento {attempt} de {self.retries}"
                 )
                 time.sleep(self.delay)
-        logging.critical(
-            f"No se pudo conectar al servidor en {self.boundary_ip}:{self.boundary_port} después de {self.retries} intentos."
-        )
+        else:
+            if not self.shutdown_event.is_set():
+                logging.critical(
+                    f"No se pudo conectar al servidor en {self.boundary_ip}:{self.boundary_port} después de {self.retries} intentos."
+                )
 
     def wait_for_result(self, protocol):
         """
         Método para seguir escuchando respuestas del servidor después de enviar los datasets.
         """
         try:
-            while True:
+            while not self.shutdown_event.is_set():
                 response = protocol.receive_message()
                 if response:
                     logging.info(f"Respuesta recibida: {response}")
@@ -124,8 +130,11 @@ class Client:
                         if ("ACK de fin" in response) or ("close" in response) or ("OK\n\n" in response):
                             logging.info("Fin de la transmisión de resultados")
                             continue
-                        json_response = json.loads(response)
-                        self.responses.append(json_response)
+                        try:
+                            json_response = json.loads(response)
+                            self.responses.append(json_response)
+                        except json.JSONDecodeError:
+                            logging.warning(f"Respuesta no es JSON válida: {response}")
                         
                     if "close" in response:
                         break
@@ -141,7 +150,7 @@ class Client:
         """
         Guardar las respuestas en un archivo JSON periódicamente.
         """
-        while True:
+        while not self.shutdown_event.is_set():
             time.sleep(10)  # Guardar cada 10 segundos
             self.save_responses_to_json()
 
@@ -156,3 +165,13 @@ class Client:
                     logging.info("Respuestas guardadas en /results/responses.json")
         except Exception as e:
             logging.error(f"Error al guardar respuestas en JSON: {e}")
+
+    def shutdown(self):
+        """
+        Método para manejar el cierre del cliente de manera ordenada.
+        """
+        logging.info("Iniciando cierre ordenado del cliente.")
+        self.shutdown_event.set()
+        # Esperar a que los hilos secundarios finalicen si es necesario
+        self.save_responses_to_json()
+        logging.info("Cliente cerrado exitosamente.")
