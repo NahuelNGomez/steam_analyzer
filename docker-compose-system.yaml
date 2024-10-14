@@ -9,6 +9,7 @@ services:
       - testing_net
     depends_on:
       - indie_filter
+      - indie_filter2
       - action_filter
       - games_counter
       - positive_review_filter
@@ -29,7 +30,8 @@ services:
     environment:
       - LOGGING_LEVEL=INFO
       - OUTPUT_QUEUE=reviews_queue
-      - AMOUNT_OF_REVIEW_INSTANCE=2
+      - AMOUNT_OF_REVIEW_INSTANCE=4 # POSITIVES
+      - AMOUNT_OF_GAMES_INSTANCE=2 # INDIE
       - OUTPUT_EXCHANGES=["games"]
       - INPUT_QUEUES={"result_queue_gateway":"result_queue"}
 

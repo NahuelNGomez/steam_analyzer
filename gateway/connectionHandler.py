@@ -22,7 +22,7 @@ output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES", "[]"))
 instance_id = os.getenv("INSTANCE_ID", "0")
 
 class ConnectionHandler:
-    def __init__(self, client_socket, address, amount_of_review_instances):
+    def __init__(self, client_socket, address, amount_of_review_instances, amount_of_games_instances):
         self.id_reviews = 0
         self.client_socket = client_socket
         self.address = address
@@ -33,6 +33,7 @@ class ConnectionHandler:
         self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.amount_of_review_instances = amount_of_review_instances
+        self.amount_of_games_instances = amount_of_games_instances
         self.completed_games = False
         self.next_instance = 0
         self.remaining_responses = 5
