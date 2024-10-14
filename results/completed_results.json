@@ -210,35 +210,6 @@
         ]
     },
     {
-        "top_5_indie_games_positive_reviews": [
-            {
-                "rank": 1,
-                "name": "Terraria",
-                "positive_review_count": 82227
-            },
-            {
-                "rank": 2,
-                "name": "Rust",
-                "positive_review_count": 61032
-            },
-            {
-                "rank": 3,
-                "name": "Rocket League®",
-                "positive_review_count": 51084
-            },
-            {
-                "rank": 4,
-                "name": "Undertale",
-                "positive_review_count": 49812
-            },
-            {
-                "rank": 5,
-                "name": "Starbound",
-                "positive_review_count": 36134
-            }
-        ]
-    },
-    {
         "negative_count_percentile": [
             {
                 "game_id": "10",
