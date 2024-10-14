@@ -78,8 +78,8 @@ class Client:
                     # Enviar datasets una vez
                     # self.send_data(protocol, "data/games.csv", "games")
                     # self.send_data(protocol, "data/dataset.csv", "reviews")
-                    self.send_data(protocol, "data/games.csv", "games")
-                    self.send_data(protocol, "data/dataset.csv", "reviews")
+                    self.send_data(protocol, "datasets/games.csv", "games")
+                    self.send_data(protocol, "datasets/dataset.csv", "reviews")
                     self.send_fin(protocol)
 
                     # Iniciar un hilo para guardar respuestas periódicamente
@@ -160,9 +160,9 @@ class Client:
         """
         try:
             with self.lock:
-                with open("/results/responses.json", "w", encoding="utf-8") as json_file:
+                with open("/results/dist_results.json", "w", encoding="utf-8") as json_file:
                     json.dump(self.responses, json_file, indent=4, ensure_ascii=False)
-                    logging.info("Respuestas guardadas en /results/responses.json")
+                    logging.info("Respuestas guardadas en /results/dist_results.json")
         except Exception as e:
             logging.error(f"Error al guardar respuestas en JSON: {e}")
 

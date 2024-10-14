@@ -262,8 +262,7 @@ class ConnectionHandler:
                     review = Review.from_csv_row(self.id_reviews, row)
                     if review.checkNanElements():
                         self.filtrados += 1
-                        print(f"reviews filtradas: {self.filtrados}", flush=True)
-                        print(f"review filtrada: {review}", flush=True)   
+
                         continue
                     review_str = json.dumps(review.getData())
                     finalList += f"{review_str}\n"

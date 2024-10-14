@@ -23,7 +23,6 @@ class PositivityFilter:
                         continue
                 result_review = Review.decode(json.loads(row))
                 self.counter += 1
-                print("Juegos procesados: ", self.counter, flush=True)
                 
                 review_score = result_review.review_score
                 if int(review_score) == self.positivity: # Cast?

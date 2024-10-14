@@ -11,9 +11,6 @@ class Review():
     @staticmethod
     def from_csv_row(id_review, row):
         fields = list(csv.reader([row]))[0]
-        if (fields[0] == 105600 or fields[0] == '105600') and fields[2].strip() == '':
-            print("Fields: ", fields, flush=True)
-        
         return Review(fields[0].strip(), fields[1].strip(), fields[2], fields[3].strip(), id_review)
     
     def getData(self):

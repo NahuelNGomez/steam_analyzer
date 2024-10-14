@@ -21,6 +21,8 @@ class PercentileAccumulator:
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
                                      self._callBack, self._finCallBack)
 
+        self.counter = 0
+        
     def start(self):
         """
         Inicia el acumulador.
@@ -33,9 +35,9 @@ class PercentileAccumulator:
         Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas.
         """
         try:
+            self.counter += 1
             game_id = game.game_id
-            if (game_id == "352460"):
-                print("12213123->", game, flush=True)
+
             if game_id in self.games:
                 self.games[game_id]['count'] += 1
             else:
@@ -51,10 +53,11 @@ class PercentileAccumulator:
         Calcula los juegos dentro del percentil 90 de reseñas negativas.
         """
         try:
+
             # Ordenar los juegos por la cantidad de reseñas negativas de forma ascendente (de menor a mayor)
             sorted_games = sorted(self.games.items(), key=lambda x: x[1]['count'], reverse=False)
             total_games = len(sorted_games)
-            cutoff_index = int((total_games + 1) * (self.percentile / 100))
+            cutoff_index = int((total_games) * (self.percentile / 100))
             
             # Si el total de juegos es menor al cutoff, ajustar el índice
             cutoff_index = min(cutoff_index, total_games - 1)
@@ -83,10 +86,6 @@ class PercentileAccumulator:
             self.middleware.send(json.dumps({
                 'negative_count_percentile': negative_count_percentile_list
             }))
-            print("2->", self.games["352460"], flush=True)
-            print("1->", self.games["10"], flush=True)
-            print("1->", self.games["49540"], flush=True)
-            print("c->", cutoff_index, flush=True)
 
             self.games.clear()
         except Exception as e:
@@ -114,3 +113,5 @@ class PercentileAccumulator:
             self.process_game(game_review)
         except Exception as e:
             logging.error(f"Error en PercentileAccumulator callback: {e}")
+            
+       
