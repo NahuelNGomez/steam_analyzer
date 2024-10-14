@@ -43,7 +43,7 @@ def compare_jsons(json1, json2):
 def main():
     # Archivos JSON a comparar
     file1 = 'responses.json'
-    file2 = 'serial_queries_1_results.json'
+    file2 = 'completed_results.json'
 
     # Cargar ambos archivos
     json1 = load_json(file1)
