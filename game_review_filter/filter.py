@@ -31,6 +31,7 @@ class GameReviewFilter:
         self.nodes_completed = 0
         self.review_file = 0
         self.review_file_size = 0
+        self.counter = 0
 
         #self.requeued_reviews = []
 
@@ -71,10 +72,8 @@ class GameReviewFilter:
         try:
             game = Game.decode(json.loads(game))
             self.games[game.id] = game.name
-            if (game.id == '352460'):
-                logging.info(f"Juego agregado: {game.id}")
-                logging.info(f"Juego agregado: {game.name}")
-                logging.info(f"Juego agregado: {self.games[game.id]}")
+            if (game.name == "The Plan"):
+                print("Juego agregado: ", game.name, flush=True)
         except Exception as e:
             logging.error(f"Error al agregar juego: {e}")
 
@@ -93,12 +92,12 @@ class GameReviewFilter:
                         file.write(review_cleaned + "\n")
                 self.reviews_to_add = []
                 self.review_file_size += 1
-        if self.review_file_size >= 100:
-            print("Procesando reviews", flush=True)
-            self.review_file_size = 0
-            #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
-            self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-            #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
+        # if self.review_file_size >= 100:
+        #     print("Procesando reviews", flush=True)
+        #     self.review_file_size = 0
+        #     #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
+        #     self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+        #     #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
 
     def handle_game_eof(self, message):
         """
