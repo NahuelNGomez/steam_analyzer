@@ -11,7 +11,10 @@ class Review():
     @staticmethod
     def from_csv_row(id_review, row):
         fields = list(csv.reader([row]))[0]
-        return Review(fields[0].strip(), fields[1].strip(), fields[2].strip(), fields[3].strip(), id_review)
+        if (fields[0] == 105600 or fields[0] == '105600') and fields[2].strip() == '':
+            print("Fields: ", fields, flush=True)
+        
+        return Review(fields[0].strip(), fields[1].strip(), fields[2], fields[3].strip(), id_review)
     
     def getData(self):
         return [self.game_id, self.app_name, self.review_text, self.review_score, self.id]
@@ -25,6 +28,9 @@ class Review():
             cleaned_fields[0], cleaned_fields[1], cleaned_fields[2],
             cleaned_fields[3], cleaned_fields[4]
         )
+
+    def __str__(self):
+        return f"Review({self.game_id}, {self.app_name}, {self.review_text}, {self.review_score}, {self.id})"
     
     def checkNanElements(self):
         if self.game_id == "": 

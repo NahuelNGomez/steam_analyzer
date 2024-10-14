@@ -76,10 +76,10 @@ class Client:
                     )
                     
                     # Enviar datasets una vez
-                    self.send_data(protocol, "data/games.csv", "games")
-                    self.send_data(protocol, "data/dataset.csv", "reviews")
-                    # self.send_data(protocol, "datasets/games.csv", "games")
-                    # self.send_data(protocol, "datasets/dataset.csv", "reviews")
+                    # self.send_data(protocol, "data/games.csv", "games")
+                    # self.send_data(protocol, "data/dataset.csv", "reviews")
+                    self.send_data(protocol, "datasets/games.csv", "games")
+                    self.send_data(protocol, "datasets/dataset.csv", "reviews")
                     self.send_fin(protocol)
 
                     # Iniciar un hilo para guardar respuestas periódicamente

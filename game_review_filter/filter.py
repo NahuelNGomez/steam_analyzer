@@ -140,12 +140,9 @@ class GameReviewFilter:
             with open(name, "r") as file:
                 for line in file:
                     review = Review.decode(json.loads(line))
-                    # if(review.game_id == '352460'):
-                    #     logging.info(f"Juego procesado y enviandolo 352460: {game}")
-                    #     logging.info(f"Juego procesado 352460: {review.review_text}")
                     if review.game_id in self.games:
                         game = self.games[review.game_id]
-                        if 'action' in self.games_input_queue[1]:
+                        if 'action' in self.games_input_queue[1].lower():
                             game_review = GameReview(review.game_id, game, review.review_text)
                             game_str = json.dumps(game_review.getData())
                             self.reviews_middleware.send(game_str)
