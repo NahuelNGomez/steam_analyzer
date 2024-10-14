@@ -25,7 +25,6 @@ class RangeFilter:
             logging.info(f"Juego filtrado enviado:{filtered_game}")
         else:
             logging.info("Juego no cumple con el filtro de rango.")
-            print("Juego no cumple con el filtro de rango.", flush=True)
 
     def filter_by_range(self, game):
         """
@@ -67,7 +66,7 @@ class RangeFilter:
 
         
     def _finCallBack(self, data):
-        print("rangeFilter sending data: ", data, flush=True)
+        logging.info("Fin de la transmisión de datos")
         self.middleware.send(data = data)
         
 

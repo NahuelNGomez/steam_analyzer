@@ -10,7 +10,7 @@ from common.utils import split_complex_string
 
 
 class GameReviewFilter:
-    def __init__(self, input_games_queue, input_reviews_queue, output_exchanges, output_queues, instance_id):
+    def __init__(self, input_games_queue, input_reviews_queue, output_exchanges, output_queues, instance_id, previous_review_nodes):
         """
         :param input_queues: Lista de colas de entrada (e.g., ['action_games_queue', 'positive_reviews_queue']).
         :param output_queue: Cola de salida (e.g., 'action_games_positive_reviews_queue').
@@ -27,6 +27,11 @@ class GameReviewFilter:
         self.completed_reviews = False
         self.sended_fin = False
         self.reviews_to_add = []
+        self.previous_review_nodes = previous_review_nodes
+        self.nodes_completed = 0
+        self.review_file = 0
+        self.review_file_size = 0
+        self.counter = 0
 
         #self.requeued_reviews = []
 
@@ -67,6 +72,8 @@ class GameReviewFilter:
         try:
             game = Game.decode(json.loads(game))
             self.games[game.id] = game.name
+            if (game.name == "The Plan"):
+                print("Juego agregado: ", game.name, flush=True)
         except Exception as e:
             logging.error(f"Error al agregar juego: {e}")
 
@@ -77,62 +84,74 @@ class GameReviewFilter:
         with self.file_lock:
             review_cleaned = review.replace('\x00', '')
             self.reviews_to_add.append(review_cleaned)
-            
             # Usar lock antes de escribir en el archivo
-            if len(self.reviews_to_add) >= 1000:
+            if len(self.reviews_to_add) >= 2000:
                 name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
                 with open(name, "a") as file:
                     for review_cleaned in self.reviews_to_add:
                         file.write(review_cleaned + "\n")
                 self.reviews_to_add = []
+                self.review_file_size += 1
+        # if self.review_file_size >= 100:
+        #     print("Procesando reviews", flush=True)
+        #     self.review_file_size = 0
+        #     #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
+        #     self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+        #     #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
 
     def handle_game_eof(self, message):
         """
         Maneja el mensaje de fin de juegos.
         """
-        print("Fin de la transmisión de juegos", flush=True)
+        logging.info("Fin de la transmisión de juegos")
         self.completed_games = True
         
         if self.completed_games and self.completed_reviews and not self.sended_fin:
             self.sended_fin = True
-            print("Fin de la transmisión de datos", flush=True)
-            self.process_reviews()
+            logging.info("Fin de la transmisión de datos")
+            self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
             self.reviews_middleware.send("fin\n\n")
-
-    def handle_review_eof(self, message):
+    
+    def save_last_reviews(self):
         """
-        Maneja el mensaje de fin de reviews y asegura que todas las reviews se escriban en el archivo.
+        Guarda las reviews restantes en el archivo.
         """
-        self.completed_reviews = True
-        
-        # Usar lock antes de escribir en el archivo
         name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
         with self.file_lock:
             with open(name, "a") as file:
                 for review in self.reviews_to_add:
                     file.write(review + "\n")
             self.reviews_to_add = []
-        
-        if self.completed_games and self.completed_reviews and not self.sended_fin:
+    
+    
+    def handle_review_eof(self, message):
+        """
+        Maneja el mensaje de fin de reviews y asegura que todas las reviews se escriban en el archivo.
+        """
+        self.completed_reviews = True
+        self.nodes_completed += 1
+
+        if (self.nodes_completed == self.previous_review_nodes) and not self.sended_fin:
             self.sended_fin = True
-            print("Fin de la transmisión de reviews", flush=True)
-            print("Fin de la transmisión de datos", flush=True)
-            self.process_reviews()
+            self.save_last_reviews()
+            self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
             self.reviews_middleware.send("fin\n\n")
         
-    def process_reviews(self):
+        
+    def process_reviews(self, path):
         """
         Procesa las reviews y realiza el join con los juegos.
         """
         # Usar lock antes de leer y procesar el archivo
-        name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
+        name = path
         with self.file_lock:
             with open(name, "r") as file:
                 for line in file:
+                    print("Procesando reviews - ", line, flush=True)
                     review = Review.decode(json.loads(line))
                     if review.game_id in self.games:
                         game = self.games[review.game_id]
-                        if 'action' in self.games_input_queue[1]:
+                        if 'action' in self.games_input_queue[1].lower():
                             game_review = GameReview(review.game_id, game, review.review_text)
                             game_str = json.dumps(game_review.getData())
                             self.reviews_middleware.send(game_str)
@@ -141,9 +160,10 @@ class GameReviewFilter:
                             game_str = json.dumps(game_review.getData())
                             self.reviews_middleware.send(game_str)
                     else:
-                        print(f"Juego no encontrado: {review.game_id}. Descartado", flush=True)
-        print("Fin de la ejecución de reviews", flush=True)
-
+                        pass
+            logging.info("Fin de la ejecución de reviews")
+            os.remove(name)
+        
     def start(self):
         """
         Inicia el proceso de join.

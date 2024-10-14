@@ -28,8 +28,9 @@ class GenreFilter:
         """
         try: 
             genres_str = message.genres
-            print(f"Genres: {genres_str}", flush=True)
             if self.genre in genres_str:
+                return message
+            if self.genre == genres_str:
                 return message
             return None
         except Exception as e:
@@ -42,32 +43,36 @@ class GenreFilter:
 
         :param data: Datos recibidos.
         """
-        print("Fin de la transmisión, enviando data", data, flush=True)
+        logging.info("Fin de la transmisión, enviando data")
         self.middleware.send(data)
     
     def _callBack(self, data):
-        """
-        Callback para procesar los mensajes recibidos.
-
-        :param data: Datos recibidos.
-        """
         try:
-            batch = data.split('\n')
+            clean_data = data.strip()  # Remover espacios y saltos de línea al inicio y final
+            batch = clean_data.split('\n')  # Separar las filas
+
             for row in batch:
+                row = row.strip()  # Asegurar que cada fila no tenga espacios en blanco
+                if not row:
+                    logging.warning("Fila vacía o compuesta solo de espacios, saltando...")
+                    continue  # Ignora las filas vacías
+
                 json_row = json.loads(row)
                 game = Game.decode(json_row)
                 
                 logging.debug(f"Mensaje decodificado: {game}")
-
                 filtered_game = self.filter_games_by_genre(game)
                 if filtered_game:
+                    if (filtered_game.id == '352460'):
+                        logging.info(f"Juego filtrado enviado: {filtered_game.id}")
                     game_str = json.dumps(filtered_game.getData())
                     self.middleware.send(game_str)
                     logging.info(f"Juego filtrado enviado: {filtered_game}")
                 else:
                     logging.info("Juego no cumple con el filtro de género.")
-                    print("Juego no cumple con el filtro de género.", flush=True)
         
+        except json.JSONDecodeError as e:
+            logging.error(f"Error de JSON al procesar el mensaje: {e}")
         except Exception as e:
             logging.error(f"Error en _callback al procesar el mensaje: {e}")
 

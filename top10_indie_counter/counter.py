@@ -38,8 +38,7 @@ class Top10IndieCounter:
                     "name": game["nombre"],
                     "average_playtime_hours": round(game["tiempo"], 2)
                 } for idx, (game_id, game) in enumerate(top10)
-            ],
-            "generated_at": datetime.utcnow().isoformat() + "Z"
+            ]
         }
 
 
@@ -51,8 +50,6 @@ class Top10IndieCounter:
             game_id = game.id
             name = game.name
             playtime = int(game.apf)
-
-            print(f"Processing game: {name} ({playtime} hours)...", flush=True)
 
             menor_puesto = min(
                 (k for k, v in self.game_playtimes.items() if v["tiempo"] is not None),

@@ -17,38 +17,30 @@ class GamesCounter:
         self.total_games = 0
 
     def counterGames(self, game):
+        self.total_games += 1
         try:
             game_name = game.name
             windows = game.windows
             mac = game.mac
             linux = game.linux
-            self.total_games += 1
             
-            # Mostrar los valores decodificados para Windows, Mac y Linux
-            print(f"Juego: {game_name}, Valores Originales -> Windows: {windows}, Mac: {mac}, Linux: {linux}", flush=True)
-            logging.info(f"Juego: {game_name}, Valores Originales -> Windows: {windows}, Mac: {mac}, Linux: {linux}")
 
             # Convertir a booleano de forma robusta
             windows = self._convert_to_boolean(windows)
             mac = self._convert_to_boolean(mac)
             linux = self._convert_to_boolean(linux)
 
-            # Mostrar los valores convertidos para Windows, Mac y Linux
-            print(f"Juego: {game_name}, Valores Convertidos -> Windows: {windows}, Mac: {mac}, Linux: {linux}", flush=True)
-            logging.info(f"Juego: {game_name}, Valores Convertidos -> Windows: {windows}, Mac: {mac}, Linux: {linux}")
-
             # Verificar si los valores ya eran booleanos
             if windows:
                 self.platform_counts['Windows'] += 1
-                logging.info(f"Juego '{game_name}' soporta Windows.")
+                #logging.info(f"Juego '{game_name}' soporta Windows.")
             if mac:
                 self.platform_counts['Mac'] += 1
-                logging.info(f"Juego '{game_name}' soporta Mac.")
+                #logging.info(f"Juego '{game_name}' soporta Mac.")
             if linux:
                 self.platform_counts['Linux'] += 1
-                logging.info(f"Juego '{game_name}' soporta Linux.")
+                #logging.info(f"Juego '{game_name}' soporta Linux.")
 
-            logging.info(f"Conteo Actual: {dict(self.platform_counts)}")
         except Exception as e:
             logging.error(f"Error al filtrar el juego '{game_name}': {e}")
     
@@ -71,10 +63,12 @@ class GamesCounter:
         try:
             batch = data.split('\n')
             for row in batch:
-                json_row = json.loads(row)
-                game = Game.decode(json_row)
-                logging.debug(f"Mensaje decodificado: {game}")
-                self.counterGames(game)
+                try:
+                    json_row = json.loads(row)
+                    game = Game.decode(json_row)
+                    self.counterGames(game)
+                except Exception as e:
+                    logging.error(f"Error al procesar la fila '{row}': {e}")
                 
         except Exception as e:
             logging.error(f"Error en _callBack al procesar el mensaje: {e}")
@@ -88,8 +82,7 @@ class GamesCounter:
                 {"platform": "Windows", "game_count": self.platform_counts['Windows']},
                 {"platform": "Mac", "game_count": self.platform_counts['Mac']},
                 {"platform": "Linux", "game_count": self.platform_counts['Linux']}
-            ],
-            "generated_at": datetime.utcnow().isoformat() + "Z"
+            ]
         }
         self.middleware.send(json.dumps(response, indent=4))
         #self.middleware.send("Respuesta del contador de juegos enviada.")

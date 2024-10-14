@@ -8,7 +8,6 @@ RABBITMQ_PORT = 5672
 
 REQUEUE = 2
 
-
 class Middleware:
     def __init__(
         self,
@@ -19,20 +18,40 @@ class Middleware:
         callback: Callable = None,
         eofCallback: Callable = None,
         amount_output_instances: int = 1,
+        exchange_output_type: str = "fanout",
+        exchange_input_type: str = "fanout",
     ):
+        self.exchange_output_type = exchange_output_type
+        self.echange_input_type = exchange_input_type   
         self.amount_output_instances = amount_output_instances
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host="rabbitmq", port=5672)
-        )
+        self.connection = self._connect_with_retries()
         self.channel = self.connection.channel()
+        self.channel.basic_qos(prefetch_count=100)
         self.input_queues: dict[str, str] = {}
         self.output_queues = output_queues
         self.output_exchanges = output_exchanges
         self.intance_id = intance_id
         self.callback = callback
         self.eofCallback = eofCallback
+        self.auto_ack = False
         self._init_input_queues(input_queues)
         self._init_output_queues()
+
+    def _connect_with_retries(self, retries=5, delay=5):
+        for attempt in range(retries):
+            try:
+                connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host=RABBITMQ_HOST, port=RABBITMQ_PORT)
+                )
+                logging.info("Successfully connected to RabbitMQ")
+                return connection
+            except pika.exceptions.AMQPConnectionError as e:
+                logging.warning(f"Connection attempt {attempt + 1} failed: {e}")
+                if attempt < retries - 1:
+                    time.sleep(delay)
+                else:
+                    logging.error("Max retries reached. Could not connect to RabbitMQ.")
+                    raise
 
     def _init_input_queues(self, input_queues):
         for queue, exchange in input_queues.items():
@@ -41,9 +60,9 @@ class Middleware:
             self.channel.queue_declare(queue=queue_name, durable=True)
             if exchange:
                 self.channel.exchange_declare(
-                    exchange=exchange, exchange_type="fanout"
+                    exchange=exchange, exchange_type=self.echange_input_type
                 )  # Cambiar a una variable
-                print(f"Binding {queue_name} to {exchange}", flush=True)
+                logging.info(f"Binding {queue_name} to {exchange}")
                 self.channel.queue_bind(exchange=exchange, queue=queue_name)
 
             callback_wrapper = self._create_callback_wrapper(
@@ -51,26 +70,24 @@ class Middleware:
             )
 
             self.channel.basic_consume(
-                queue=queue_name, on_message_callback=callback_wrapper, auto_ack=False
+                queue=queue_name, on_message_callback=callback_wrapper, auto_ack=self.auto_ack
             )
 
             if queue_name not in self.input_queues:
                 self.input_queues[queue_name] = exchange
 
     def _init_output_queues(self):
-        print("Creating output queues", flush=True)
+        logging.info("Creating output queues")
         if self.amount_output_instances <= 1:
             for queue in self.output_queues:
                 self.channel.queue_declare(queue=queue, durable=True)
         if self.amount_output_instances > 1:
                 for queue in self.output_queues:
-                    print(
-                        f"Creating output queues for instance {queue}", flush=True
-                    )
+                    logging.info(f"Creating output queues {queue}_0")
                     self.channel.queue_declare(queue=f"{queue}_0", durable=True)
 
         for exchange in self.output_exchanges:
-            self.channel.exchange_declare(exchange=exchange, exchange_type="fanout")
+            self.channel.exchange_declare(exchange=exchange, exchange_type=self.exchange_output_type)
 
     def send_to_requeue_positive(self, queue: str, data: str):
         self.channel.basic_publish(
@@ -88,17 +105,14 @@ class Middleware:
 
         def callback_wrapper(ch, method, properties, body):
             response = 0
-            print(f"[x] Recibido {body}", flush=True)
+            logging.debug("Received %s", body)
             mensaje_str = body.decode("utf-8")
-            if mensaje_str == "fin\n\n":
+            if "fin\n\n" in mensaje_str:
                 eofCallback(body)
             else:
                 response = callback(mensaje_str)
-            if response == 2:
-                self.send_to_requeue_positive(method.routing_key, body)
-            if response == 3:
-                self.send_to_requeue_negative(method.routing_key, body)
-            self.ack(method.delivery_tag)
+            if not self.auto_ack:
+                self.ack(method.delivery_tag)
 
         return callback_wrapper
 
@@ -115,13 +129,12 @@ class Middleware:
         except pika.exceptions.ConnectionClosedByBroker:
             logging.debug("Connection closed")
 
-    def send(self, data: str, instance_id: int = None):
+    def send(self, data: str, instance_id: int = None, routing_key: str = ""):
         if self.amount_output_instances > 1:
             for queue in self.output_queues:
                 self.send_to_queue(f"{queue}_0", data)
         for exchange in self.output_exchanges:
-            print(f"Sent to exchange {exchange}", flush=True)
-            self.channel.basic_publish(exchange=exchange, routing_key="", body=data)
+            self.channel.basic_publish(exchange=exchange, routing_key=routing_key, body=data)
             logging.debug("Sent to exchange %s: %s", exchange, data)
 
     def send_to_queue(self, queue: str, data: str):

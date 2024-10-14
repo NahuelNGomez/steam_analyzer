@@ -35,15 +35,13 @@ class LanguageFilter:
             game_review = GameReview.decode(json.loads(data))
             result_text = game_review.review_text
             language, confidence = langid.classify(result_text)
-            print(f"Language: {language}, Confidence: {confidence}, Text {result_text}", flush=True)
+            logging.info(f"Mensaje decodificado: {game_review}")
             if language == 'en':
                 game = GameReview(game_review.game_id, game_review.game_name, None)
                 game_str = json.dumps(game.getData())
                 self.middleware.send(game_str)
             else:
-                print("Mensaje no es en inglés, no se envía", flush=True)
-            
-            print(f"Mensaje decodificado: {result_text}", flush=True)
+                logging.info("Mensaje no es en inglés, no se envía")
             
         except Exception as e:
             logging.error(f"Error en LanguageFilter callback: {e}")
@@ -54,6 +52,6 @@ class LanguageFilter:
 
         :param data: Datos recibidos.
         """
-        print("Fin de la transmisión, enviando data", data, flush=True)
-        #self.middleware.send(data)
+        logging.info("LanguageFilter finished")
+        self.middleware.send(data)
         

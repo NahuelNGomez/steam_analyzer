@@ -17,6 +17,7 @@ class Top5ReviewCounter:
             eofCallback=self._eof_callback
         )
         self.games_dict = {}
+        self.remaining_fin = 4
 
     def get_games(self):
         """
@@ -34,8 +35,7 @@ class Top5ReviewCounter:
                     "name": game_data["name"],
                     "positive_review_count": game_data["count"]
                 } for idx, (game_id, game_data) in enumerate(top_5_games)
-            ],
-            "generated_at": datetime.utcnow().isoformat() + "Z"
+            ]
         }
 
 
@@ -69,6 +69,9 @@ class Top5ReviewCounter:
         """
         Callback function for handling end of file (EOF) messages.
         """
+        self.remaining_fin -= 1
+        if self.remaining_fin > 0:
+            return
         logging.info("End of file received. Sending top 5 indie games positive reviews data.")
         top5_games = json.dumps(self.get_games(), indent=4)
         self.middleware.send(top5_games)

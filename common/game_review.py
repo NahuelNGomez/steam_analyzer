@@ -9,8 +9,6 @@ class GameReview():
     
     @staticmethod
     def decode(fields: list):
-        print("FIELDS PARA DECODE:", fields)
-        
         # Limpiar las comillas solo si el campo es una cadena, y manejar None
         cleaned_fields = [field.strip('"') if isinstance(field, str) else field for field in fields]
         

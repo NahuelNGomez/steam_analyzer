@@ -18,6 +18,9 @@ services:
       - positive_review_filter4
       - negative_review_filter
       - indie_game_review_filter
+      - indie_game_review_filter2
+      - indie_game_review_filter3
+      - indie_game_review_filter4
       - action_game_review_filter
       - language_filter
       - action_name_accumulator
@@ -25,7 +28,7 @@ services:
     volumes:
       - ./common:/common
     environment:
-      - LOGGING_LEVEL=DEBUG
+      - LOGGING_LEVEL=INFO
       - OUTPUT_QUEUE=reviews_queue
       - AMOUNT_OF_REVIEW_INSTANCE=4 # POSITIVES
       - AMOUNT_OF_GAMES_INSTANCE=2 # INDIE
@@ -46,10 +49,12 @@ services:
       - LOGGING_LEVEL=INFO
       - rabbitmq_RESULTS_QUEUE=result_queue
     volumes:
-      - ./client/datasets:/datasets
+      - ./client/data:/data
+      #- ./client/datasets:/datasets
       - ./client/config.ini:/client/config.ini
       - ./common:/common
-
+      - ./results:/results
+      
   games_counter:
     container_name: games_counter
     build:
@@ -74,32 +79,15 @@ services:
     depends_on:
       - top10_indie_counter
       - indie_game_review_filter
+      - indie_game_review_filter2
+      - indie_game_review_filter3
+      - indie_game_review_filter4
     networks:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["indie_games"]
-      - INPUT_QUEUES={"games_queue":""}
-      - INSTANCE_ID=0
-      - LOGGING_LEVEL=DEBUG
-      - GENRE=Indie
-    volumes:
-      - ./common:/common
-
-  indie_filter2:
-    container_name: indie_filter2
-    build:
-      context: ./genre_filter
-    image: genre_filter:latest
-    depends_on:
-      - top10_indie_counter
-      - indie_game_review_filter
-    networks:
-      - testing_net
-    environment:
-      - OUTPUT_EXCHANGES=["indie_games"]
-      - INPUT_QUEUES={"games_queue":""}
-      - INSTANCE_ID=0
-      - LOGGING_LEVEL=DEBUG
+      - INPUT_QUEUES={"games_queue_filter":"games"}
+      - LOGGING_LEVEL=INFO
       - GENRE=Indie
     volumes:
       - ./common:/common
@@ -117,8 +105,8 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["action_games"]
       - INPUT_QUEUES={"games_queue_filter":"games"}
-      - INSTANCE_ID=1
-      - LOGGING_LEVEL=DEBUG
+      - INSTANCE_ID=2
+      - LOGGING_LEVEL=INFO
       - GENRE=Action
     volumes:
       - ./common:/common  
@@ -133,7 +121,7 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["indie_range_games"]
       - INPUT_QUEUES={"indie_games_queue":"indie_games"}
-      - LOGGING_LEVEL=DEBUG
+      - LOGGING_LEVEL=INFO
     volumes:
       - ./common:/common
 
@@ -148,7 +136,7 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["result_queue"]
       - INPUT_QUEUES={"indie_range_games_queue":"indie_range_games"}
-      - LOGGING_LEVEL=DEBUG
+      - LOGGING_LEVEL=INFO
     volumes:
       - ./top10_indie_counter/data:/data
       - ./common:/common
@@ -165,8 +153,8 @@ services:
       - testing_net
     environment:
       - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":""}
-      - LOGGING_LEVEL=DEBUG
+      - INPUT_QUEUES={"to_positive_review_1":"to_positive_review"}
+      - LOGGING_LEVEL=INFO
       - POSITIVITY=1
       - INSTANCE_ID=0
     volumes:
@@ -182,9 +170,9 @@ services:
     networks:
       - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":""}
-      - LOGGING_LEVEL=DEBUG
+      - OUTPUT_EXCHANGES=["positive_reviews_4"]
+      - INPUT_QUEUES={"to_positive_review_4":"to_positive_review"}
+      - LOGGING_LEVEL=INFO
       - POSITIVITY=1
       - INSTANCE_ID=0
     volumes:
@@ -200,9 +188,9 @@ services:
     networks:
       - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":""}
-      - LOGGING_LEVEL=DEBUG
+      - OUTPUT_EXCHANGES=["positive_reviews_3"]
+      - INPUT_QUEUES={"to_positive_review_3":"to_positive_review"}
+      - LOGGING_LEVEL=INFO
       - POSITIVITY=1
       - INSTANCE_ID=0
     volumes:
@@ -218,9 +206,9 @@ services:
     networks:
       - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"reviews_queue":""}
-      - LOGGING_LEVEL=DEBUG
+      - OUTPUT_EXCHANGES=["positive_reviews_2"]
+      - INPUT_QUEUES={"to_positive_review_2":"to_positive_review"}
+      - LOGGING_LEVEL=INFO
       - POSITIVITY=1
       - INSTANCE_ID=0
     volumes:
@@ -239,7 +227,7 @@ services:
       - OUTPUT_EXCHANGES=["negative_reviews"]
       - INPUT_QUEUES={"reviews_queue":"reviews"}
       - INSTANCE_ID=1
-      - LOGGING_LEVEL=DEBUG
+      - LOGGING_LEVEL=INFO
       - POSITIVITY=-1
     volumes:
       - ./common:/common  
@@ -257,8 +245,71 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["games_reviews_indie"]
       - INPUT_GAMES_QUEUE=["indie_games_queue","indie_games"]
-      - INPUT_REVIEWS_QUEUE=["positive_review_queue","positive_reviews"]
-      - LOGGING_LEVEL=DEBUG
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue_1","positive_reviews"]
+      - PREVIOUS_REVIEW_NODES=1
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
+
+
+
+  indie_game_review_filter2:
+    container_name: indie_game_review_filter2
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews_indie"]
+      - INPUT_GAMES_QUEUE=["indie_games_queue_2","indie_games"]
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue_2","positive_reviews_2"]
+      - PREVIOUS_REVIEW_NODES=1
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
+
+  indie_game_review_filter3:
+    container_name: indie_game_review_filter3
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews_indie"]
+      - INPUT_GAMES_QUEUE=["indie_games_queue_3","indie_games"]
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue_3","positive_reviews_3"]
+      - PREVIOUS_REVIEW_NODES=1
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
+    
+  indie_game_review_filter4:
+    container_name: indie_game_review_filter4
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews_indie"]
+      - INPUT_GAMES_QUEUE=["indie_games_queue_4","indie_games"]
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue_4","positive_reviews_4"]
+      - PREVIOUS_REVIEW_NODES=1
+      - LOGGING_LEVEL=INFO
     volumes:
       - ./common:/common
       - ./game_review_filter/data:/data
@@ -278,7 +329,8 @@ services:
       - OUTPUT_EXCHANGES=["games_reviews_action"]
       - INPUT_GAMES_QUEUE=["action_games_queue","action_games"]
       - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
-      - LOGGING_LEVEL=DEBUG
+      - PREVIOUS_REVIEW_NODES=1
+      - LOGGING_LEVEL=INFO
     volumes:
       - ./common:/common
       - ./game_review_filter/data:/data   
@@ -294,7 +346,7 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["result_queue"]
       - INPUT_QUEUES={"games_reviews_queue":"games_reviews_indie"}
-      - LOGGING_LEVEL=DEBUG
+      - LOGGING_LEVEL=INFO
     volumes:
       - ./common:/common
       - ./game_review_filter/data:/data
@@ -310,7 +362,7 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["english_reviews"]
       - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
-      - LOGGING_LEVEL=DEBUG
+      - LOGGING_LEVEL=INFO
     volumes:
       - ./common:/common
 
@@ -325,8 +377,8 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["result_queue"]
       - INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}
-      - LOGGING_LEVEL=DEBUG
-      - REVIEWS_LOW_LIMIT=30
+      - LOGGING_LEVEL=INFO
+      - REVIEWS_LOW_LIMIT=5000
     volumes:
       - ./common:/common
   
@@ -341,7 +393,7 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["result_queue"]
       - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
-      - LOGGING_LEVEL=DEBUG
+      - LOGGING_LEVEL=INFO
       - PERCENTILE=90
       - INSTANCE_ID=3
     volumes:

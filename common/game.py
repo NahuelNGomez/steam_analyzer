@@ -1,4 +1,5 @@
 import csv
+import sys
 
 
 class Game():
@@ -22,7 +23,6 @@ class Game():
     
     @staticmethod
     def decode(fields: list):
-        print("FIELDS PARA DECODE:", fields)
         
         # Ensure all fields are strings before applying strip
         cleaned_fields = [str(field).strip('"') if isinstance(field, str) else field for field in fields]
@@ -43,6 +43,12 @@ class Game():
         if self.apf == "nan" or self.apf == "" or self.apf == None:
             return True
         if self.genres == "nan" or self.genres == "" or self.genres == None:
+            return True
+        if self.id == "nan" or self.id == "" or self.id == None:
+            return True
+        if self.release_date == "nan" or self.release_date == "" or self.release_date == None:
+            return True
+        if self.name == "nan" or self.name == "" or self.name == None:
             return True
         
         
