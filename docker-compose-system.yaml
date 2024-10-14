@@ -17,6 +17,9 @@ services:
       - positive_review_filter4
       - negative_review_filter
       - indie_game_review_filter
+      - indie_game_review_filter2
+      - indie_game_review_filter3
+      - indie_game_review_filter4
       - action_game_review_filter
       - language_filter
       - action_name_accumulator
@@ -74,6 +77,9 @@ services:
     depends_on:
       - top10_indie_counter
       - indie_game_review_filter
+      - indie_game_review_filter2
+      - indie_game_review_filter3
+      - indie_game_review_filter4
     networks:
       - testing_net
     environment:
@@ -162,7 +168,7 @@ services:
     networks:
       - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - OUTPUT_EXCHANGES=["positive_reviews_4"]
       - INPUT_QUEUES={"to_positive_review_4":"to_positive_review"}
       - LOGGING_LEVEL=INFO
       - POSITIVITY=1
@@ -180,7 +186,7 @@ services:
     networks:
       - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - OUTPUT_EXCHANGES=["positive_reviews_3"]
       - INPUT_QUEUES={"to_positive_review_3":"to_positive_review"}
       - LOGGING_LEVEL=INFO
       - POSITIVITY=1
@@ -198,7 +204,7 @@ services:
     networks:
       - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews"]
+      - OUTPUT_EXCHANGES=["positive_reviews_2"]
       - INPUT_QUEUES={"to_positive_review_2":"to_positive_review"}
       - LOGGING_LEVEL=INFO
       - POSITIVITY=1
@@ -237,8 +243,70 @@ services:
     environment:
       - OUTPUT_EXCHANGES=["games_reviews_indie"]
       - INPUT_GAMES_QUEUE=["indie_games_queue","indie_games"]
-      - INPUT_REVIEWS_QUEUE=["positive_review_queue","positive_reviews"]
-      - PREVIOUS_REVIEW_NODES=4
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue_1","positive_reviews"]
+      - PREVIOUS_REVIEW_NODES=1
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
+
+
+
+  indie_game_review_filter2:
+    container_name: indie_game_review_filter2
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews_indie"]
+      - INPUT_GAMES_QUEUE=["indie_games_queue_2","indie_games"]
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue_2","positive_reviews_2"]
+      - PREVIOUS_REVIEW_NODES=1
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
+
+  indie_game_review_filter3:
+    container_name: indie_game_review_filter3
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews_indie"]
+      - INPUT_GAMES_QUEUE=["indie_games_queue_3","indie_games"]
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue_3","positive_reviews_3"]
+      - PREVIOUS_REVIEW_NODES=1
+      - LOGGING_LEVEL=INFO
+    volumes:
+      - ./common:/common
+      - ./game_review_filter/data:/data
+    
+  indie_game_review_filter4:
+    container_name: indie_game_review_filter4
+    build:
+      context: ./game_review_filter
+      dockerfile: Dockerfile
+    image: game_review_filter:latest
+    depends_on:
+      - game_review_positive_counter
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["games_reviews_indie"]
+      - INPUT_GAMES_QUEUE=["indie_games_queue_4","indie_games"]
+      - INPUT_REVIEWS_QUEUE=["positive_review_queue_4","positive_reviews_4"]
+      - PREVIOUS_REVIEW_NODES=1
       - LOGGING_LEVEL=INFO
     volumes:
       - ./common:/common

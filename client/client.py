@@ -160,9 +160,9 @@ class Client:
         """
         try:
             with self.lock:
-                with open("/results/responses.json", "w", encoding="utf-8") as json_file:
+                with open("/results/dist_results.json", "w", encoding="utf-8") as json_file:
                     json.dump(self.responses, json_file, indent=4, ensure_ascii=False)
-                    logging.info("Respuestas guardadas en /results/responses.json")
+                    logging.info("Respuestas guardadas en /results/dist_results.json")
         except Exception as e:
             logging.error(f"Error al guardar respuestas en JSON: {e}")
 

@@ -1,71 +1,52 @@
 import json
+import sys
 import difflib
-import os
-import logging
 
-def load_json(file_path):
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    except Exception as e:
-        logging.error(f"Error al cargar el archivo {file_path}: {e}")
-        return None
+def load_and_sort_json(file_path):
+    """
+    Carga un archivo JSON y lo devuelve en formato ordenado.
+    """
+    with open(file_path, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    return sorted(data, key=lambda x: json.dumps(x, sort_keys=True))
 
-def clean_responses(responses):
-    cleaned_responses = []
-    for response in responses:
-        if isinstance(response, str):
-            if response.startswith("OK") or "ACK de fin" in response:
-                continue
-        try:
-            parsed_response = json.loads(response)
-            cleaned_responses.append(parsed_response)
-        except json.JSONDecodeError:
-            continue
-    return cleaned_responses
+def compare_json_files(file1, file2):
+    """
+    Compara dos archivos JSON y devuelve True si son iguales.
+    """
+    data1 = load_and_sort_json(file1)
+    data2 = load_and_sort_json(file2)
+    return data1 == data2, data1, data2
 
+def print_differences(data1, data2):
+    """
+    Imprime las diferencias línea por línea entre dos JSONs.
+    """
+    json1_str = json.dumps(data1, indent=4, sort_keys=True).splitlines()
+    json2_str = json.dumps(data2, indent=4, sort_keys=True).splitlines()
 
-def compare_jsons(json1, json2):
-    # Convertir ambos JSON en cadenas con formato JSON indentado
-    json1_str = json.dumps(json1, indent=4, ensure_ascii=False)
-    json2_str = json.dumps(json2, indent=4, ensure_ascii=False)
-
-    # Comparar ambos strings y obtener las diferencias
-    diff = difflib.unified_diff(
-        json1_str.splitlines(),
-        json2_str.splitlines(),
-        fromfile='responses.json',
-        tofile='serial_queries_1_results.json',
-        lineterm=''
-    )
-    return list(diff)
+    diff = difflib.unified_diff(json1_str, json2_str, fromfile='file1', tofile='file2', lineterm='')
+    print('\n'.join(diff))
 
 def main():
-    # Archivos JSON a comparar
-    file1 = 'responses.json'
-    file2 = 'completed_results.json'
+    """
+    Punto de entrada del programa. Compara dos archivos JSON pasados como argumentos.
+    """
+    if len(sys.argv) != 3:
+        print("Uso: python compare_json.py <file1> <file2>")
+        sys.exit(1)
 
-    # Cargar ambos archivos
-    json1 = load_json(file1)
-    json2 = load_json(file2)
+    file1 = sys.argv[1]
+    file2 = sys.argv[2]
 
-    if json1 is None or json2 is None:
-        logging.error("No se pudo cargar uno o ambos archivos JSON")
-        return
+    are_equal, data1, data2 = compare_json_files(file1, file2)
 
-    # Limpiar y preparar los datos de responses.json
-    cleaned_json1 = clean_responses(json1)
-
-    # Comparar y obtener las diferencias
-    differences = compare_jsons(cleaned_json1, json2)
-
-    # Mostrar diferencias
-    if differences:
-        logging.info("Diferencias encontradas:")
-        for line in differences:
-            print(line)
+    if are_equal:
+        print("Los archivos JSON son iguales.")
     else:
-        print("No se encontraron diferencias, los resultados son equivalentes.")
+        print("Los archivos JSON son diferentes.")
+        print("Diferencias:")
+        print_differences(data1, data2)
 
 if __name__ == "__main__":
     main()

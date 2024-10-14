@@ -67,7 +67,6 @@ class GamesCounter:
                     json_row = json.loads(row)
                     game = Game.decode(json_row)
                     self.counterGames(game)
-                    print(f"Juego '{game.name}' procesado.", flush=True)
                 except Exception as e:
                     logging.error(f"Error al procesar la fila '{row}': {e}")
                 
@@ -85,7 +84,6 @@ class GamesCounter:
                 {"platform": "Linux", "game_count": self.platform_counts['Linux']}
             ]
         }
-        print("CANTIDAD DE JUEGOS TOTALES: ", self.total_games, flush=True)
         self.middleware.send(json.dumps(response, indent=4))
         #self.middleware.send("Respuesta del contador de juegos enviada.")
     
