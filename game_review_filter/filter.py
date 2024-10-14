@@ -29,6 +29,8 @@ class GameReviewFilter:
         self.reviews_to_add = []
         self.previous_review_nodes = previous_review_nodes
         self.nodes_completed = 0
+        self.review_file = 0
+        self.review_file_size = 0
 
         #self.requeued_reviews = []
 
@@ -90,6 +92,13 @@ class GameReviewFilter:
                     for review_cleaned in self.reviews_to_add:
                         file.write(review_cleaned + "\n")
                 self.reviews_to_add = []
+                self.review_file_size += 1
+        if self.review_file_size >= 100:
+            print("Procesando reviews", flush=True)
+            self.review_file_size = 0
+            #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
+            self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+            #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
 
     def handle_game_eof(self, message):
         """
@@ -101,7 +110,7 @@ class GameReviewFilter:
         if self.completed_games and self.completed_reviews and not self.sended_fin:
             self.sended_fin = True
             logging.info("Fin de la transmisión de datos")
-            self.process_reviews()
+            self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
             self.reviews_middleware.send("fin\n\n")
     
     def save_last_reviews(self):
@@ -126,19 +135,20 @@ class GameReviewFilter:
         if (self.nodes_completed == self.previous_review_nodes) and not self.sended_fin:
             self.sended_fin = True
             self.save_last_reviews()
-            self.process_reviews()
+            self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
             self.reviews_middleware.send("fin\n\n")
         
         
-    def process_reviews(self):
+    def process_reviews(self, path):
         """
         Procesa las reviews y realiza el join con los juegos.
         """
         # Usar lock antes de leer y procesar el archivo
-        name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
+        name = path
         with self.file_lock:
             with open(name, "r") as file:
                 for line in file:
+                    print("Procesando reviews - ", line, flush=True)
                     review = Review.decode(json.loads(line))
                     if review.game_id in self.games:
                         game = self.games[review.game_id]
@@ -152,8 +162,8 @@ class GameReviewFilter:
                             self.reviews_middleware.send(game_str)
                     else:
                         pass
-        logging.info("Fin de la ejecución de reviews")
-        os.remove(name)
+            logging.info("Fin de la ejecución de reviews")
+            os.remove(name)
         
     def start(self):
         """
