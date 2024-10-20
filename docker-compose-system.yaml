@@ -37,8 +37,8 @@ services:
   client:
     container_name: client
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./client/Dockerfile
     image: client:latest
     networks:
       - testing_net
@@ -48,12 +48,11 @@ services:
       - LOGGING_LEVEL=INFO
       - rabbitmq_RESULTS_QUEUE=result_queue
     volumes:
-      - ./client/data:/data
+      - ./data:/data
       #- ./client/datasets:/datasets
       - ./client/config.ini:/client/config.ini
-      - ./common:/common
       - ./results:/results
-      
+
   games_counter:
     container_name: games_counter
     build:
@@ -108,7 +107,7 @@ services:
       - LOGGING_LEVEL=INFO
       - GENRE=Action
     volumes:
-      - ./common:/common  
+      - ./common:/common
 
   range_filter:
     container_name: range_filter
@@ -146,8 +145,7 @@ services:
     build:
       context: ./positivity_filter
       dockerfile: Dockerfile
-    image:
-      positivity_filter:latest
+    image: positivity_filter:latest
     networks:
       - testing_net
     environment:
@@ -164,8 +162,7 @@ services:
     build:
       context: ./positivity_filter
       dockerfile: Dockerfile
-    image:
-      positivity_filter:latest
+    image: positivity_filter:latest
     networks:
       - testing_net
     environment:
@@ -182,8 +179,7 @@ services:
     build:
       context: ./positivity_filter
       dockerfile: Dockerfile
-    image:
-      positivity_filter:latest
+    image: positivity_filter:latest
     networks:
       - testing_net
     environment:
@@ -200,8 +196,7 @@ services:
     build:
       context: ./positivity_filter
       dockerfile: Dockerfile
-    image:
-      positivity_filter:latest
+    image: positivity_filter:latest
     networks:
       - testing_net
     environment:
@@ -218,8 +213,7 @@ services:
     build:
       context: ./positivity_filter
       dockerfile: Dockerfile
-    image:
-      positivity_filter:latest
+    image: positivity_filter:latest
     networks:
       - testing_net
     environment:
@@ -229,7 +223,7 @@ services:
       - LOGGING_LEVEL=INFO
       - POSITIVITY=-1
     volumes:
-      - ./common:/common  
+      - ./common:/common
 
   indie_game_review_filter:
     container_name: indie_game_review_filter
@@ -250,8 +244,6 @@ services:
     volumes:
       - ./common:/common
       - ./game_review_filter/data:/data
-
-
 
   indie_game_review_filter2:
     container_name: indie_game_review_filter2
@@ -292,7 +284,7 @@ services:
     volumes:
       - ./common:/common
       - ./game_review_filter/data:/data
-    
+
   indie_game_review_filter4:
     container_name: indie_game_review_filter4
     build:
@@ -332,7 +324,7 @@ services:
       - LOGGING_LEVEL=INFO
     volumes:
       - ./common:/common
-      - ./game_review_filter/data:/data   
+      - ./game_review_filter/data:/data
 
   game_review_positive_counter:
     container_name: game_review_positive_counter
@@ -380,7 +372,7 @@ services:
       - REVIEWS_LOW_LIMIT=5000
     volumes:
       - ./common:/common
-  
+
   percentile_accumulator:
     container_name: percentile_accumulator
     build:
@@ -388,7 +380,7 @@ services:
       dockerfile: Dockerfile
     image: percentile_accumulator:latest
     networks:
-      - testing_net    
+      - testing_net
     environment:
       - OUTPUT_EXCHANGES=["result_queue"]
       - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}

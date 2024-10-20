@@ -33,7 +33,7 @@ class Middleware:
         self.intance_id = intance_id
         self.callback = callback
         self.eofCallback = eofCallback
-        self.auto_ack = False
+        self.auto_ack = True
         self._init_input_queues(input_queues)
         self._init_output_queues()
 

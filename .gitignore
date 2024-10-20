@@ -7,3 +7,4 @@ __pycache__/
 /client/data/
 /client/datasets/
 /game_review_filter/data/
+data/

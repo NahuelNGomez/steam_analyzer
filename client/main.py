@@ -2,7 +2,7 @@ import configparser
 import logging
 import signal
 import sys
-from client import Client
+from src.client import Client
 
 def load_config(config_file='config.ini'):
     config = configparser.ConfigParser()

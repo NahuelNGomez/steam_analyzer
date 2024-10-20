@@ -85,14 +85,14 @@ class GameReviewFilter:
             review_cleaned = review.replace('\x00', '')
             self.reviews_to_add.append(review_cleaned)
             # Usar lock antes de escribir en el archivo
-            if len(self.reviews_to_add) >= 2000:
+            if len(self.reviews_to_add) >= 15000:
                 name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
                 with open(name, "a") as file:
                     for review_cleaned in self.reviews_to_add:
                         file.write(review_cleaned + "\n")
                 self.reviews_to_add = []
                 self.review_file_size += 1
-            if self.review_file_size >= 10:
+            if self.review_file_size >= 10 and self.completed_games:
                 print("Procesando reviews", flush=True)
                 self.review_file_size = 0
                 #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()

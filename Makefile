@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 PROJECT_NAME = tp1
+PWD := $(shell pwd)
 
 default: docker-compose-up
 
