@@ -9,7 +9,6 @@ services:
       - testing_net
     depends_on:
       - indie_filter
-      - indie_filter2
       - action_filter
       - games_counter
       - positive_review_filter

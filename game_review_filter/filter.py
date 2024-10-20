@@ -92,12 +92,13 @@ class GameReviewFilter:
                         file.write(review_cleaned + "\n")
                 self.reviews_to_add = []
                 self.review_file_size += 1
-        # if self.review_file_size >= 100:
-        #     print("Procesando reviews", flush=True)
-        #     self.review_file_size = 0
-        #     #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
-        #     self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-        #     #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
+            if self.review_file_size >= 10:
+                print("Procesando reviews", flush=True)
+                self.review_file_size = 0
+                #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
+                
+                self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+                #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
 
     def handle_game_eof(self, message):
         """
@@ -117,11 +118,10 @@ class GameReviewFilter:
         Guarda las reviews restantes en el archivo.
         """
         name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
-        with self.file_lock:
-            with open(name, "a") as file:
-                for review in self.reviews_to_add:
-                    file.write(review + "\n")
-            self.reviews_to_add = []
+        with open(name, "a") as file:
+            for review in self.reviews_to_add:
+                file.write(review + "\n")
+        self.reviews_to_add = []
     
     
     def handle_review_eof(self, message):
@@ -133,6 +133,7 @@ class GameReviewFilter:
 
         if (self.nodes_completed == self.previous_review_nodes) and not self.sended_fin:
             self.sended_fin = True
+        with self.file_lock:
             self.save_last_reviews()
             self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
             self.reviews_middleware.send("fin\n\n")
@@ -144,25 +145,24 @@ class GameReviewFilter:
         """
         # Usar lock antes de leer y procesar el archivo
         name = path
-        with self.file_lock:
-            with open(name, "r") as file:
-                for line in file:
-                    print("Procesando reviews - ", line, flush=True)
-                    review = Review.decode(json.loads(line))
-                    if review.game_id in self.games:
-                        game = self.games[review.game_id]
-                        if 'action' in self.games_input_queue[1].lower():
-                            game_review = GameReview(review.game_id, game, review.review_text)
-                            game_str = json.dumps(game_review.getData())
-                            self.reviews_middleware.send(game_str)
-                        else:
-                            game_review = GameReview(review.game_id, game, None)
-                            game_str = json.dumps(game_review.getData())
-                            self.reviews_middleware.send(game_str)
+        with open(name, "r") as file:
+            for line in file:
+                print("Procesando reviews - ", line, flush=True)
+                review = Review.decode(json.loads(line))
+                if review.game_id in self.games:
+                    game = self.games[review.game_id]
+                    if 'action' in self.games_input_queue[1].lower():
+                        game_review = GameReview(review.game_id, game, review.review_text)
+                        game_str = json.dumps(game_review.getData())
+                        self.reviews_middleware.send(game_str)
                     else:
-                        pass
-            logging.info("Fin de la ejecución de reviews")
-            os.remove(name)
+                        game_review = GameReview(review.game_id, game, None)
+                        game_str = json.dumps(game_review.getData())
+                        self.reviews_middleware.send(game_str)
+                else:
+                    pass
+        logging.info("Fin de la ejecución de reviews")
+        os.remove(name)
         
     def start(self):
         """
