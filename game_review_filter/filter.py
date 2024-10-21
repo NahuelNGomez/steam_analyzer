@@ -85,19 +85,19 @@ class GameReviewFilter:
             review_cleaned = review.replace('\x00', '')
             self.reviews_to_add.append(review_cleaned)
             # Usar lock antes de escribir en el archivo
-            if len(self.reviews_to_add) >= 15000:
-                name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
+            if len(self.reviews_to_add) >= 3000:
+                name = "../data/reviewsData" + self.reviews_input_queue[0] + ".txt"
                 with open(name, "a") as file:
                     for review_cleaned in self.reviews_to_add:
                         file.write(review_cleaned + "\n")
                 self.reviews_to_add = []
                 self.review_file_size += 1
-            if self.review_file_size >= 10 and self.completed_games:
+            if self.review_file_size >= 70:
                 print("Procesando reviews", flush=True)
                 self.review_file_size = 0
                 #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
                 
-                self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+                self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
                 #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
 
     def handle_game_eof(self, message):
@@ -110,14 +110,14 @@ class GameReviewFilter:
         if self.completed_games and self.completed_reviews and not self.sended_fin:
             self.sended_fin = True
             logging.info("Fin de la transmisión de datos")
-            self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+            self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
             self.reviews_middleware.send("fin\n\n")
     
     def save_last_reviews(self):
         """
         Guarda las reviews restantes en el archivo.
         """
-        name = "data/reviewsData" + self.reviews_input_queue[0] + ".txt"
+        name = "../data/reviewsData" + self.reviews_input_queue[0] + ".txt"
         with open(name, "a") as file:
             for review in self.reviews_to_add:
                 file.write(review + "\n")
@@ -135,7 +135,7 @@ class GameReviewFilter:
             self.sended_fin = True
         with self.file_lock:
             self.save_last_reviews()
-            self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+            self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
             self.reviews_middleware.send("fin\n\n")
         
         
