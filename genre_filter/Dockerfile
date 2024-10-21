@@ -1,5 +1,8 @@
 FROM python:3.9-slim
-COPY . /
+
+COPY /genre_filter /src
+COPY /common /src/common
+WORKDIR /src
 
 # Instalar dependencias
 RUN pip install --no-cache-dir pika

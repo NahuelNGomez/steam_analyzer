@@ -1,7 +1,9 @@
 FROM python:3.9-slim
 
-# Copiar los archivos necesarios
-COPY . /
+
+COPY /range_filter /src
+COPY /common /src/common
+WORKDIR /src
 
 # Instalar dependencias
 RUN pip install --no-cache-dir pika
