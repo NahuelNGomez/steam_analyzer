@@ -31,7 +31,8 @@ class GameReviewFilter:
         self.nodes_completed = 0
         self.review_file = 0
         self.review_file_size = 0
-        self.counter = 0
+        self.batch_counter = 0
+        self.total_batches = 0 
 
         #self.requeued_reviews = []
 
@@ -77,28 +78,47 @@ class GameReviewFilter:
         except Exception as e:
             logging.error(f"Error al agregar juego: {e}")
 
-    def _add_review(self, review):
+    def _add_review(self, message):
         """
         Agrega una review a la lista y escribe en el archivo cuando llega a 1000.
         """
+        batch = message.split("\n")
+        self.batch_counter += 1
+        print("Recibiendo batch - ",self.batch_counter,flush=True)
         with self.file_lock:
-            review_cleaned = review.replace('\x00', '')
-            self.reviews_to_add.append(review_cleaned)
-            # Usar lock antes de escribir en el archivo
-            if len(self.reviews_to_add) >= 3000:
-                name = "../data/reviewsData" + self.reviews_input_queue[0] + ".txt"
-                with open(name, "a") as file:
-                    for review_cleaned in self.reviews_to_add:
-                        file.write(review_cleaned + "\n")
-                self.reviews_to_add = []
-                self.review_file_size += 1
-            if self.review_file_size >= 70:
-                print("Procesando reviews", flush=True)
-                self.review_file_size = 0
-                #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
+            for row in batch:
+                if not row.strip():
+                    continue
+                #review = Review.decode(json.loads(row))
+                #review_cleaned = review.replace('\x00', '')
+                self.reviews_to_add.append(row)
+                # Usar lock antes de escribir en el archivo
+                if len(self.reviews_to_add) >= 3000:
+                    name = "../data/reviewsData" + self.reviews_input_queue[0] + ".txt"
+                    with open(name, "a") as file:
+                        for review_cleaned in self.reviews_to_add:
+                            file.write(review_cleaned + "\n")
+                    self.reviews_to_add = []
+                    self.review_file_size += 1
+                if self.review_file_size >= 70:
+                    print("Procesando reviews", flush=True)
+                    self.review_file_size = 0
+                    #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
+                    
+                    self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+                    #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
+        if (self.nodes_completed == self.previous_review_nodes) and not self.sended_fin:
+            if self.batch_counter == self.total_batches and self.sended_fin == False:
+                print("Fin de la transmisión de datos batches", self.batch_counter, flush=True)
+                with self.file_lock:
+                    self.save_last_reviews()
+                    self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+                    self.reviews_middleware.send("fin\n\n")
+        
+                self.sended_fin = True
                 
-                self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-                #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
+
+
 
     def handle_game_eof(self, message):
         """
@@ -117,6 +137,7 @@ class GameReviewFilter:
         """
         Guarda las reviews restantes en el archivo.
         """
+        print("Recibiendo EOF - ",flush=True)
         name = "../data/reviewsData" + self.reviews_input_queue[0] + ".txt"
         with open(name, "a") as file:
             for review in self.reviews_to_add:
@@ -130,13 +151,28 @@ class GameReviewFilter:
         """
         self.completed_reviews = True
         self.nodes_completed += 1
-
+        
+        print("Recibiendo EOF  mESSAGE- ",message,flush=True)
+        
+        message_str = message.decode("utf-8")
+        parts = message_str.split("\n\n")
+        self.total_batches = int(parts[1])
+        
+        print("Recibiendo EOF - ",self.total_batches,flush=True)
+        
+        # with self.file_lock:
+        #     self.save_last_reviews()
+        #     self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+        #     self.reviews_middleware.send("fin\n\n")
         if (self.nodes_completed == self.previous_review_nodes) and not self.sended_fin:
-            self.sended_fin = True
-        with self.file_lock:
-            self.save_last_reviews()
-            self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-            self.reviews_middleware.send("fin\n\n")
+            if self.batch_counter == self.total_batches:
+                print("Fin de la transmisión de datos batches", self.batch_counter, flush=True)
+                with self.file_lock:
+                    self.save_last_reviews()
+                    self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+                    self.reviews_middleware.send("fin\n\n")
+        
+                self.sended_fin = True
         
         
     def process_reviews(self, path):
@@ -147,7 +183,6 @@ class GameReviewFilter:
         name = path
         with open(name, "r") as file:
             for line in file:
-                print("Procesando reviews - ", line, flush=True)
                 review = Review.decode(json.loads(line))
                 if review.game_id in self.games:
                     game = self.games[review.game_id]

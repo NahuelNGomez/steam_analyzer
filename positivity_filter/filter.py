@@ -5,33 +5,48 @@ from common.review import Review
 from common.utils import split_complex_string
 from common.constants import REVIEWS_APP_ID_POS, REVIEWS_APP_NAME_POS, REVIEWS_SCORE_POS
 
+
 class PositivityFilter:
-    def __init__(self, input_queue, positivity, output_exchange, instance_id,  input_type):
+    def __init__(
+        self, input_queue, positivity, output_exchange, instance_id, input_type
+    ):
         self.positivity = positivity
-        self.middleware = Middleware(input_queues=input_queue, output_queues=[], output_exchanges=output_exchange, intance_id=instance_id, callback=self._callback, eofCallback=self._finCallback, exchange_input_type=input_type)
-        self.counter = 0
+        self.middleware = Middleware(
+            input_queues=input_queue,
+            output_queues=[],
+            output_exchanges=output_exchange,
+            intance_id=instance_id,
+            callback=self._callback,
+            eofCallback=self._finCallback,
+            exchange_input_type=input_type,
+        )
+        self.batch_counter = 0
+
     def start(self):
         self.middleware.start()
         logging.info("FilterPositivity started")
-        
+
     def _callback(self, message):
         try:
             batch = message.split("\n")
+            finalList = ""
+            
 
             for row in batch:
                 if not row.strip():
-                        continue
+                    continue
                 result_review = Review.decode(json.loads(row))
-                self.counter += 1
-                
+
                 review_score = result_review.review_score
-                if int(review_score) == self.positivity: # Cast?
-                    self.middleware.send(json.dumps(result_review.getData()))
+                if int(review_score) == self.positivity:
+                    finalList += f"{json.dumps(result_review.getData())}\n"
+            self.batch_counter += 1
+            self.middleware.send(finalList)
 
         except Exception as e:
             logging.error(f"Error in FilterPositivity callback: {e}")
-            
+
     def _finCallback(self, message):
-        self.middleware.send(message)
+        fin_message = "fin\n\n" + str(self.batch_counter)
+        self.middleware.send(fin_message)
         logging.info("FilterPositivity finished")
-        
