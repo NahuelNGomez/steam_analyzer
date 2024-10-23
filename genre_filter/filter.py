@@ -43,19 +43,20 @@ class GenreFilter:
 
         :param data: Datos recibidos.
         """
+        print("Fin de la transmisión, enviando data", data, flush=True)
         logging.info("Fin de la transmisión, enviando data")
         self.middleware.send(data)
     
     def _callBack(self, data):
         try:
-            clean_data = data.strip()  # Remover espacios y saltos de línea al inicio y final
-            batch = clean_data.split('\n')  # Separar las filas
+            clean_data = data.strip()
+            batch = clean_data.split('\n')
 
             for row in batch:
-                row = row.strip()  # Asegurar que cada fila no tenga espacios en blanco
+                row = row.strip()
                 if not row:
                     logging.warning("Fila vacía o compuesta solo de espacios, saltando...")
-                    continue  # Ignora las filas vacías
+                    continue
 
                 json_row = json.loads(row)
                 game = Game.decode(json_row)
@@ -63,8 +64,6 @@ class GenreFilter:
                 logging.debug(f"Mensaje decodificado: {game}")
                 filtered_game = self.filter_games_by_genre(game)
                 if filtered_game:
-                    if (filtered_game.id == '352460'):
-                        logging.info(f"Juego filtrado enviado: {filtered_game.id}")
                     game_str = json.dumps(filtered_game.getData())
                     self.middleware.send(game_str)
                     logging.info(f"Juego filtrado enviado: {filtered_game}")
