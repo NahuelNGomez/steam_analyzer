@@ -3,6 +3,7 @@ import socket
 import logging
 import json
 import threading
+from common.packet_fin import Fin
 from common.protocol import Protocol
 from common.constants import MAX_BATCH_SIZE
 
@@ -57,10 +58,11 @@ class Client:
 
     def send_fin(self, protocol):
         try:
-            message = "fin\n\n"
-            protocol.send_message(message)
+            fin_msg = Fin(0, 1)
+            #message = "fin\n\n"
+            protocol.send_message(fin_msg.encode())
             logging.info("Fin de la transmisión de datos")
-            logging.debug(f"Enviado ({message.strip()})")
+            #logging.debug(f"Enviado ({message.strip()})")
         except Exception as e:
             logging.error(f"Error al enviar fin: {e}")
 
@@ -78,8 +80,8 @@ class Client:
                     # Enviar datasets una vez
                     # self.send_data(protocol, "data/games.csv", "games")
                     # self.send_data(protocol, "data/dataset.csv", "reviews")
-                    self.send_data(protocol, "../data/sample_30_games.csv", "games")
-                    self.send_data(protocol, "../data/sample_30_reviews.csv", "reviews")
+                    self.send_data(protocol, "../data/sample_10_por_ciento_games.csv", "games")
+                    self.send_data(protocol, "../data/sample_10_por_ciento_review.csv", "reviews")
                     self.send_fin(protocol)
 
                     # Iniciar un hilo para guardar respuestas periódicamente
