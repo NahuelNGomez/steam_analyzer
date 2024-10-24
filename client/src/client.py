@@ -9,7 +9,7 @@ from common.constants import MAX_BATCH_SIZE
 
 
 class Client:
-    def __init__(self, boundary_ip, boundary_port, retries=5, delay=5):
+    def __init__(self, boundary_ip, boundary_port, retries=5, delay=5, client_id=0):
         self.boundary_ip = boundary_ip
         self.boundary_port = boundary_port
         self.retries = retries
@@ -17,7 +17,7 @@ class Client:
         self.responses = []
         self.lock = threading.Lock()
         self.shutdown_event = threading.Event()
-        self.client_id = 28  # ID del cliente
+        self.client_id =client_id # ID del cliente
 
     def send_data(self, protocol, file_path, data_type):
         try:

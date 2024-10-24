@@ -45,10 +45,14 @@ services:
       - gateway
     environment:
       - LOGGING_LEVEL=INFO
-      - rabbitmq_RESULTS_QUEUE=result_queue
+      - CLIENT_ID=1
+      - BOUNDARY_IP=gateway
+      - BOUNDARY_PORT=12345
+      - DELAY=5
+      - RETRIES=5
+      
     volumes:
       - ./data:/data
-      - ./client/config.ini:/client/config.ini
       - ./results:/results
 
   games_counter:

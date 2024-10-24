@@ -1,13 +1,9 @@
 import configparser
 import logging
+import os
 import signal
 import sys
 from src.client import Client
-
-def load_config(config_file='config.ini'):
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    return config['DEFAULT']
 
 def setup_logging(level):
     numeric_level = getattr(logging, level.upper(), None)
@@ -23,20 +19,19 @@ def setup_logging(level):
     logging.info("Logging configurado.")
 
 def main():
-    # Cargar configuración
-    config = load_config()
     
     # Configuración de logging
-    LOGGING_LEVEL = config.get('LOGGING_LEVEL', 'INFO')
+    LOGGING_LEVEL = os.getenv("LOGGING_LEVEL") or "INFO"
     setup_logging(LOGGING_LEVEL)
     
     # Configuración del cliente
-    BOUNDARY_IP = config.get('BOUNDARY_IP', '127.0.0.1')  
-    BOUNDARY_PORT = config.get('BOUNDARY_PORT', 8000)
-    RETRIES = config.getint('RETRIES', 5)
-    DELAY = config.getint('DELAY', 5)
+    BOUNDARY_IP = os.getenv("BOUNDARY_IP") or '127.0.0.1'
+    BOUNDARY_PORT = int(os.getenv("BOUNDARY_PORT") or 8000)
+    RETRIES = int(os.getenv("RETRIES") or 5)
+    DELAY = int(os.getenv("DELAY") or 5)
+    CLIENT_ID = int(os.getenv("CLIENT_ID") or 1)
     
-    client = Client(BOUNDARY_IP, BOUNDARY_PORT, retries=RETRIES, delay=DELAY)
+    client = Client(BOUNDARY_IP, BOUNDARY_PORT, retries=RETRIES, delay=DELAY,client_id=CLIENT_ID)
     
     # Manejar señales para un cierre graceful
     def handle_signal(signum, frame):
@@ -45,7 +40,7 @@ def main():
         sys.exit(0)
     
     signal.signal(signal.SIGTERM, handle_signal)
-    signal.signal(signal.SIGINT, handle_signal)  # Opcional: manejar Ctrl+C también
+    signal.signal(signal.SIGINT, handle_signal)
     
     try:
         client.start()
