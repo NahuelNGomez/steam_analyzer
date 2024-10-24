@@ -53,7 +53,6 @@ class PositivityFilter:
         print("Fin de la transmisión, enviando data", message, flush=True)
         json_row = Fin.decode(message)
         fin_message = Fin(self.batch_counter, json_row.client_id)
-        #fin_message = "fin\n\n" + str(self.batch_counter)
         
         self.middleware.send(fin_message.encode())
         logging.info("FilterPositivity finished")

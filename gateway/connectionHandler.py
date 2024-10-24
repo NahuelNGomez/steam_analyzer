@@ -108,15 +108,15 @@ class ConnectionHandler:
                 )
 
                 # Separar tipo de dataset y contenido usando doble salto de línea
-                parts = data.split("\n\n", 1)
-                if len(parts) < 2:
+                parts = data.split("\n\n", 2)
+                if len(parts) < 3:
                     logging.warning("Datos recibidos en formato incorrecto.")
                     self.protocol.send_message("Error: Formato de datos incorrecto")
                     continue
 
                 if first:
                     first = False
-                    self.gamesHeader = parts[1].strip().split("\n")
+                    self.gamesHeader = parts[2].strip().split("\n")
                     logging.info(f"Header recibido: {self.gamesHeader}")
                     self.protocol.send_message("OK\n\n")
                     continue
@@ -140,31 +140,29 @@ class ConnectionHandler:
                         break
 
                     if data_type == "reviews":
-                        self.reviews_to_process_queue.put(parts[1])
+                        self.reviews_to_process_queue.put(parts[1:])
                         self.protocol.send_message("OK\n\n")
                         if not self.completed_games:
-                            self.games_from_client_queue.put("fin\n\n")
+                            self.games_from_client_queue.put("fin\n\n") # Cabmiar cuando games o review tenga el id del client
                             self.completed_games = True
                         
                     if data_type == "games":
-                        games_list = parts[1].strip().split("\n")
+                        games_list = parts[2].strip().split("\n")
                         finalList = ''
                         for row in games_list:
                             try:
-                                # Convertir a un objeto Game y procesar los datos
-                                game = Game.from_csv_row(row)
+                                game = Game.from_csv_row(row, int(parts[1]))
                                 if game.checkNanElements():
                                     continue
                                 game_str = json.dumps(game.getData())
                                 finalList += f"{game_str}\n"
                             except Exception as e:
                                 logging.error(f"Error al procesar la fila: {row}, error: {e}")
-                                continue  # Continuar con la siguiente fila si ocurre un error
+                                continue
                         if finalList:
                             logging.info(f"Enviando los siguientes datos a la cola: {finalList[:50]}...")
                         else:
                             logging.info("No hay datos para enviar después del filtrado.")
-                        # Enviar los juegos procesados a la cola
                         self.games_from_client_queue.put(finalList)
                         self.protocol.send_message("OK\n\n")
                 except Exception as e:
@@ -259,10 +257,12 @@ class ConnectionHandler:
         while not self.shutdown_event.is_set():
             try:
                 packet = self.reviews_to_process_queue.get(block=True, timeout=1)
-                review_list = packet.strip().split("\n")
+                data = packet[1]
+                client_id = packet[0]
+                review_list = data.strip().split("\n")
                 finalList = ''
                 for row in review_list:
-                    review = Review.from_csv_row(self.id_reviews, row)
+                    review = Review.from_csv_row(self.id_reviews, row, client_id)
                     if review.checkNanElements():
                         self.filtrados += 1
 

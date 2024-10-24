@@ -17,6 +17,7 @@ class Client:
         self.responses = []
         self.lock = threading.Lock()
         self.shutdown_event = threading.Event()
+        self.client_id = 28  # ID del cliente
 
     def send_data(self, protocol, file_path, data_type):
         try:
@@ -30,14 +31,14 @@ class Client:
                         return
                     if first:
                         first = False
-                        message = f"{data_type}\n\n{line}"
+                        message = f"{data_type}\n\n{self.client_id}\n\n{line}"
                         protocol.send_message(message)
                         logging.debug(f"Enviado (inicio {data_type}): {line[:50]}...")
                         continue
                     batch.append(line)
                     if len(batch) == MAX_BATCH_SIZE:  # Si alcanzamos el tamaño del batch
                         data = ''.join(batch)
-                        message = f"{data_type}\n\n{data}"
+                        message = f"{data_type}\n\n{self.client_id}\n\n{data}"
                         protocol.send_message(message)
                         logging.debug(f"Enviado ({data_type}): {data[:50]}...")
                         batch.clear()  # Vaciar el batch para el siguiente conjunto de líneas
@@ -46,7 +47,7 @@ class Client:
                 # Enviar cualquier resto de líneas que no formó un batch completo
                 if batch:
                     data = ''.join(batch)
-                    message = f"{data_type}\n\n{data}"
+                    message = f"{data_type}\n\n{self.client_id}\n\n{data}"
                     protocol.send_message(message)
                     logging.debug(f"Enviado ({data_type}): {data[:50]}...")
                     protocol.receive_message()
@@ -58,11 +59,9 @@ class Client:
 
     def send_fin(self, protocol):
         try:
-            fin_msg = Fin(0, 1)
-            #message = "fin\n\n"
+            fin_msg = Fin(0, self.client_id)
             protocol.send_message(fin_msg.encode())
             logging.info("Fin de la transmisión de datos")
-            #logging.debug(f"Enviado ({message.strip()})")
         except Exception as e:
             logging.error(f"Error al enviar fin: {e}")
 
@@ -84,17 +83,15 @@ class Client:
                     self.send_data(protocol, "../data/sample_10_por_ciento_review.csv", "reviews")
                     self.send_fin(protocol)
 
-                    # Iniciar un hilo para guardar respuestas periódicamente
                     save_thread = threading.Thread(target=self.periodic_save_responses, name="SaveThread")
                     save_thread.daemon = True
                     save_thread.start()
 
-                    # Escuchar respuestas del servidor después de enviar los datasets
                     logging.info("Esperando resultado del servidor...")
                     self.wait_for_result(protocol)
 
                     logging.info("Cerrando conexión.")
-                    break  # Terminar después de recibir respuestas
+                    break
             except socket.gaierror:
                 attempt += 1
                 logging.error(

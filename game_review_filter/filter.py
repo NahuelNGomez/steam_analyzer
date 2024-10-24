@@ -90,10 +90,7 @@ class GameReviewFilter:
             for row in batch:
                 if not row.strip():
                     continue
-                #review = Review.decode(json.loads(row))
-                #review_cleaned = review.replace('\x00', '')
                 self.reviews_to_add.append(row)
-                # Usar lock antes de escribir en el archivo
                 if len(self.reviews_to_add) >= 3000:
                     name = "../data/reviewsData" + self.reviews_input_queue[0] + ".txt"
                     with open(name, "a") as file:
@@ -104,17 +101,14 @@ class GameReviewFilter:
                 if self.review_file_size >= 70:
                     print("Procesando reviews", flush=True)
                     self.review_file_size = 0
-                    #threading.Thread(target=self.process_reviews, args=("data/reviewsData" + self.reviews_input_queue[0] +".txt",)).start()
-                    
                     self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-                    #self.process_reviews("data/reviewsData" + self.reviews_input_queue[0] +(self.review_file-1) + ".txt")
         if (self.nodes_completed == self.previous_review_nodes) and not self.sended_fin:
             if self.batch_counter == self.total_batches and self.sended_fin == False:
                 print("Fin de la transmisión de datos batches", self.batch_counter, flush=True)
                 with self.file_lock:
                     self.save_last_reviews()
                     self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-                    self.reviews_middleware.send("fin\n\n")
+                    self.reviews_middleware.send("fin\n\n") # Cambiar cuando review tenga el id del client
         
                 self.sended_fin = True
                 
@@ -132,7 +126,7 @@ class GameReviewFilter:
             self.sended_fin = True
             logging.info("Fin de la transmisión de datos")
             self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-            self.reviews_middleware.send("fin\n\n")
+            self.reviews_middleware.send(message)
     
     def save_last_reviews(self):
         """
@@ -152,8 +146,6 @@ class GameReviewFilter:
         """
         self.completed_reviews = True
         self.nodes_completed += 1
-        
-        print("Recibiendo EOF  mESSAGE- ",message,flush=True)
         
         message_fin = Fin.decode(message)
         self.total_batches = int(message_fin.batch_id)
@@ -182,11 +174,11 @@ class GameReviewFilter:
                 if review.game_id in self.games:
                     game = self.games[review.game_id]
                     if 'action' in self.games_input_queue[1].lower():
-                        game_review = GameReview(review.game_id, game, review.review_text)
+                        game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
                         game_str = json.dumps(game_review.getData())
                         self.reviews_middleware.send(game_str)
                     else:
-                        game_review = GameReview(review.game_id, game, None)
+                        game_review = GameReview(review.game_id, game, None, review.client_id)
                         game_str = json.dumps(game_review.getData())
                         self.reviews_middleware.send(game_str)
                 else:
