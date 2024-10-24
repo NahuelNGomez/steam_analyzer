@@ -10,6 +10,7 @@ from common.middleware import Middleware
 from common.protocol import Protocol
 from common.constants import MAX_QUEUE_SIZE
 from common.review import Review
+from common.packet_fin import Fin
 from common.utils import split_complex_string
 import csv
 import io
@@ -130,10 +131,12 @@ class ConnectionHandler:
 
                 try:
                     if data_type == "fin":
+                        fin_msg = Fin.decode(data)
+                        print("Fin de la transmisión, enviando data", fin_msg.encode(), flush=True)
                         logging.info("Fin de la transmisión de datos")
                         self.protocol.send_message("OK - ACK de fin")
-                        self.reviews_from_client_queue.put("fin\n\n")
-                        self._fin_sender()
+                        self.reviews_from_client_queue.put(fin_msg.encode())
+                        self._fin_sender(fin_msg.encode())
                         break
 
                     if data_type == "reviews":
@@ -196,7 +199,7 @@ class ConnectionHandler:
         except Exception as e:
             logging.error(f"Error al enviar resultados al cliente: {e}")
 
-    def _fin_sender(self):
+    def _fin_sender(self, msg):
         middleware = Middleware(
             output_exchanges=['to_positive_review'],
             output_queues=['to_positive_review_1_0', 'to_positive_review_2_0', 'to_positive_review_3_0', 'to_positive_review_4_0'],
@@ -206,7 +209,7 @@ class ConnectionHandler:
         for i in range(4):
             routing = f"to_positive_review_{i+1}_0"
             logging.info(f"Sending to FIN {routing}")
-            middleware.send("fin\n\n", routing_key=f"to_positive_review_{i+1}_0")
+            middleware.send(msg, routing_key=f"to_positive_review_{i+1}_0")
 
     def __middleware_sender(self, packet_queue, output_exchange, output_queues, instances, output_type):
         logging.info("Middleware sender started")

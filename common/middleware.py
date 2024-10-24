@@ -105,10 +105,10 @@ class Middleware:
 
         def callback_wrapper(ch, method, properties, body):
             response = 0
-            logging.debug("Received %s", body)
             mensaje_str = body.decode("utf-8")
+            logging.debug("Received %s", mensaje_str)
             if "fin\n\n" in mensaje_str:
-                eofCallback(body)
+                eofCallback(mensaje_str)
             else:
                 response = callback(mensaje_str)
             if not self.auto_ack:

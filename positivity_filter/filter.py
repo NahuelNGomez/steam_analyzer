@@ -1,6 +1,7 @@
 import json
 import logging
 from common.middleware import Middleware
+from common.packet_fin import Fin
 from common.review import Review
 from common.utils import split_complex_string
 from common.constants import REVIEWS_APP_ID_POS, REVIEWS_APP_NAME_POS, REVIEWS_SCORE_POS
@@ -47,6 +48,12 @@ class PositivityFilter:
             logging.error(f"Error in FilterPositivity callback: {e}")
 
     def _finCallback(self, message):
-        fin_message = "fin\n\n" + str(self.batch_counter)
-        self.middleware.send(fin_message)
+        if not message:
+            raise ValueError("Message is empty or None")
+        print("Fin de la transmisión, enviando data", message, flush=True)
+        json_row = Fin.decode(message)
+        fin_message = Fin(self.batch_counter, json_row.client_id)
+        #fin_message = "fin\n\n" + str(self.batch_counter)
+        
+        self.middleware.send(fin_message.encode())
         logging.info("FilterPositivity finished")

@@ -5,6 +5,7 @@ import threading
 from common.game import Game
 from common.game_review import GameReview
 from common.middleware import Middleware
+from common.packet_fin import Fin
 from common.review import Review
 from common.utils import split_complex_string
 
@@ -154,23 +155,17 @@ class GameReviewFilter:
         
         print("Recibiendo EOF  mESSAGE- ",message,flush=True)
         
-        message_str = message.decode("utf-8")
-        parts = message_str.split("\n\n")
-        self.total_batches = int(parts[1])
+        message_fin = Fin.decode(message)
+        self.total_batches = int(message_fin.batch_id)
         
         print("Recibiendo EOF - ",self.total_batches,flush=True)
-        
-        # with self.file_lock:
-        #     self.save_last_reviews()
-        #     self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-        #     self.reviews_middleware.send("fin\n\n")
         if (self.nodes_completed == self.previous_review_nodes) and not self.sended_fin:
             if self.batch_counter == self.total_batches:
                 print("Fin de la transmisión de datos batches", self.batch_counter, flush=True)
                 with self.file_lock:
                     self.save_last_reviews()
                     self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-                    self.reviews_middleware.send("fin\n\n")
+                    self.reviews_middleware.send(Fin(self.total_batches, message_fin.client_id).encode())
         
                 self.sended_fin = True
         
