@@ -170,9 +170,9 @@ class Client:
         """
         try:
             with self.lock:
-                path = "/results/dist_results_" + self.client_id+ ".json"
+                path = "/results/dist_results_" + str(self.client_id)+ ".json"
                 with open(
-                    "/results/dist_results.json", "w", encoding="utf-8"
+                    path, "w", encoding="utf-8"
                 ) as json_file:
                     json.dump(self.responses, json_file, indent=4, ensure_ascii=False)
                     logging.info("Respuestas guardadas en /results/dist_results.json")
