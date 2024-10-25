@@ -3,6 +3,7 @@ import logging
 from common.game import Game
 from common.middleware import Middleware
 from common.utils import split_complex_string
+from common.packet_fin import Fin
 from common.constants import GAMES_APP_ID_POS, GAMES_NAME_POS, GAMES_AVERAGE_PLAYTIME_FOREVER_POS
 from datetime import datetime
 
@@ -99,10 +100,10 @@ class Top10IndieCounter:
         try:
             logging.info("End of file received. Sending top 10 indie games data for each client.")
             # Enviar el top 10 para cada cliente
-            for client_id in self.game_playtimes_by_client:
-                top10_games = json.dumps(self.get_games(client_id), indent=4)
-                self.middleware.send(top10_games)
-                logging.info(f"Top 10 indie games data sent for client {client_id}.")
+            fin_msg = Fin.decode(data)
+            client_id = int(fin_msg.client_id)
+            self.middleware.send(json.dumps(self.get_games(client_id)))
+            
         except Exception as e:
             logging.error(f"Error in _eof_callback: {e}")
 

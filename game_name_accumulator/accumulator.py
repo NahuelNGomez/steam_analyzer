@@ -3,8 +3,7 @@ import logging
 from collections import defaultdict
 from common.game_review import GameReview
 from common.middleware import Middleware
-from common.utils import split_complex_string
-from common.constants import REVIEWS_APP_ID_POS, REVIEWS_TEXT_POS
+from common.packet_fin import Fin
 
 class GameNamesAccumulator:
     def __init__(self, input_queues, output_exchanges, instance_id, reviews_low_limit):
@@ -14,13 +13,15 @@ class GameNamesAccumulator:
         :param input_queues: Diccionario de colas de entrada.
         :param output_exchanges: Lista de exchanges de salida.
         :param instance_id: ID de instancia para identificar colas únicas.
+        :param reviews_low_limit: Límite de reseñas para enviar un juego.
         """
-        self.games = defaultdict(int)
-        self.sent_games = []
+        # Diccionario para almacenar juegos por client_id
+        self.games_by_client = defaultdict(lambda: defaultdict(int))
+        self.sent_games_by_client = defaultdict(list)
         self.reviews_low_limit = reviews_low_limit
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
-        self._callBack, self._finCallBack)
-        self.datasent = False
+                                     self._callBack, self._finCallBack)
+        self.datasent_by_client = defaultdict(bool)
 
     def start(self):
         """
@@ -31,66 +32,81 @@ class GameNamesAccumulator:
     
     def process_game(self, game):
         """
-        Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas.
+        Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas por cliente.
         Si el número de reseñas supera el límite definido, envía el nombre del juego.
         """
         try:
+            client_id = game.client_id  # Obtener el client_id
             game_id = game.game_id
-            if game_id in self.games:
-                self.games[game_id]['count'] += 1
+
+            games = self.games_by_client[client_id]
+            sent_games = self.sent_games_by_client[client_id]
+
+            if game_id in games:
+                games[game_id]['count'] += 1
             else:
-                if self.games[game_id] not in self.sent_games:
-                    self.games[game_id] = {
+                if games[game_id] not in sent_games:
+                    games[game_id] = {
                         'name': game.game_name,
                         'count': 1
                     }
 
-            if self.games[game_id]['count'] > self.reviews_low_limit and game_id not in self.sent_games:
+            if games[game_id]['count'] > self.reviews_low_limit and game_id not in sent_games:
                 message = {
-                    'game_exceeding_limit': [
-                        {
-                            'game_name': self.games[game_id]['name']
+                    f'game_exceeding_limit': {
+                        "client id " + str(client_id): {
+                            {
+                                'game_name': games[game_id]['name']
+                            }
                         }
-                    ]
+                    }
                 }
                 self.middleware.send(json.dumps(message))
-                self.sent_games.append(game_id)
-                self.games.pop(game_id)
-                self.datasent = True
+                sent_games.append(game_id)
+                games.pop(game_id)
+                self.datasent_by_client[client_id] = True
 
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
     
-    def get_games(self):
+    def get_games(self, client_id):
         """
-        Obtiene los juegos acumulados.
+        Obtiene los juegos acumulados para un cliente específico.
 
+        :param client_id: ID del cliente.
         :return: Diccionario de juegos acumulados.
         """
-        return self.games
+        return self.games_by_client.get(client_id, {})
     
     def _finCallBack(self, data):
         """
         Callback para manejar el mensaje de fin.
-
-        :param data: Datos recibidos.
+        Procesa el fin específico para el cliente asociado al `client_id` recibido.
         """
-        logging.info("Fin de la transmisión, enviando data")
-        if not self.datasent:
-            message = {
-                'game_exceeding_limit': []
+        try:
+            fin = Fin.decode(data)  # Decodificar el mensaje de fin para obtener el client_id
+            client_id = fin.client_id
+            logging.info(f"Fin de la transmisión recibido para el cliente {client_id}")
+
+            # Enviar datos del cliente si no se ha enviado antes
+            if not self.datasent_by_client[client_id]:
+                message = {
+                    f'game_exceeding_limit_client_id{client_id}': []
+                }
+                self.middleware.send(json.dumps(message))
+
+            # Enviar el mensaje final de chequeo
+            message2 = {
+                f"final_check_low_limit_client_id{client_id}": True
             }
-            self.middleware.send(json.dumps(message))
-        message2 ={
-            "final_check_low_limit": True
-        }
-        self.middleware.send(json.dumps(message2))
+            self.middleware.send(json.dumps(message2))
+
+        except Exception as e:
+            logging.error(f"Error al procesar el mensaje de fin: {e}")
     
     def _callBack(self, data):
         """
         Callback para procesar los mensajes recibidos.
-
-        :param data: Datos recibidos.
         """
         try:
             game = GameReview.decode(json.loads(data))
@@ -99,4 +115,3 @@ class GameNamesAccumulator:
             
         except Exception as e:
             logging.error(f"Error en GameNamesAccumulator callback: {e}")
-            

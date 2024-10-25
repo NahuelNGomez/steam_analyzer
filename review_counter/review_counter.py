@@ -3,6 +3,7 @@ import logging
 from common.game_review import GameReview
 from common.middleware import Middleware
 from common.utils import split_complex_string
+from common.packet_fin import Fin
 from common.constants import GAMES_APP_ID_POS, GAMES_NAME_POS, GAMES_AVERAGE_PLAYTIME_FOREVER_POS
 from datetime import datetime
 
@@ -32,8 +33,8 @@ class Top5ReviewCounter:
             reverse=True
         )[:5]
         return {
-            f"top_5_indie_games_positive_reviews": {
-                f"client id {client_id}": [
+            "top_5_indie_games_positive_reviews": {
+                "client id " + str(client_id): [
                     {
                         "rank": idx + 1,
                         "name": game_data["name"],
@@ -84,13 +85,18 @@ class Top5ReviewCounter:
         if self.remaining_fin > 0:
             return
         logging.info("End of file received. Sending top 5 indie games positive reviews data for each client.")
+        # fin_msg = Fin.decode(data)
+        # client_id = int(fin_msg.client_id)
+        # top_5_games = self.get_games(client_id)
         
-        # Enviar el top 5 para cada cliente
+        # self.middleware.send(json.dumps(top_5_games))
         for client_id in self.games_dict_by_client:
             top5_games = json.dumps(self.get_games(client_id), indent=4)
             self.middleware.send(top5_games)
             logging.info(f"Top 5 indie games positive reviews data sent for client {client_id}.")
     
+        
+
     def start(self):
         """
         Start middleware to begin consuming messages.
