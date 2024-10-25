@@ -17,7 +17,6 @@ class PercentileAccumulator:
         :param instance_id: ID de instancia para identificar colas únicas.
         :param percentile: Percentil para filtrar los juegos (por defecto, 90).
         """
-        # Diccionario para almacenar juegos por client_id
         self.games_by_client = defaultdict(lambda: defaultdict(lambda: {'name': '', 'count': 0}))
         self.percentile = percentile
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
@@ -38,7 +37,7 @@ class PercentileAccumulator:
         try:
             self.counter += 1
             game_id = game.game_id
-            client_id = game.client_id  # Extraer client_id del game_review
+            client_id = int(game.client_id)
 
             games = self.games_by_client[client_id]
 
@@ -83,18 +82,18 @@ class PercentileAccumulator:
                 negative_count_percentile_list.append(game_entry)
                 logging.info(f"Juego en el percentil 90 añadido para cliente {client_id}: {game_data['name']}")
 
-            # Ordenar la lista de juegos por game_id tratado como número antes de enviarla
             negative_count_percentile_list = sorted(negative_count_percentile_list, key=lambda x: int(x['game_id']))
 
-            # Enviar la lista completa al middleware con el client_id en el nombre de la query
-            self.middleware.send(json.dumps({
-                f'negative_count_percentile_client_id{client_id}': negative_count_percentile_list
-            }))
-
+            response = {
+                "negative_count_percentile": {
+                    f"client_id {client_id}": negative_count_percentile_list
+                }
+            }
+            self.middleware.send(json.dumps(response))
             self.games_by_client[client_id].clear()
+
         except Exception as e:
             logging.error(f"Error al calcular el percentil 90 para cliente {client_id}: {e}")
-    
     def _finCallBack(self, data):
         """
         Callback para manejar el mensaje de fin.

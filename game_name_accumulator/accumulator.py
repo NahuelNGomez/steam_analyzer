@@ -5,6 +5,7 @@ from common.game_review import GameReview
 from common.middleware import Middleware
 from common.packet_fin import Fin
 
+
 class GameNamesAccumulator:
     def __init__(self, input_queues, output_exchanges, instance_id, reviews_low_limit):
         """
@@ -19,8 +20,14 @@ class GameNamesAccumulator:
         self.games_by_client = defaultdict(lambda: defaultdict(int))
         self.sent_games_by_client = defaultdict(list)
         self.reviews_low_limit = reviews_low_limit
-        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
-                                     self._callBack, self._finCallBack)
+        self.middleware = Middleware(
+            input_queues,
+            [],
+            output_exchanges,
+            instance_id,
+            self._callBack,
+            self._finCallBack,
+        )
         self.datasent_by_client = defaultdict(bool)
 
     def start(self):
@@ -29,7 +36,7 @@ class GameNamesAccumulator:
         """
         self.middleware.start()
         logging.info("GameNamesAccumulator started")
-    
+
     def process_game(self, game):
         """
         Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas por cliente.
@@ -43,22 +50,19 @@ class GameNamesAccumulator:
             sent_games = self.sent_games_by_client[client_id]
 
             if game_id in games:
-                games[game_id]['count'] += 1
+                games[game_id]["count"] += 1
             else:
                 if games[game_id] not in sent_games:
-                    games[game_id] = {
-                        'name': game.game_name,
-                        'count': 1
-                    }
+                    games[game_id] = {"name": game.game_name, "count": 1}
 
-            if games[game_id]['count'] > self.reviews_low_limit and game_id not in sent_games:
+            if (
+                games[game_id]["count"] > self.reviews_low_limit
+                and game_id not in sent_games
+            ):
                 message = {
-                    f'game_exceeding_limit': {
-                        "client id " + str(client_id): {
-                            {
-                                'game_name': games[game_id]['name']
-                            }
-                        }
+                    f"game_exceeding_limit": {
+                        "client id "
+                        + str(client_id): {{"game_name": games[game_id]["name"]}}
                     }
                 }
                 self.middleware.send(json.dumps(message))
@@ -68,7 +72,7 @@ class GameNamesAccumulator:
 
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
-    
+
     def get_games(self, client_id):
         """
         Obtiene los juegos acumulados para un cliente específico.
@@ -77,33 +81,27 @@ class GameNamesAccumulator:
         :return: Diccionario de juegos acumulados.
         """
         return self.games_by_client.get(client_id, {})
-    
+
     def _finCallBack(self, data):
         """
         Callback para manejar el mensaje de fin.
         Procesa el fin específico para el cliente asociado al `client_id` recibido.
         """
         try:
-            fin = Fin.decode(data)  # Decodificar el mensaje de fin para obtener el client_id
+            fin = Fin.decode(data)
             client_id = fin.client_id
             logging.info(f"Fin de la transmisión recibido para el cliente {client_id}")
 
-            # Enviar datos del cliente si no se ha enviado antes
             if not self.datasent_by_client[client_id]:
-                message = {
-                    f'game_exceeding_limit_client_id{client_id}': []
-                }
+                message = {"game_exceeding_limit": {"client_id " + client_id: []}}
                 self.middleware.send(json.dumps(message))
 
-            # Enviar el mensaje final de chequeo
-            message2 = {
-                f"final_check_low_limit_client_id{client_id}": True
-            }
+            message2 ={"final_check_low_limit": {"client_id " + client_id: True}}
             self.middleware.send(json.dumps(message2))
 
         except Exception as e:
             logging.error(f"Error al procesar el mensaje de fin: {e}")
-    
+
     def _callBack(self, data):
         """
         Callback para procesar los mensajes recibidos.
@@ -112,6 +110,6 @@ class GameNamesAccumulator:
             game = GameReview.decode(json.loads(data))
             logging.debug(f"Mensaje decodificado: {game}")
             self.process_game(game)
-            
+
         except Exception as e:
             logging.error(f"Error en GameNamesAccumulator callback: {e}")

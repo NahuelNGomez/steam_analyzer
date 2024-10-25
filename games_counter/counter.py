@@ -91,7 +91,6 @@ class GamesCounter:
                 }
             }
             self.middleware.send(json.dumps(response, indent=4))
-            #self.middleware.send("Respuesta del contador de juegos enviada.")
         except Exception as e:
             logging.error(f"Error al procesar el mensaje de fin: {e}")
     

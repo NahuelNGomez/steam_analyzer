@@ -108,7 +108,7 @@ class GameReviewFilter:
                 with self.file_lock:
                     self.save_last_reviews()
                     self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
-                    self.reviews_middleware.send("fin\n\n") # Cambiar cuando review tenga el id del client
+                    self.reviews_middleware.send(Fin(0,Review.decode(json.loads(batch[0])).client_id)) # Cambiar cuando review tenga el id del client
         
                 self.sended_fin = True
                 

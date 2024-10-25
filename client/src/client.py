@@ -17,7 +17,7 @@ class Client:
         self.responses = []
         self.lock = threading.Lock()
         self.shutdown_event = threading.Event()
-        self.client_id =client_id # ID del cliente
+        self.client_id = client_id  # ID del cliente
 
     def send_data(self, protocol, file_path, data_type):
         try:
@@ -27,7 +27,9 @@ class Client:
                 protocol.send_message(data_type)
                 for line in file:
                     if self.shutdown_event.is_set():
-                        logging.info("Señal de cierre recibida. Deteniendo envío de datos.")
+                        logging.info(
+                            "Señal de cierre recibida. Deteniendo envío de datos."
+                        )
                         return
                     if first:
                         first = False
@@ -36,8 +38,10 @@ class Client:
                         logging.debug(f"Enviado (inicio {data_type}): {line[:50]}...")
                         continue
                     batch.append(line)
-                    if len(batch) == MAX_BATCH_SIZE:  # Si alcanzamos el tamaño del batch
-                        data = ''.join(batch)
+                    if (
+                        len(batch) == MAX_BATCH_SIZE
+                    ):  # Si alcanzamos el tamaño del batch
+                        data = "".join(batch)
                         message = f"{data_type}\n\n{self.client_id}\n\n{data}"
                         protocol.send_message(message)
                         logging.debug(f"Enviado ({data_type}): {data[:50]}...")
@@ -46,7 +50,7 @@ class Client:
 
                 # Enviar cualquier resto de líneas que no formó un batch completo
                 if batch:
-                    data = ''.join(batch)
+                    data = "".join(batch)
                     message = f"{data_type}\n\n{self.client_id}\n\n{data}"
                     protocol.send_message(message)
                     logging.debug(f"Enviado ({data_type}): {data[:50]}...")
@@ -75,15 +79,21 @@ class Client:
                     logging.info(
                         f"Conectado al servidor en {self.boundary_ip}:{self.boundary_port}"
                     )
-                    
+
                     # Enviar datasets una vez
                     # self.send_data(protocol, "data/games.csv", "games")
                     # self.send_data(protocol, "data/dataset.csv", "reviews")
-                    self.send_data(protocol, "../data/sample_10_por_ciento_games.csv", "games")
-                    self.send_data(protocol, "../data/sample_10_por_ciento_review.csv", "reviews")
+                    self.send_data(
+                        protocol, "../data/sample_10_por_ciento_games.csv", "games"
+                    )
+                    self.send_data(
+                        protocol, "../data/sample_10_por_ciento_review.csv", "reviews"
+                    )
                     self.send_fin(protocol)
 
-                    save_thread = threading.Thread(target=self.periodic_save_responses, name="SaveThread")
+                    save_thread = threading.Thread(
+                        target=self.periodic_save_responses, name="SaveThread"
+                    )
                     save_thread.daemon = True
                     save_thread.start()
 
@@ -130,7 +140,8 @@ class Client:
                             logging.info("Fin de la transmisión de resultados")
                         try:
                             json_response = json.loads(response)
-                            self.responses.append(json_response)
+                            processed_response = self.restructure_json(json_response)
+                            self.responses.append(processed_response)
                         except json.JSONDecodeError:
                             logging.warning(f"Respuesta no es JSON válida: {response}")
                         
@@ -159,7 +170,10 @@ class Client:
         """
         try:
             with self.lock:
-                with open("/results/dist_results.json", "w", encoding="utf-8") as json_file:
+                path = "/results/dist_results_" + self.client_id+ ".json"
+                with open(
+                    "/results/dist_results.json", "w", encoding="utf-8"
+                ) as json_file:
                     json.dump(self.responses, json_file, indent=4, ensure_ascii=False)
                     logging.info("Respuestas guardadas en /results/dist_results.json")
         except Exception as e:
@@ -174,3 +188,44 @@ class Client:
         # Esperar a que los hilos secundarios finalicen si es necesario
         self.save_responses_to_json()
         logging.info("Cliente cerrado exitosamente.")
+
+    def restructure_json(self, json_data):
+        """
+        Elimina la capa `client_id` y reestructura el JSON para cada categoría.
+        Acepta tanto un diccionario único como una lista de diccionarios.
+        
+        Args:
+            json_data: Puede ser un diccionario o una lista de diccionarios
+            
+        Returns:
+            dict: JSON reestructurado sin la capa de client_id
+        """
+        restructured_data = {}
+        
+        # Si recibimos un solo diccionario, lo convertimos en una lista
+        if isinstance(json_data, dict):
+            json_data = [json_data]
+        elif not isinstance(json_data, list):
+            raise ValueError("Los datos JSON deben ser un diccionario o una lista de diccionarios.")
+        
+        for category in json_data:
+            if not isinstance(category, dict):
+                raise ValueError("Cada categoría debe ser un diccionario.")
+            
+            for category_key, category_value in category.items():
+                if not isinstance(category_value, dict):
+                    raise ValueError(f"Se esperaba un diccionario para la categoría {category_key}.")
+                
+                # Inicializa la lista si la categoría no existe
+                if category_key not in restructured_data:
+                    restructured_data[category_key] = []
+                
+                # Procesa cada item bajo el client_id
+                for client_id, items in category_value.items():
+                    if not isinstance(items, list):
+                        raise ValueError(f"Se esperaba una lista de items bajo {client_id}.")
+                    
+                    # Añade cada entrada sin la capa de client_id
+                    restructured_data[category_key].extend(items)
+        
+        return restructured_data
