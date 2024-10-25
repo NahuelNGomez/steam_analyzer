@@ -1,66 +1,77 @@
 [
     {
         "supported_platforms": {
-            "1": {
-                "Windows": "9230",
-                "Mac": "1773",
-                "Linux": "1280"
-            }
+            "client_id 1": [
+                {
+                    "platform": "Windows",
+                    "game_count": 9230
+                },
+                {
+                    "platform": "Mac",
+                    "game_count": 1773
+                },
+                {
+                    "platform": "Linux",
+                    "game_count": 1280
+                }
+            ]
         }
     },
     {
-        "top_10_indie_games_2010s": [
-            {
-                "rank": 1,
-                "name": "Beasts of Bermuda",
-                "average_playtime_hours": 17147
-            },
-            {
-                "rank": 2,
-                "name": "Revhead",
-                "average_playtime_hours": 14716
-            },
-            {
-                "rank": 3,
-                "name": "RimWorld",
-                "average_playtime_hours": 10424
-            },
-            {
-                "rank": 4,
-                "name": "Aberoth",
-                "average_playtime_hours": 8334
-            },
-            {
-                "rank": 5,
-                "name": "LOVE³ -Love Cube-",
-                "average_playtime_hours": 7259
-            },
-            {
-                "rank": 6,
-                "name": "Franchise Hockey Manager 6",
-                "average_playtime_hours": 4027
-            },
-            {
-                "rank": 7,
-                "name": "Rento Fortune: Online Dice Board Game (大富翁)",
-                "average_playtime_hours": 3775
-            },
-            {
-                "rank": 8,
-                "name": "Metaverse Keeper / 元能失控",
-                "average_playtime_hours": 2770
-            },
-            {
-                "rank": 9,
-                "name": "In Exilium",
-                "average_playtime_hours": 2716
-            },
-            {
-                "rank": 10,
-                "name": "太吾绘卷 The Scroll Of Taiwu",
-                "average_playtime_hours": 2555
-            }
-        ]
+        "top_10_indie_games_2010s": {
+            "client_id 1": [
+                {
+                    "rank": 1,
+                    "name": "Beasts of Bermuda",
+                    "average_playtime_hours": 17147
+                },
+                {
+                    "rank": 2,
+                    "name": "Revhead",
+                    "average_playtime_hours": 14716
+                },
+                {
+                    "rank": 3,
+                    "name": "RimWorld",
+                    "average_playtime_hours": 10424
+                },
+                {
+                    "rank": 4,
+                    "name": "Aberoth",
+                    "average_playtime_hours": 8334
+                },
+                {
+                    "rank": 5,
+                    "name": "LOVE³ -Love Cube-",
+                    "average_playtime_hours": 7259
+                },
+                {
+                    "rank": 6,
+                    "name": "Franchise Hockey Manager 6",
+                    "average_playtime_hours": 4027
+                },
+                {
+                    "rank": 7,
+                    "name": "Rento Fortune: Online Dice Board Game (大富翁)",
+                    "average_playtime_hours": 3775
+                },
+                {
+                    "rank": 8,
+                    "name": "Metaverse Keeper / 元能失控",
+                    "average_playtime_hours": 2770
+                },
+                {
+                    "rank": 9,
+                    "name": "In Exilium",
+                    "average_playtime_hours": 2716
+                },
+                {
+                    "rank": 10,
+                    "name": "太吾绘卷 The Scroll Of Taiwu",
+                    "average_playtime_hours": 2555
+                }
+            ]
+        }
     },
     {
         "negative_count_percentile": [

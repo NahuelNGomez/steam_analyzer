@@ -83,11 +83,11 @@ class GamesCounter:
             logging.info(f"Fin de la transmisión de juegos del cliente {client_id}")
             response = {
                 "supported_platforms": {
-                    "client id " + str(client_id): {
-                        "Windows": self.platform_counts[client_id]['Windows'],
-                        "Mac": self.platform_counts[client_id]['Mac'],
-                        "Linux": (self.platform_counts[client_id]['Linux'])
-                    }
+                    "client_id " + str(client_id): [
+                        {"platform": "Windows", "game_count": self.platform_counts[client_id]['Windows']},
+                        {"platform": "Mac", "game_count": self.platform_counts[client_id]['Mac']},
+                        {"platform": "Linux", "game_count": self.platform_counts[client_id]['Linux']}
+                    ]
                 }
             }
             self.middleware.send(json.dumps(response, indent=4))

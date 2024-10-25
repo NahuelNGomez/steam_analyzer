@@ -16,15 +16,18 @@ class Top10IndieCounter:
             callback=self._process_callback,
             eofCallback=self._eof_callback
         )
-        self.game_playtimes = {i: {"nombre": None, "tiempo": None} for i in range(10)}
+        #self.game_playtimes = {i: {"nombre": None, "tiempo": None} for i in range(10)}
+        self.game_playtimes_by_client = {}
 
-    def get_games(self):
+    def get_games(self, client_id):
         """
         Returns the top 10 games dictionary.
         """
+        game_playtimes = self.game_playtimes_by_client.get(client_id, {})
+
         # Ordenar los juegos por tiempo de juego descendente
         sorted_games = sorted(
-            self.game_playtimes.items(),
+            game_playtimes.items(),
             key=lambda item: item[1]["tiempo"],
             reverse=True
         )
@@ -32,40 +35,49 @@ class Top10IndieCounter:
         top10 = sorted_games[:10]
         # Formatear la respuesta
         return {
-            "top_10_indie_games_2010s": [
-                {
-                    "rank": idx + 1,
-                    "name": game["nombre"],
-                    "average_playtime_hours": round(game["tiempo"], 2)
-                } for idx, (game_id, game) in enumerate(top10)
-            ]
+            "top_10_indie_games_2010s": {
+                "client_id " + str(client_id): [
+                    {
+                        "rank": idx + 1,
+                        "name": game["nombre"],
+                        "average_playtime_hours": round(game["tiempo"], 2)
+                    } for idx, (game_id, game) in enumerate(top10)
+                ]
+         }
         }
 
 
     def process_game(self, game):
         """
-        Processes each message (game) received and adds it to the top 10 list if applicable.
+        Processes each message (game) received and adds it to the top 10 list if applicable, based on client_id.
         """
         try:
+            client_id = game.client_id  # Obtener el client_id del juego
             game_id = game.id
             name = game.name
             playtime = int(game.apf)
 
+            # Inicializar los tiempos de juego para este cliente si no existen
+            if client_id not in self.game_playtimes_by_client:
+                self.game_playtimes_by_client[client_id] = {i: {"nombre": None, "tiempo": None} for i in range(10)}
+
+            game_playtimes = self.game_playtimes_by_client[client_id]
+
             menor_puesto = min(
-                (k for k, v in self.game_playtimes.items() if v["tiempo"] is not None),
-                key=lambda k: self.game_playtimes[k]["tiempo"],
+                (k for k, v in game_playtimes.items() if v["tiempo"] is not None),
+                key=lambda k: game_playtimes[k]["tiempo"],
                 default=None,
             )
 
             puesto_vacio = next(
-                (k for k, v in self.game_playtimes.items() if v["tiempo"] is None),
+                (k for k, v in game_playtimes.items() if v["tiempo"] is None),
                 None,
             )
 
             if puesto_vacio is not None:
-                self.game_playtimes[puesto_vacio] = {"nombre": name, "tiempo": playtime}
-            elif menor_puesto is not None and playtime > self.game_playtimes[menor_puesto]["tiempo"]:
-                self.game_playtimes[menor_puesto] = {"nombre": name, "tiempo": playtime}
+                game_playtimes[puesto_vacio] = {"nombre": name, "tiempo": playtime}
+            elif menor_puesto is not None and playtime > game_playtimes[menor_puesto]["tiempo"]:
+                game_playtimes[menor_puesto] = {"nombre": name, "tiempo": playtime}
 
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
@@ -84,11 +96,15 @@ class Top10IndieCounter:
         """
         Callback function for handling end of file (EOF) messages.
         """
-        logging.info("End of file received. Sending top 10 indie games data.")
-        top10_games = json.dumps(self.get_games(), indent=4)
-        self.middleware.send(top10_games)
-        logging.info("Top 10 indie games data sent.")
-
+        try:
+            logging.info("End of file received. Sending top 10 indie games data for each client.")
+            # Enviar el top 10 para cada cliente
+            for client_id in self.game_playtimes_by_client:
+                top10_games = json.dumps(self.get_games(client_id), indent=4)
+                self.middleware.send(top10_games)
+                logging.info(f"Top 10 indie games data sent for client {client_id}.")
+        except Exception as e:
+            logging.error(f"Error in _eof_callback: {e}")
 
     def start(self):
         """
