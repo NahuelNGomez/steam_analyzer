@@ -143,7 +143,7 @@ class ConnectionHandler:
                         self.reviews_to_process_queue.put(parts[1:])
                         self.protocol.send_message("OK\n\n")
                         if not self.completed_games:
-                            self.games_from_client_queue.put("fin\n\n") # Cabmiar cuando games o review tenga el id del client
+                            self.games_from_client_queue.put(Fin(0, int(parts[1])).encode()) 
                             self.completed_games = True
                         
                     if data_type == "games":
