@@ -24,7 +24,7 @@ class GameReviewFilter:
         self.output_exchanges = output_exchanges
         self.output_queues = output_queues
         self.instance_id = instance_id
-        self.completed_games = False
+        self.completed_games: dict = {}
         self.completed_reviews = False
         self.sended_fin = False
         self.reviews_to_add = []
@@ -34,8 +34,6 @@ class GameReviewFilter:
         self.review_file_size = 0
         self.batch_counter = 0
         self.total_batches = 0 
-
-        #self.requeued_reviews = []
 
         self.games: dict = {}
         
@@ -69,23 +67,24 @@ class GameReviewFilter:
         
     def _add_game(self, game):
         """
-        Agrega un juego al diccionario de juegos.
+        Agrega un juego al diccionario de juegos, organizados por client_id.
         """
         try:
             game = Game.decode(json.loads(game))
-            self.games[game.id] = game.name
-            if (game.name == "The Plan"):
-                print("Juego agregado: ", game.name, flush=True)
+            print("Recibiendo GAME - client_id:", type(game.client_id), "game_id:", type(game.id), flush=True)
+            client_id = game.client_id
+            if client_id not in self.games:
+                self.games[client_id] = {}
+            self.games[client_id][str(game.id)] = game.name
         except Exception as e:
-            logging.error(f"Error al agregar juego: {e}")
-
+            logging.error(f"Error al agregar juego para cliente {game.client_id}: {e}")
+            
     def _add_review(self, message):
         """
         Agrega una review a la lista y escribe en el archivo cuando llega a 1000.
         """
         batch = message.split("\n")
         self.batch_counter += 1
-        print("Recibiendo batch - ",self.batch_counter,flush=True)
         with self.file_lock:
             for row in batch:
                 if not row.strip():
@@ -101,13 +100,13 @@ class GameReviewFilter:
                 if self.review_file_size >= 70:
                     print("Procesando reviews", flush=True)
                     self.review_file_size = 0
-                    self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+                    self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt", Review.decode(json.loads(row)).client_id)
         if (self.nodes_completed == self.previous_review_nodes) and not self.sended_fin:
             if self.batch_counter == self.total_batches and self.sended_fin == False:
                 print("Fin de la transmisión de datos batches", self.batch_counter, flush=True)
                 with self.file_lock:
                     self.save_last_reviews()
-                    self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+                    self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt", Review.decode(json.loads(batch[0])).client_id)
                     self.reviews_middleware.send(Fin(0,Review.decode(json.loads(batch[0])).client_id)) # Cambiar cuando review tenga el id del client
         
                 self.sended_fin = True
@@ -120,19 +119,24 @@ class GameReviewFilter:
         Maneja el mensaje de fin de juegos.
         """
         logging.info("Fin de la transmisión de juegos")
-        self.completed_games = True
+        fin = Fin.decode(message)
         
-        if self.completed_games and self.completed_reviews and not self.sended_fin:
+        client_id = int(fin.client_id)
+        print("Recibiendo EOF - ",type(client_id),flush=True)
+
+        self.completed_games[client_id] = True
+        
+        if self.completed_games[client_id] and self.completed_reviews and not self.sended_fin:
             self.sended_fin = True
             logging.info("Fin de la transmisión de datos")
-            self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+            self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt", fin.client_id)
             self.reviews_middleware.send(message)
     
     def save_last_reviews(self):
         """
         Guarda las reviews restantes en el archivo.
         """
-        print("Recibiendo EOF - ",flush=True)
+        print(" EOF Recibiendo- ",flush=True)
         name = "../data/reviewsData" + self.reviews_input_queue[0] + ".txt"
         with open(name, "a") as file:
             for review in self.reviews_to_add:
@@ -156,34 +160,40 @@ class GameReviewFilter:
                 print("Fin de la transmisión de datos batches", self.batch_counter, flush=True)
                 with self.file_lock:
                     self.save_last_reviews()
-                    self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt")
+                    self.process_reviews("../data/reviewsData" + self.reviews_input_queue[0] + ".txt", message_fin.client_id)
                     self.reviews_middleware.send(Fin(self.total_batches, message_fin.client_id).encode())
         
                 self.sended_fin = True
         
         
-    def process_reviews(self, path):
+    def process_reviews(self, path, client_id): 
         """
-        Procesa las reviews y realiza el join con los juegos.
+        Procesa las reviews y realiza el join con los juegos específicos del client_id.
         """
-        # Usar lock antes de leer y procesar el archivo
+        client_games = self.games.get(int(client_id), {})
+        print("Juegos para el cliente", client_id, ":", client_games, flush=True)  # Verificar contenido
+
         name = path
         with open(name, "r") as file:
             for line in file:
                 review = Review.decode(json.loads(line))
-                if review.game_id in self.games:
-                    game = self.games[review.game_id]
+                print("Recibiendo REVIEW - review.game_id:", type(review.game_id), "valor:", review.game_id, flush=True)
+                
+                if review.game_id in client_games:
+                    print("Procesando review para game_id:", review.game_id, flush=True)
+                    game = client_games[review.game_id]
+                    
                     if 'action' in self.games_input_queue[1].lower():
                         game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
-                        game_str = json.dumps(game_review.getData())
-                        self.reviews_middleware.send(game_str)
                     else:
                         game_review = GameReview(review.game_id, game, None, review.client_id)
-                        game_str = json.dumps(game_review.getData())
-                        self.reviews_middleware.send(game_str)
+                    
+                    game_str = json.dumps(game_review.getData())
+                    self.reviews_middleware.send(game_str)
                 else:
-                    pass
-        logging.info("Fin de la ejecución de reviews")
+                    print(f"Review no encontrada para game_id {review.game_id} en client {client_id}", flush=True)
+                        
+        logging.info("Fin de la ejecución de reviews para el cliente %s", client_id)
         os.remove(name)
         
     def start(self):
