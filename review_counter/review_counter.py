@@ -34,7 +34,7 @@ class Top5ReviewCounter:
         )[:5]
         return {
             "top_5_indie_games_positive_reviews": {
-                "client id " + str(client_id): [
+                "client_id " + str(client_id): [
                     {
                         "rank": idx + 1,
                         "name": game_data["name"],

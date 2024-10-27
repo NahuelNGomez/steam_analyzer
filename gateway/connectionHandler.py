@@ -22,6 +22,33 @@ input_queues: dict = json.loads(os.getenv("INPUT_QUEUES", "{}"))
 output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES", "[]"))
 instance_id = os.getenv("INSTANCE_ID", "0")
 
+
+def modify_queue_key(suffix: str) -> dict:
+    """
+    Modifica la clave del diccionario de colas añadiendo un sufijo.
+    
+    Args:
+        suffix (str): El sufijo a añadir a la clave (ej: '2', '23', '44')
+        
+    Returns:
+        dict: Diccionario modificado con la nueva clave
+    """
+    # Obtener el diccionario original
+    input_queues: dict = json.loads(os.getenv("INPUT_QUEUES", "{}"))
+    
+    if not input_queues:
+        return {}
+    
+    # Obtener la primera (y única) clave y valor
+    original_key = next(iter(input_queues.keys()))
+    original_value = input_queues[original_key]
+    
+    # Crear nueva clave con el sufijo
+    new_key = f"{original_key}_{suffix}"
+    
+    # Crear nuevo diccionario con la clave modificada
+    return {new_key: original_value}
+
 class ConnectionHandler:
     def __init__(self, client_socket, address, amount_of_review_instances):
         self.id_reviews = 0
@@ -38,6 +65,8 @@ class ConnectionHandler:
         self.next_instance = 0
         self.remaining_responses = 5
         self.filtrados = 0
+        self.client_id = -1
+        self.result_queue = modify_queue_key(address[0])
         csv.field_size_limit(sys.maxsize)
             
         self.gamesHeader = []
@@ -58,7 +87,7 @@ class ConnectionHandler:
         )
         self.games_middleware_receiver_thread = threading.Thread(
             target=self._middleware_receiver,
-            args=(input_queues,),
+            args=(self.result_queue,),
             name="games_middleware_receiver",
             daemon=True
         )
@@ -68,12 +97,6 @@ class ConnectionHandler:
             name="reviews_middleware_sender",
             daemon=True
         )
-        # self.review_middleware_receiver_thread = threading.Thread(
-        #     target=self._middleware_receiver,
-        #     args=(input_queues,),
-        #     name="reviews_middleware_receiver",
-        #     daemon=True
-        # )
         self.review_middleware_sender_thread_positive = threading.Thread(
             target=self.__middleware_sender,
             args=(self.reviews_from_client_queue_to_positive, "to_positive_review", [], 1, 'direct'),
@@ -116,6 +139,7 @@ class ConnectionHandler:
 
                 if first:
                     first = False
+                    self.client_id = int(parts[1])
                     self.gamesHeader = parts[2].strip().split("\n")
                     logging.info(f"Header recibido: {self.gamesHeader}")
                     self.protocol.send_message("OK\n\n")
@@ -286,6 +310,18 @@ class ConnectionHandler:
         logging.info("Data sent to client")
         json_response = json.loads(data)
         print(json_response, flush=True)
+        
+        client_id_response = 'client_id ' +str(self.client_id)
+        print(client_id_response, flush=True)
+        
+        client_found = any(
+        client_id_response in sub_data
+        for sub_data in json_response.values()
+        if isinstance(sub_data, dict)
+    )
+        if not client_found:
+            return
+        
         if not 'final_check_low_limit' in json_response:
             self.result_to_client_queue.put(data)
         if 'supported_platforms' in json_response:
@@ -312,13 +348,12 @@ class ConnectionHandler:
             self.shutdown_event.set()
             
             # Enviar FIN a middleware si es necesario
-            self._fin_sender()
+            self._fin_sender(Fin(0, self.client_id).encode())
             
             # Esperar a que los hilos secundarios finalicen
             self.games_middleware_sender_thread.join(timeout=2)
             self.games_middleware_receiver_thread.join(timeout=2)
             self.review_middleware_sender_thread.join(timeout=2)
-            #self.review_middleware_receiver_thread.join(timeout=2)
             self.review_middleware_sender_thread_positive.join(timeout=2)
             self.review_process.join(timeout=2)
             
