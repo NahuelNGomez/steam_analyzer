@@ -112,6 +112,7 @@ class GameReviewFilter:
             self.total_batches[client_id] = 0
         
         self.batch_counter[client_id] += 1
+        print("Recibiendo REVIEW - batch_counter:", self.batch_counter[client_id], flush=True)
 
         with self.file_lock:
             for row in batch:
@@ -187,11 +188,18 @@ class GameReviewFilter:
         """
         self.completed_reviews = True
         
-
+        
         message_fin = Fin.decode(message)
         client_id = int(message_fin.client_id)
         self.nodes_completed[client_id] += 1
         self.total_batches[client_id] = int(message_fin.batch_id)
+        print("Recibiendo EOF - TypeClient_id", type(client_id), flush=True)
+        print("Recibiendo EOF - Client_id", type(client_id), flush=True)
+        print("Recibiendo EOF - TypeBatch_id", type(message_fin.batch_id), flush=True)
+        print("Recibiendo EOF - Batch_id", message_fin.batch_id, flush=True)
+        print("Recibiendo EOF - TypeTotalBatch", type(self.total_batches[client_id]), flush=True)
+        print("Recibiendo EOF - TotalBatch", self.total_batches[client_id], flush=True)
+        
 
         if (self.nodes_completed[client_id] == self.previous_review_nodes) and not self.sended_fin[client_id]:
             if self.batch_counter[client_id] == self.total_batches[client_id]:
