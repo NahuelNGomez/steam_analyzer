@@ -43,6 +43,7 @@ class PositivityFilter:
             
             client_id = int(Review.decode(json.loads(batch[0])).client_id)
             if client_id not in self.batch_counter:
+                print(f"Client id {client_id} not in batch_counter", flush=True)
                 self.batch_counter[client_id] = 0
             self.batch_counter[client_id] += 1
             self.middleware.send(finalList)
@@ -53,9 +54,10 @@ class PositivityFilter:
     def _finCallback(self, message):
         if not message:
             raise ValueError("Message is empty or None")
-        print("Fin de la transmisión, enviando data", message, flush=True)
+        
         json_row = Fin.decode(message)
         fin_message = Fin(self.batch_counter[int(json_row.client_id)], json_row.client_id)
+        print("Fin de la transmisión, enviando data", self.batch_counter[int(json_row.client_id)], flush=True)
         
         self.middleware.send(fin_message.encode())
         logging.info("FilterPositivity finished")

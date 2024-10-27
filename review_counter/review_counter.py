@@ -19,7 +19,7 @@ class Top5ReviewCounter:
         )
         # Diccionario para almacenar los datos por client_id
         self.games_dict_by_client = {}
-        self.remaining_fin = 4
+        self.remaining_fin : dict = {}
 
     def get_games(self, client_id):
         """
@@ -81,19 +81,23 @@ class Top5ReviewCounter:
         """
         Callback function for handling end of file (EOF) messages.
         """
-        self.remaining_fin -= 1
-        if self.remaining_fin > 0:
+        fin_msg = Fin.decode(data)
+        client_id = fin_msg.client_id
+        if client_id not in self.remaining_fin:
+            self.remaining_fin[client_id] = 3
+        else:
+            self.remaining_fin[client_id] -= 1
+        if self.remaining_fin[client_id] > 0:
             return
         logging.info("End of file received. Sending top 5 indie games positive reviews data for each client.")
-        # fin_msg = Fin.decode(data)
-        # client_id = int(fin_msg.client_id)
-        # top_5_games = self.get_games(client_id)
         
-        # self.middleware.send(json.dumps(top_5_games))
-        for client_id in self.games_dict_by_client:
-            top5_games = json.dumps(self.get_games(client_id), indent=4)
-            self.middleware.send(top5_games)
-            logging.info(f"Top 5 indie games positive reviews data sent for client {client_id}.")
+        top_5_games = self.get_games(client_id)
+        
+        self.middleware.send(json.dumps(top_5_games))
+        # for client_id in self.games_dict_by_client:
+        #     top5_games = json.dumps(self.get_games(client_id), indent=4)
+        #     self.middleware.send(top5_games)
+        logging.info(f"Top 5 indie games positive reviews data sent for client {client_id}.")
     
         
 

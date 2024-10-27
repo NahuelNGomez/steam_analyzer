@@ -68,12 +68,12 @@ class ConnectionHandler:
             name="reviews_middleware_sender",
             daemon=True
         )
-        self.review_middleware_receiver_thread = threading.Thread(
-            target=self._middleware_receiver,
-            args=(input_queues,),
-            name="reviews_middleware_receiver",
-            daemon=True
-        )
+        # self.review_middleware_receiver_thread = threading.Thread(
+        #     target=self._middleware_receiver,
+        #     args=(input_queues,),
+        #     name="reviews_middleware_receiver",
+        #     daemon=True
+        # )
         self.review_middleware_sender_thread_positive = threading.Thread(
             target=self.__middleware_sender,
             args=(self.reviews_from_client_queue_to_positive, "to_positive_review", [], 1, 'direct'),
@@ -90,7 +90,7 @@ class ConnectionHandler:
         self.games_middleware_sender_thread.start()
         self.games_middleware_receiver_thread.start()
         self.review_middleware_sender_thread.start()
-        self.review_middleware_receiver_thread.start()
+        #self.review_middleware_receiver_thread.start()
         self.review_middleware_sender_thread_positive.start()
         self.review_process.start()
 
@@ -285,6 +285,7 @@ class ConnectionHandler:
         
         logging.info("Data sent to client")
         json_response = json.loads(data)
+        print(json_response, flush=True)
         if not 'final_check_low_limit' in json_response:
             self.result_to_client_queue.put(data)
         if 'supported_platforms' in json_response:
@@ -317,7 +318,7 @@ class ConnectionHandler:
             self.games_middleware_sender_thread.join(timeout=2)
             self.games_middleware_receiver_thread.join(timeout=2)
             self.review_middleware_sender_thread.join(timeout=2)
-            self.review_middleware_receiver_thread.join(timeout=2)
+            #self.review_middleware_receiver_thread.join(timeout=2)
             self.review_middleware_sender_thread_positive.join(timeout=2)
             self.review_process.join(timeout=2)
             
