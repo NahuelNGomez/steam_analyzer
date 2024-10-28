@@ -61,13 +61,14 @@ class ConnectionHandler:
         self.games_from_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.result_to_client_queue = Queue(maxsize=MAX_QUEUE_SIZE)
         self.amount_of_review_instances = amount_of_review_instances
-        self.completed_games = False
+        self.completed_games:dict = {}
         self.next_instance = 0
         self.remaining_responses = 5
         self.filtrados = 0
         self.client_id = -1
         self.result_queue = modify_queue_key(address[0])
         csv.field_size_limit(sys.maxsize)
+        self.batch_id_reviews = 0
             
         self.gamesHeader = []
         self.shutdown_event = threading.Event()
@@ -159,17 +160,16 @@ class ConnectionHandler:
                         print("Fin de la transmisión, enviando data", fin_msg.encode(), flush=True)
                         logging.info("Fin de la transmisión de datos")
                         self.protocol.send_message("OK - ACK de fin")
-                        self.reviews_from_client_queue.put(fin_msg.encode())
+                        self.reviews_from_client_queue.put(Fin(self.batch_id_reviews, self.client_id).encode())
                         self._fin_sender(fin_msg.encode())
                         break
 
                     if data_type == "reviews":
                         self.reviews_to_process_queue.put(parts[1:])
                         self.protocol.send_message("OK\n\n")
-                        if not self.completed_games:
+                        if not parts[1] in self.completed_games:
                             self.games_from_client_queue.put(Fin(0, int(parts[1])).encode()) 
-                            self.completed_games = True
-                        
+                            self.completed_games[parts[1]] = True
                     if data_type == "games":
                         games_list = parts[2].strip().split("\n")
                         finalList = ''
@@ -228,10 +228,13 @@ class ConnectionHandler:
             amount_output_instances=1,
             exchange_output_type='direct'
         )
+        fin_msg = Fin(self.batch_id_reviews, self.client_id)
+        
+    
         for i in range(4):
             routing = f"to_positive_review_{i+1}_0"
             logging.info(f"Sending to FIN {routing}")
-            middleware.send(msg, routing_key=f"to_positive_review_{i+1}_0")
+            middleware.send(fin_msg.encode(), routing_key=f"to_positive_review_{i+1}_0")
 
     def __middleware_sender(self, packet_queue, output_exchange, output_queues, instances, output_type):
         logging.info("Middleware sender started")
@@ -297,6 +300,9 @@ class ConnectionHandler:
                 self.reviews_from_client_queue.put(finalList)
                 self.reviews_from_client_queue_to_positive.put(finalList)
                 logging.info("Review batch processed")
+                self.batch_id_reviews += 1
+                
+
             except Empty:
                 continue
             except Exception as e:

@@ -22,12 +22,14 @@ class PositivityFilter:
             exchange_input_type=input_type,
         )
         self.batch_counter: dict = {}
+        self.expected_batches: dict = {}
 
     def start(self):
         self.middleware.start()
         logging.info("FilterPositivity started")
 
     def _callback(self, message):
+
         try:
             batch = message.split("\n")
             finalList = ""
@@ -42,12 +44,22 @@ class PositivityFilter:
                     finalList += f"{json.dumps(result_review.getData())}\n"
             
             client_id = int(Review.decode(json.loads(batch[0])).client_id)
+
             if client_id not in self.batch_counter:
                 print(f"Client id {client_id} not in batch_counter", flush=True)
                 self.batch_counter[client_id] = 0
-            self.batch_counter[client_id] += 1
+            if client_id not in self.expected_batches:
+                print(f"Client id {client_id} not in expected_batches", flush=True)
+                self.expected_batches[client_id] = 0
             self.middleware.send(finalList)
-
+            self.batch_counter[client_id] += 1
+            print(f"Batch counter: {self.batch_counter[client_id]}", flush=True)
+            
+            
+            if self.batch_counter[client_id] >= self.expected_batches[client_id]:
+                self.middleware.send(Fin(self.batch_counter[client_id], client_id).encode())
+            
+            
         except Exception as e:
             logging.error(f"Error in FilterPositivity callback: {e}")
 
@@ -56,8 +68,11 @@ class PositivityFilter:
             raise ValueError("Message is empty or None")
         
         json_row = Fin.decode(message)
-        fin_message = Fin(self.batch_counter[int(json_row.client_id)], json_row.client_id)
-        print("Fin de la transmisión, enviando data", self.batch_counter[int(json_row.client_id)], flush=True)
+        # fin_message = Fin(self.batch_counter[int(json_row.client_id)], json_row.client_id)
+        print("llega batch id: ", json_row.batch_id,flush=True)
+        self.expected_batches[int(json_row.client_id)] = int(json_row.batch_id) // 4
+        print("Fin de la transmisión, enviando data", self.expected_batches[int(json_row.client_id)], flush=True)
         
-        self.middleware.send(fin_message.encode())
+        if self.batch_counter[int(json_row.client_id)] >= self.expected_batches[int(json_row.client_id)]:
+            self.middleware.send(message)
         logging.info("FilterPositivity finished")

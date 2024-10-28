@@ -75,6 +75,28 @@ services:
       - ./data:/data
       - ./results:/results
 
+      
+  client3:
+    container_name: client3
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    image: client:latest
+    networks:
+      - testing_net
+    depends_on:
+      - gateway
+    environment:
+      - LOGGING_LEVEL=INFO
+      - CLIENT_ID=3
+      - BOUNDARY_IP=gateway
+      - BOUNDARY_PORT=12345
+      - DELAY=5
+      - RETRIES=5
+    volumes:
+      - ./data:/data
+      - ./results:/results
+
   games_counter:
     container_name: games_counter
     build:
