@@ -68,7 +68,8 @@ class ConnectionHandler:
         self.client_id = -1
         self.result_queue = modify_queue_key(address[0])
         csv.field_size_limit(sys.maxsize)
-        self.batch_id_reviews = 0
+        self.batch_id_reviews = -1
+        self.batch_id_review_positive = [0, 0, 0, 0]
             
         self.gamesHeader = []
         self.shutdown_event = threading.Event()
@@ -165,6 +166,7 @@ class ConnectionHandler:
                         break
 
                     if data_type == "reviews":
+                        self.batch_id_reviews += 1
                         self.reviews_to_process_queue.put(parts[1:])
                         self.protocol.send_message("OK\n\n")
                         if not parts[1] in self.completed_games:
@@ -300,7 +302,7 @@ class ConnectionHandler:
                 self.reviews_from_client_queue.put(finalList)
                 self.reviews_from_client_queue_to_positive.put(finalList)
                 logging.info("Review batch processed")
-                self.batch_id_reviews += 1
+                
                 
 
             except Empty:

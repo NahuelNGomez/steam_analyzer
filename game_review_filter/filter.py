@@ -80,12 +80,7 @@ class GameReviewFilter:
         try:
             game = Game.decode(json.loads(game))
             print(
-                "Recibiendo GAME - client_id:",
-                type(game.client_id),
-                "game_id:",
-                type(game.id),
-                flush=True,
-            )
+                "Recibiendo GAME", flush=True)
             client_id = game.client_id
             if client_id not in self.games:
                 self.games[client_id] = {}
@@ -144,7 +139,7 @@ class GameReviewFilter:
         if (
             self.nodes_completed[client_id] == self.previous_review_nodes
         ) and not self.sended_fin[client_id]:
-            if self.batch_counter[client_id] == self.total_batches[client_id]:
+            if self.batch_counter[client_id] >= self.total_batches[client_id] and self.total_batches[client_id] != 0:
                 print(
                     "Fin de la transmisión de datos batches",
                     self.batch_counter[client_id],
@@ -153,9 +148,9 @@ class GameReviewFilter:
                 with self.file_lock:
                     self.save_last_reviews(client_id)
                     self.process_reviews(f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt",client_id)
-                    self.reviews_middleware.send(Fin(0, client_id))
+                    self.reviews_middleware.send(Fin(0, client_id).encode())
 
-                self.sended_fin = True
+                self.sended_fin[client_id] = True
 
     def handle_game_eof(self, message):
         """
@@ -168,6 +163,20 @@ class GameReviewFilter:
         print("Recibiendo EOF - ", type(client_id), flush=True)
 
         self.completed_games[client_id] = True
+        if client_id not in self.batch_counter:
+            self.batch_counter[client_id] = 0
+        if client_id not in self.reviews_to_add:
+            self.reviews_to_add[client_id] = []
+        if client_id not in self.review_file_size:
+            self.review_file_size[client_id] = 0
+        if client_id not in self.nodes_completed:
+            self.nodes_completed[client_id] = 0
+        if client_id not in self.sended_fin:
+            self.sended_fin[client_id] = False
+        if client_id not in self.total_batches:
+            self.total_batches[client_id] = 0
+        if client_id not in self.completed_reviews:
+            self.completed_reviews[client_id] = False
 
         if (
             self.completed_games[client_id]
@@ -200,11 +209,25 @@ class GameReviewFilter:
         print("Recibiendo EOF - con THE PLAN:", self.the_plan_1, flush=True)
         message_fin = Fin.decode(message)
         client_id = int(message_fin.client_id)
+        if client_id not in self.batch_counter:
+            self.batch_counter[client_id] = 0
+        if client_id not in self.reviews_to_add:
+            self.reviews_to_add[client_id] = []
+        if client_id not in self.review_file_size:
+            self.review_file_size[client_id] = 0
+        if client_id not in self.nodes_completed:
+            self.nodes_completed[client_id] = 0
+        if client_id not in self.sended_fin:
+            self.sended_fin[client_id] = False
+        if client_id not in self.total_batches:
+            self.total_batches[client_id] = 0
+        if client_id not in self.completed_reviews:
+            self.completed_reviews[client_id] = False
         self.completed_reviews[client_id] = True
         self.nodes_completed[client_id] += 1
         self.total_batches[client_id] = int(message_fin.batch_id)
-        print("Recibiendo EOF - TypeClient_id", type(client_id), flush=True)
-        print("Recibiendo EOF - Client_id", type(client_id), flush=True)
+        print("Recibiendo EOF - counter nodes_completed", self.nodes_completed[client_id] , flush=True)
+        print("Recibiendo EOF - Client_id", client_id, flush=True)
         print("Recibiendo EOF - TypeBatch_id", type(message_fin.batch_id), flush=True)
         print("Recibiendo EOF - Batch_id", message_fin.batch_id, flush=True)
         print("Recibiendo EOF - TypeTotalBatch", type(self.total_batches[client_id]), flush=True)
@@ -212,7 +235,7 @@ class GameReviewFilter:
         
 
         if (self.nodes_completed[client_id] == self.previous_review_nodes) and not self.sended_fin[client_id]:
-            if self.batch_counter[client_id] == self.total_batches[client_id]:
+            if self.batch_counter[client_id] >= self.total_batches[client_id]:
                 print(
                     "Fin de la transmisión de datos batches",
                     self.batch_counter[client_id],
