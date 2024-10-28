@@ -7,96 +7,31 @@ services:
       dockerfile: ./gateway/Dockerfile
     image: gateway:latest
     networks:
-      - testing_net
+    - testing_net
     depends_on:
-      - indie_filter
-      - action_filter
-      - games_counter
-      - positive_review_filter
-      - positive_review_filter_2
-      - positive_review_filter3
-      - positive_review_filter4
-      - negative_review_filter
-      - indie_game_review_filter
-      - indie_game_review_filter2
-      - indie_game_review_filter3
-      - indie_game_review_filter4
-      - action_game_review_filter
-      - language_filter
-      - action_name_accumulator
-      - percentile_accumulator
+    - indie_filter
+    - action_filter
+    - games_counter
+    - positive_review_filter
+    - positive_review_filter_2
+    - positive_review_filter3
+    - positive_review_filter4
+    - negative_review_filter
+    - indie_game_review_filter
+    - indie_game_review_filter2
+    - indie_game_review_filter3
+    - indie_game_review_filter4
+    - action_game_review_filter
+    - language_filter
+    - action_name_accumulator
+    - percentile_accumulator
     environment:
-      - LOGGING_LEVEL=INFO
-      - OUTPUT_QUEUE=reviews_queue
-      - AMOUNT_OF_REVIEW_INSTANCE=4 # POSITIVES
-      - AMOUNT_OF_GAMES_INSTANCE=2 # INDIE
-      - OUTPUT_EXCHANGES=["games"]
-      - INPUT_QUEUES={"result_queue_gateway":"result_queue"}
-
-  client1:
-    container_name: client1
-    build:
-      context: .
-      dockerfile: ./client/Dockerfile
-    image: client:latest
-    networks:
-      - testing_net
-    depends_on:
-      - gateway
-    environment:
-      - LOGGING_LEVEL=INFO
-      - CLIENT_ID=1
-      - BOUNDARY_IP=gateway
-      - BOUNDARY_PORT=12345
-      - DELAY=5
-      - RETRIES=5
-    volumes:
-      - ./data:/data
-      - ./results:/results
-
-  client2:
-    container_name: client2
-    build:
-      context: .
-      dockerfile: ./client/Dockerfile
-    image: client:latest
-    networks:
-      - testing_net
-    depends_on:
-      - gateway
-    environment:
-      - LOGGING_LEVEL=INFO
-      - CLIENT_ID=2
-      - BOUNDARY_IP=gateway
-      - BOUNDARY_PORT=12345
-      - DELAY=5
-      - RETRIES=5
-    volumes:
-      - ./data:/data
-      - ./results:/results
-
-      
-  client3:
-    container_name: client3
-    build:
-      context: .
-      dockerfile: ./client/Dockerfile
-    image: client:latest
-    networks:
-      - testing_net
-    depends_on:
-      - gateway
-    environment:
-      - LOGGING_LEVEL=INFO
-      - CLIENT_ID=3
-      - BOUNDARY_IP=gateway
-      - BOUNDARY_PORT=12345
-      - DELAY=5
-      - RETRIES=5
-    volumes:
-      - ./data:/data
-      - ./results:/results
-
+    - LOGGING_LEVEL=INFO
+    - OUTPUT_QUEUE=reviews_queue
+    - AMOUNT_OF_REVIEW_INSTANCE=4
+    - AMOUNT_OF_GAMES_INSTANCE=2
+    - OUTPUT_EXCHANGES=["games"]
+    - 'INPUT_QUEUES={"result_queue_gateway": "result_queue"}'
   games_counter:
     container_name: games_counter
     build:
@@ -104,12 +39,11 @@ services:
       dockerfile: ./games_counter/Dockerfile
     image: games_counter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - INPUT_QUEUES={"games_queue_counter":"games"}
-      - OUTPUT_EXCHANGES=["result_queue"]
-      - LOGGING_LEVEL=INFO
-
+    - INPUT_QUEUES={"games_queue_counter":"games"}
+    - OUTPUT_EXCHANGES=["result_queue"]
+    - LOGGING_LEVEL=INFO
   indie_filter:
     container_name: indie_filter
     build:
@@ -117,19 +51,18 @@ services:
       dockerfile: ./genre_filter/Dockerfile
     image: genre_filter:latest
     depends_on:
-      - top10_indie_counter
-      - indie_game_review_filter
-      - indie_game_review_filter2
-      - indie_game_review_filter3
-      - indie_game_review_filter4
+    - top10_indie_counter
+    - indie_game_review_filter
+    - indie_game_review_filter2
+    - indie_game_review_filter3
+    - indie_game_review_filter4
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["indie_games"]
-      - INPUT_QUEUES={"games_queue_filter":"games"}
-      - LOGGING_LEVEL=INFO
-      - GENRE=Indie
-
+    - OUTPUT_EXCHANGES=["indie_games"]
+    - INPUT_QUEUES={"games_queue_filter":"games"}
+    - LOGGING_LEVEL=INFO
+    - GENRE=Indie
   action_filter:
     container_name: action_filter
     build:
@@ -137,17 +70,16 @@ services:
       dockerfile: ./genre_filter/Dockerfile
     image: genre_filter:latest
     depends_on:
-      - top10_indie_counter
-      - action_game_review_filter
+    - top10_indie_counter
+    - action_game_review_filter
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["action_games"]
-      - INPUT_QUEUES={"games_queue_filter":"games"}
-      - INSTANCE_ID=2
-      - LOGGING_LEVEL=INFO
-      - GENRE=Action
-
+    - OUTPUT_EXCHANGES=["action_games"]
+    - INPUT_QUEUES={"games_queue_filter":"games"}
+    - INSTANCE_ID=2
+    - LOGGING_LEVEL=INFO
+    - GENRE=Action
   range_filter:
     container_name: range_filter
     build:
@@ -155,12 +87,11 @@ services:
       dockerfile: ./range_filter/Dockerfile
     image: range_filter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["indie_range_games"]
-      - INPUT_QUEUES={"indie_games_queue":"indie_games"}
-      - LOGGING_LEVEL=INFO
-
+    - OUTPUT_EXCHANGES=["indie_range_games"]
+    - INPUT_QUEUES={"indie_games_queue":"indie_games"}
+    - LOGGING_LEVEL=INFO
   top10_indie_counter:
     container_name: top10_indie_counter
     build:
@@ -168,15 +99,14 @@ services:
       dockerfile: ./top10_indie_counter/Dockerfile
     image: top10_indie_counter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["result_queue"]
-      - INPUT_QUEUES={"indie_range_games_queue":"indie_range_games"}
-      - LOGGING_LEVEL=INFO
+    - OUTPUT_EXCHANGES=["result_queue"]
+    - INPUT_QUEUES={"indie_range_games_queue":"indie_range_games"}
+    - LOGGING_LEVEL=INFO
     volumes:
-      - ./top10_indie_counter/data:/data
+    - ./top10_indie_counter/data:/data
     entrypoint: python3 main.py
-
   positive_review_filter:
     container_name: positive_review_filter
     build:
@@ -184,14 +114,13 @@ services:
       dockerfile: ./positivity_filter/Dockerfile
     image: positivity_filter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews"]
-      - INPUT_QUEUES={"to_positive_review_1":"to_positive_review"}
-      - LOGGING_LEVEL=INFO
-      - POSITIVITY=1
-      - INSTANCE_ID=0
-
+    - OUTPUT_EXCHANGES=["positive_reviews"]
+    - INPUT_QUEUES={"to_positive_review_1":"to_positive_review"}
+    - LOGGING_LEVEL=INFO
+    - POSITIVITY=1
+    - INSTANCE_ID=0
   positive_review_filter4:
     container_name: positive_review_filter4
     build:
@@ -199,14 +128,13 @@ services:
       dockerfile: ./positivity_filter/Dockerfile
     image: positivity_filter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews_4"]
-      - INPUT_QUEUES={"to_positive_review_4":"to_positive_review"}
-      - LOGGING_LEVEL=INFO
-      - POSITIVITY=1
-      - INSTANCE_ID=0
-
+    - OUTPUT_EXCHANGES=["positive_reviews_4"]
+    - INPUT_QUEUES={"to_positive_review_4":"to_positive_review"}
+    - LOGGING_LEVEL=INFO
+    - POSITIVITY=1
+    - INSTANCE_ID=0
   positive_review_filter3:
     container_name: positive_review_filter3
     build:
@@ -214,14 +142,13 @@ services:
       dockerfile: ./positivity_filter/Dockerfile
     image: positivity_filter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews_3"]
-      - INPUT_QUEUES={"to_positive_review_3":"to_positive_review"}
-      - LOGGING_LEVEL=INFO
-      - POSITIVITY=1
-      - INSTANCE_ID=0
-
+    - OUTPUT_EXCHANGES=["positive_reviews_3"]
+    - INPUT_QUEUES={"to_positive_review_3":"to_positive_review"}
+    - LOGGING_LEVEL=INFO
+    - POSITIVITY=1
+    - INSTANCE_ID=0
   positive_review_filter_2:
     container_name: positive_review_filter_2
     build:
@@ -229,14 +156,13 @@ services:
       dockerfile: ./positivity_filter/Dockerfile
     image: positivity_filter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["positive_reviews_2"]
-      - INPUT_QUEUES={"to_positive_review_2":"to_positive_review"}
-      - LOGGING_LEVEL=INFO
-      - POSITIVITY=1
-      - INSTANCE_ID=0
-
+    - OUTPUT_EXCHANGES=["positive_reviews_2"]
+    - INPUT_QUEUES={"to_positive_review_2":"to_positive_review"}
+    - LOGGING_LEVEL=INFO
+    - POSITIVITY=1
+    - INSTANCE_ID=0
   negative_review_filter:
     container_name: negative_review_filter
     build:
@@ -244,14 +170,13 @@ services:
       dockerfile: ./positivity_filter/Dockerfile
     image: positivity_filter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["negative_reviews"]
-      - INPUT_QUEUES={"reviews_queue":"reviews"}
-      - INSTANCE_ID=1
-      - LOGGING_LEVEL=INFO
-      - POSITIVITY=-1
-
+    - OUTPUT_EXCHANGES=["negative_reviews"]
+    - INPUT_QUEUES={"reviews_queue":"reviews"}
+    - INSTANCE_ID=1
+    - LOGGING_LEVEL=INFO
+    - POSITIVITY=-1
   indie_game_review_filter:
     container_name: indie_game_review_filter
     build:
@@ -259,18 +184,17 @@ services:
       dockerfile: ./game_review_filter/Dockerfile
     image: game_review_filter:latest
     depends_on:
-      - game_review_positive_counter
+    - game_review_positive_counter
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["games_reviews_indie"]
-      - INPUT_GAMES_QUEUE=["indie_games_queue","indie_games"]
-      - INPUT_REVIEWS_QUEUE=["positive_review_queue_1","positive_reviews"]
-      - PREVIOUS_REVIEW_NODES=1
-      - LOGGING_LEVEL=INFO
+    - OUTPUT_EXCHANGES=["games_reviews_indie"]
+    - INPUT_GAMES_QUEUE=["indie_games_queue","indie_games"]
+    - INPUT_REVIEWS_QUEUE=["positive_review_queue_1","positive_reviews"]
+    - PREVIOUS_REVIEW_NODES=1
+    - LOGGING_LEVEL=INFO
     volumes:
-      - ./game_review_filter/data:/data
-
+    - ./game_review_filter/data:/data
   indie_game_review_filter2:
     container_name: indie_game_review_filter2
     build:
@@ -278,18 +202,17 @@ services:
       dockerfile: ./game_review_filter/Dockerfile
     image: game_review_filter:latest
     depends_on:
-      - game_review_positive_counter
+    - game_review_positive_counter
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["games_reviews_indie"]
-      - INPUT_GAMES_QUEUE=["indie_games_queue_2","indie_games"]
-      - INPUT_REVIEWS_QUEUE=["positive_review_queue_2","positive_reviews_2"]
-      - PREVIOUS_REVIEW_NODES=1
-      - LOGGING_LEVEL=INFO
+    - OUTPUT_EXCHANGES=["games_reviews_indie"]
+    - INPUT_GAMES_QUEUE=["indie_games_queue_2","indie_games"]
+    - INPUT_REVIEWS_QUEUE=["positive_review_queue_2","positive_reviews_2"]
+    - PREVIOUS_REVIEW_NODES=1
+    - LOGGING_LEVEL=INFO
     volumes:
-      - ./game_review_filter/data:/data
-
+    - ./game_review_filter/data:/data
   indie_game_review_filter3:
     container_name: indie_game_review_filter3
     build:
@@ -297,18 +220,17 @@ services:
       dockerfile: ./game_review_filter/Dockerfile
     image: game_review_filter:latest
     depends_on:
-      - game_review_positive_counter
+    - game_review_positive_counter
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["games_reviews_indie"]
-      - INPUT_GAMES_QUEUE=["indie_games_queue_3","indie_games"]
-      - INPUT_REVIEWS_QUEUE=["positive_review_queue_3","positive_reviews_3"]
-      - PREVIOUS_REVIEW_NODES=1
-      - LOGGING_LEVEL=INFO
+    - OUTPUT_EXCHANGES=["games_reviews_indie"]
+    - INPUT_GAMES_QUEUE=["indie_games_queue_3","indie_games"]
+    - INPUT_REVIEWS_QUEUE=["positive_review_queue_3","positive_reviews_3"]
+    - PREVIOUS_REVIEW_NODES=1
+    - LOGGING_LEVEL=INFO
     volumes:
-      - ./game_review_filter/data:/data
-
+    - ./game_review_filter/data:/data
   indie_game_review_filter4:
     container_name: indie_game_review_filter4
     build:
@@ -316,18 +238,17 @@ services:
       dockerfile: ./game_review_filter/Dockerfile
     image: game_review_filter:latest
     depends_on:
-      - game_review_positive_counter
+    - game_review_positive_counter
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["games_reviews_indie"]
-      - INPUT_GAMES_QUEUE=["indie_games_queue_4","indie_games"]
-      - INPUT_REVIEWS_QUEUE=["positive_review_queue_4","positive_reviews_4"]
-      - PREVIOUS_REVIEW_NODES=1
-      - LOGGING_LEVEL=INFO
+    - OUTPUT_EXCHANGES=["games_reviews_indie"]
+    - INPUT_GAMES_QUEUE=["indie_games_queue_4","indie_games"]
+    - INPUT_REVIEWS_QUEUE=["positive_review_queue_4","positive_reviews_4"]
+    - PREVIOUS_REVIEW_NODES=1
+    - LOGGING_LEVEL=INFO
     volumes:
-      - ./game_review_filter/data:/data
-
+    - ./game_review_filter/data:/data
   action_game_review_filter:
     container_name: action_game_review_filter
     build:
@@ -335,19 +256,18 @@ services:
       dockerfile: ./game_review_filter/Dockerfile
     image: game_review_filter:latest
     depends_on:
-      - game_review_positive_counter
-      - percentile_accumulator
+    - game_review_positive_counter
+    - percentile_accumulator
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["games_reviews_action"]
-      - INPUT_GAMES_QUEUE=["action_games_queue","action_games"]
-      - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
-      - PREVIOUS_REVIEW_NODES=1
-      - LOGGING_LEVEL=INFO
+    - OUTPUT_EXCHANGES=["games_reviews_action"]
+    - INPUT_GAMES_QUEUE=["action_games_queue","action_games"]
+    - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
+    - PREVIOUS_REVIEW_NODES=1
+    - LOGGING_LEVEL=INFO
     volumes:
-      - ./game_review_filter/data:/data
-
+    - ./game_review_filter/data:/data
   game_review_positive_counter:
     container_name: game_review_positive_counter
     build:
@@ -355,12 +275,11 @@ services:
       dockerfile: ./review_counter/Dockerfile
     image: review_counter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["result_queue"]
-      - INPUT_QUEUES={"games_reviews_queue":"games_reviews_indie"}
-      - LOGGING_LEVEL=INFO
-
+    - OUTPUT_EXCHANGES=["result_queue"]
+    - INPUT_QUEUES={"games_reviews_queue":"games_reviews_indie"}
+    - LOGGING_LEVEL=INFO
   language_filter:
     container_name: language_filter
     build:
@@ -368,12 +287,11 @@ services:
       dockerfile: ./language_filter/Dockerfile
     image: language_filter:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["english_reviews"]
-      - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
-      - LOGGING_LEVEL=INFO
-
+    - OUTPUT_EXCHANGES=["english_reviews"]
+    - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
+    - LOGGING_LEVEL=INFO
   action_name_accumulator:
     container_name: action_name_accumulator
     build:
@@ -381,13 +299,12 @@ services:
       dockerfile: ./game_name_accumulator/Dockerfile
     image: game_name_accumulator:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["result_queue"]
-      - INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}
-      - LOGGING_LEVEL=INFO
-      - REVIEWS_LOW_LIMIT=5000
-
+    - OUTPUT_EXCHANGES=["result_queue"]
+    - INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}
+    - LOGGING_LEVEL=INFO
+    - REVIEWS_LOW_LIMIT=5000
   percentile_accumulator:
     container_name: percentile_accumulator
     build:
@@ -395,17 +312,116 @@ services:
       dockerfile: ./percentile_accumulator/Dockerfile
     image: percentile_accumulator:latest
     networks:
-      - testing_net
+    - testing_net
     environment:
-      - OUTPUT_EXCHANGES=["result_queue"]
-      - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
-      - LOGGING_LEVEL=INFO
-      - PERCENTILE=90
-      - INSTANCE_ID=3
-
+    - OUTPUT_EXCHANGES=["result_queue"]
+    - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
+    - LOGGING_LEVEL=INFO
+    - PERCENTILE=90
+    - INSTANCE_ID=3
+  client1:
+    container_name: client1
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    image: client:latest
+    networks:
+    - testing_net
+    depends_on:
+    - gateway
+    environment:
+    - LOGGING_LEVEL=INFO
+    - CLIENT_ID=1
+    - BOUNDARY_IP=gateway
+    - BOUNDARY_PORT=12345
+    - DELAY=5
+    - RETRIES=5
+    volumes:
+    - ./data:/data
+    - ./results:/results
+  client2:
+    container_name: client2
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    image: client:latest
+    networks:
+    - testing_net
+    depends_on:
+    - gateway
+    environment:
+    - LOGGING_LEVEL=INFO
+    - CLIENT_ID=2
+    - BOUNDARY_IP=gateway
+    - BOUNDARY_PORT=12345
+    - DELAY=5
+    - RETRIES=5
+    volumes:
+    - ./data:/data
+    - ./results:/results
+  client3:
+    container_name: client3
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    image: client:latest
+    networks:
+    - testing_net
+    depends_on:
+    - gateway
+    environment:
+    - LOGGING_LEVEL=INFO
+    - CLIENT_ID=3
+    - BOUNDARY_IP=gateway
+    - BOUNDARY_PORT=12345
+    - DELAY=5
+    - RETRIES=5
+    volumes:
+    - ./data:/data
+    - ./results:/results
+  client4:
+    container_name: client4
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    image: client:latest
+    networks:
+    - testing_net
+    depends_on:
+    - gateway
+    environment:
+    - LOGGING_LEVEL=INFO
+    - CLIENT_ID=4
+    - BOUNDARY_IP=gateway
+    - BOUNDARY_PORT=12345
+    - DELAY=5
+    - RETRIES=5
+    volumes:
+    - ./data:/data
+    - ./results:/results
+  client5:
+    container_name: client5
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    image: client:latest
+    networks:
+    - testing_net
+    depends_on:
+    - gateway
+    environment:
+    - LOGGING_LEVEL=INFO
+    - CLIENT_ID=5
+    - BOUNDARY_IP=gateway
+    - BOUNDARY_PORT=12345
+    - DELAY=5
+    - RETRIES=5
+    volumes:
+    - ./data:/data
+    - ./results:/results
 networks:
   testing_net:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.25.125.0/24
+      - subnet: 172.25.125.0/24
