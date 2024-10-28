@@ -30,8 +30,10 @@ def main():
     RETRIES = int(os.getenv("RETRIES") or 5)
     DELAY = int(os.getenv("DELAY") or 5)
     CLIENT_ID = int(os.getenv("CLIENT_ID") or 1)
+    GAME_FILE = os.getenv("GAME_FILE") or "sample_1_por_ciento_games.csv"
+    REVIEW_FILE = os.getenv("REVIEW_FILE") or "sample_1_por_ciento_review.csv"
     
-    client = Client(BOUNDARY_IP, BOUNDARY_PORT, retries=RETRIES, delay=DELAY,client_id=CLIENT_ID)
+    client = Client(BOUNDARY_IP, BOUNDARY_PORT, retries=RETRIES, delay=DELAY,client_id=CLIENT_ID, game_file=GAME_FILE, review_file=REVIEW_FILE)
     
     # Manejar señales para un cierre graceful
     def handle_signal(signum, frame):

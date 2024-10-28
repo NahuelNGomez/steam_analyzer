@@ -9,7 +9,7 @@ from common.constants import MAX_BATCH_SIZE
 
 
 class Client:
-    def __init__(self, boundary_ip, boundary_port, retries=5, delay=5, client_id=0):
+    def __init__(self, boundary_ip, boundary_port, retries=5, delay=5, client_id=0, game_file="sample_1_por_ciento_games.csv", review_file="sample_1_por_ciento_review.csv"):
         self.boundary_ip = boundary_ip
         self.boundary_port = boundary_port
         self.retries = retries
@@ -18,6 +18,8 @@ class Client:
         self.lock = threading.Lock()
         self.shutdown_event = threading.Event()
         self.client_id = client_id  # ID del cliente
+        self.game_file = game_file  # Ruta del archivo de juegos
+        self.review_file = review_file  # Ruta del archivo de reviews
 
     def send_data(self, protocol, file_path, data_type):
         try:
@@ -83,11 +85,13 @@ class Client:
                     # Enviar datasets una vez
                     # self.send_data(protocol, "data/games.csv", "games")
                     # self.send_data(protocol, "data/dataset.csv", "reviews")
+                    game_path = "../data/" + self.game_file
                     self.send_data(
-                        protocol, "../data/sample_10_por_ciento_games.csv", "games"
+                        protocol, game_path, "games"
                     )
+                    review_path = "../data/" + self.review_file
                     self.send_data(
-                        protocol, "../data/sample_10_por_ciento_review.csv", "reviews"
+                        protocol, review_path, "reviews"
                     )
                     self.send_fin(protocol)
 

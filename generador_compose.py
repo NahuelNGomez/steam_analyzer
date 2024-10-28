@@ -360,6 +360,8 @@ def generate_yaml(num_clients):
                 "BOUNDARY_PORT=12345",
                 "DELAY=5",
                 "RETRIES=5",
+                "GAME_FILE=sample_10_por_ciento_games.csv",
+                "REVIEW_FILE=sample_10_por_ciento_review.csv"
             ],
             "volumes": ["./data:/data", "./results:/results"],
         }
