@@ -22,6 +22,10 @@ input_queues: dict = json.loads(os.getenv("INPUT_QUEUES", "{}"))
 output_exchanges = json.loads(os.getenv("OUTPUT_EXCHANGES", "[]"))
 instance_id = os.getenv("INSTANCE_ID", "0")
 
+def check_existing_file(self, client_id):
+    path = f'../results_gateway/results_client_id_{client_id}.json'
+    return os.path.exists(path)
+
 
 def modify_queue_key(suffix: str) -> dict:
     """
@@ -70,14 +74,36 @@ class ConnectionHandler:
         csv.field_size_limit(sys.maxsize)
         self.batch_id_reviews = -1
         self.batch_id_review_positive = [0, 0, 0, 0]
+        self.json_data = {}
             
         self.gamesHeader = []
         self.shutdown_event = threading.Event()
-        
+        self.client_results_sent = False
         # Thread para manejar la conexión
         self.thread = threading.Thread(target=self.handle_connection, name=f"ConnectionHandler-{self.address}")
         self.thread.daemon = True
         self.thread.start()
+        
+    def read_json_file(self, file_path):
+        # Leer el archivo de una línea
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = file.read()
+        
+        # Separar los objetos JSON en la línea
+        json_objects = data.split('}{')
+        
+        # Corregir cada parte para que sea JSON válido
+        json_objects[0] += "}"
+        json_objects[-1] = "{" + json_objects[-1]
+        json_objects[1:-1] = ["{" + obj + "}" for obj in json_objects[1:-1]]
+        
+        # Cargar cada objeto y almacenarlo en una lista
+        parsed_data = [json.loads(obj) for obj in json_objects]
+        
+        # Procesar cada respuesta individualmente
+        for obj in parsed_data:
+            self.protocol.send_message(json.dumps(obj))
+
 
     def handle_connection(self):
         # Inicializar y arrancar hilos secundarios
@@ -104,6 +130,7 @@ class ConnectionHandler:
             args=(self.reviews_from_client_queue_to_positive, "to_positive_review", [], 1, 'direct'),
             name="reviews_middleware_sender_positive",
             daemon=True
+            
         )
         self.review_process = threading.Thread(
             target=self.process_review,
@@ -121,6 +148,7 @@ class ConnectionHandler:
 
         logging.info(f"Conexión establecida desde {self.address}")
         first = True
+        second = False
         try:
             while not self.shutdown_event.is_set():
                 data = self.protocol.receive_message()
@@ -140,8 +168,23 @@ class ConnectionHandler:
                     continue
 
                 if first:
+                    second = True
                     first = False
                     self.client_id = int(parts[1])
+                    logging.info(f"Handshake recibido del cliente: {self.client_id}")
+                    
+                    if check_existing_file(self, self.client_id):
+                        logging.info("Cliente ya ha solicitado resultados")
+                        self.protocol.send_message("True\n\n")
+                        self._send_old_results()
+                        self.client_results_sent = True
+                        break
+                    else:
+                        self.protocol.send_message("False\n\n")
+                    continue
+
+                if second:
+                    second = False
                     self.gamesHeader = parts[2].strip().split("\n")
                     logging.info(f"Header recibido: {self.gamesHeader}")
                     self.protocol.send_message("OK\n\n")
@@ -196,12 +239,20 @@ class ConnectionHandler:
                     self.protocol.send_message("Error processing data")
 
             logging.info(f"Fin del recibo de datos {self.address}")
-            self._send_results()
+            if not self.client_results_sent:
+                self._send_results()
         except Exception as e:
             logging.error(f"Error en la conexión con {self.address}: {e}")
         finally:
             #self.shutdown()
             logging.info("Conexión cerrada.")
+    
+    def _send_old_results(self):
+        logging.info("Enviando resultados antiguos al cliente")
+        path = f'../results_gateway/results_client_id_{self.client_id}.json'
+        self.read_json_file(path)
+        self.protocol.send_message("close\n\n")
+        logging.info("Resultados antiguos enviados al cliente")
 
     def _send_results(self):
         try:
@@ -231,8 +282,6 @@ class ConnectionHandler:
             exchange_output_type='direct'
         )
         fin_msg = Fin(self.batch_id_reviews, self.client_id)
-        
-    
         for i in range(4):
             routing = f"to_positive_review_{i+1}_0"
             logging.info(f"Sending to FIN {routing}")
@@ -332,6 +381,9 @@ class ConnectionHandler:
         
         if not 'final_check_low_limit' in json_response:
             self.result_to_client_queue.put(data)
+            path = f'../results_gateway/results_client_id_{self.client_id}.json'
+            with open (path, 'a') as f:
+                f.write(json.dumps(json_response))
         if 'supported_platforms' in json_response:
             logging.info("JSON contains 'supported_platforms'")
             self.remaining_responses -= 1

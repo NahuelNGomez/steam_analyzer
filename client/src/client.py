@@ -85,27 +85,31 @@ class Client:
                     # Enviar datasets una vez
                     # self.send_data(protocol, "data/games.csv", "games")
                     # self.send_data(protocol, "data/dataset.csv", "reviews")
-                    game_path = "../data/" + self.game_file
-                    self.send_data(
-                        protocol, game_path, "games"
-                    )
-                    review_path = "../data/" + self.review_file
-                    self.send_data(
-                        protocol, review_path, "reviews"
-                    )
-                    self.send_fin(protocol)
+                    
+                    response = self.send_handshake(protocol)
+                    if not response:
+                        game_path = "../data/" + self.game_file
+                        self.send_data(
+                            protocol, game_path, "games"
+                        )
+                        review_path = "../data/" + self.review_file
+                        self.send_data(
+                            protocol, review_path, "reviews"
+                        )
+                        self.send_fin(protocol)
 
-                    save_thread = threading.Thread(
-                        target=self.periodic_save_responses, name="SaveThread"
-                    )
-                    save_thread.daemon = True
-                    save_thread.start()
+                        save_thread = threading.Thread(
+                            target=self.periodic_save_responses, name="SaveThread"
+                        )
+                        save_thread.daemon = True
+                        save_thread.start()
 
-                    logging.info("Esperando resultado del servidor...")
+                        logging.info("Esperando resultado del servidor...")
+
+                        logging.info("Cerrando conexión.")
                     self.wait_for_result(protocol)
-
-                    logging.info("Cerrando conexión.")
                     break
+
             except socket.gaierror:
                 attempt += 1
                 logging.error(
@@ -130,6 +134,20 @@ class Client:
                     f"No se pudo conectar al servidor en {self.boundary_ip}:{self.boundary_port} después de {self.retries} intentos."
                 )
 
+    def send_handshake(self, protocol):
+        
+        message = f"handshake\n\n{self.client_id}\n\n"
+        protocol.send_message(message)
+        response = protocol.receive_message()
+        print("Handshake enviado", flush=True)
+        print("Respuesta del servidor: ", response, flush=True)
+        
+        if ("False\n\n" in response):
+            print("handshake exitoso", flush=True)
+            return False
+        else:
+            return True
+    
     def wait_for_result(self, protocol):
         """
         Método para seguir escuchando respuestas del servidor después de enviar los datasets.
@@ -140,7 +158,7 @@ class Client:
                 if response:
                     logging.info(f"Respuesta recibida: {response}")
                     with self.lock:
-                        if ("ACK de fin" in response) or ("close" in response) or ("OK\n\n" in response):
+                        if ("ACK de fin" in response) or ("close" in response) or ("OK\n\n" in response) :
                             logging.info("Fin de la transmisión de resultados")
                         try:
                             json_response = json.loads(response)

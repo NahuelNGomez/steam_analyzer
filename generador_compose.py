@@ -1,7 +1,7 @@
+import configparser
 import yaml
 
-
-def generate_yaml(num_clients):
+def generate_yaml(num_clients, client_files):
     # Base configuration
     base_config = {
         "name": "tp1",
@@ -37,6 +37,7 @@ def generate_yaml(num_clients):
                     'OUTPUT_EXCHANGES=["games"]',
                     'INPUT_QUEUES={"result_queue_gateway": "result_queue"}',
                 ],
+                "volumes": ["./results_gateway:/results_gateway"],
             },
             "games_counter": {
                 "container_name": "games_counter",
@@ -347,6 +348,9 @@ def generate_yaml(num_clients):
     # Generate clients
     for i in range(1, num_clients + 1):
         client_name = f"client{i}"
+        game_file = client_files[client_name]["game_file"]
+        review_file = client_files[client_name]["review_file"]
+        
         base_config["services"][client_name] = {
             "container_name": f"client{i}",
             "build": {"context": ".", "dockerfile": "./client/Dockerfile"},
@@ -360,8 +364,8 @@ def generate_yaml(num_clients):
                 "BOUNDARY_PORT=12345",
                 "DELAY=5",
                 "RETRIES=5",
-                "GAME_FILE=sample_10_por_ciento_games.csv",
-                "REVIEW_FILE=sample_10_por_ciento_review.csv"
+                f"GAME_FILE={game_file}",
+                f"REVIEW_FILE={review_file}",
             ],
             "volumes": ["./data:/data", "./results:/results"],
         }
@@ -373,10 +377,28 @@ def save_yaml(config, filename="docker-compose-system.yaml"):
     with open(filename, "w") as file:
         yaml.dump(config, file, default_flow_style=False, sort_keys=False)
 
+def load_client_files(config_file="config.ini"):
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    # Read number of clients
+    num_clients = int(config["global"]["num_clients"])
+
+    # Collect client-specific file information
+    client_files = {}
+    for i in range(1, num_clients + 1):
+        client_name = f"client{i}"
+        client_files[client_name] = {
+            "game_file": config[client_name]["game_file"],
+            "review_file": config[client_name]["review_file"]
+        }
+    
+    return num_clients, client_files
+
 
 # Ejemplo de uso
-if __name__ == "__main__":
-    num_clients = int(input("Ingrese el número de clientes: "))
-    config = generate_yaml(num_clients)
+if __name__== "__main__":
+    num_clients, client_files = load_client_files()
+    config = generate_yaml(num_clients, client_files)
     save_yaml(config)
-    print(f"Archivo YAML generado con {num_clients} clientes.")
+    print(f"Archivo YAML generado con {num_clients} clientes.")
