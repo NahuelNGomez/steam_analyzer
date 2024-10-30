@@ -1,7 +1,7 @@
 import configparser
 import yaml
 
-def generate_yaml(num_clients, client_files):
+def generate_yaml(num_clients, client_files, language_num_nodes):
     # Base configuration
     base_config = {
         "name": "tp1",
@@ -25,10 +25,10 @@ def generate_yaml(num_clients, client_files):
                     "indie_game_review_filter3",
                     "indie_game_review_filter4",
                     "action_game_review_filter",
-                    "language_filter",
                     "action_name_accumulator",
                     "percentile_accumulator",
-                ],
+                    # Agregar dinámicamente los language_filter_i
+                ] + [f"language_filter_{i}" for i in range(1, language_num_nodes + 1)],
                 "environment": [
                     "LOGGING_LEVEL=INFO",
                     "OUTPUT_QUEUE=reviews_queue",
@@ -280,6 +280,7 @@ def generate_yaml(num_clients, client_files):
                     'INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]',
                     "PREVIOUS_REVIEW_NODES=1",
                     "LOGGING_LEVEL=INFO",
+                    f"AMOUNT_OF_LANGUAGE_FILTERS={language_num_nodes}",
                 ],
                 "volumes": ["./game_review_filter/data:/data"],
             },
@@ -294,17 +295,7 @@ def generate_yaml(num_clients, client_files):
                     "LOGGING_LEVEL=INFO",
                 ],
             },
-            "language_filter": {
-                "container_name": "language_filter",
-                "build": {"context": ".", "dockerfile": "./language_filter/Dockerfile"},
-                "image": "language_filter:latest",
-                "networks": ["testing_net"],
-                "environment": [
-                    'OUTPUT_EXCHANGES=["english_reviews"]',
-                    'INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}',
-                    "LOGGING_LEVEL=INFO",
-                ],
-            },
+
             "action_name_accumulator": {
                 "container_name": "action_name_accumulator",
                 "build": {
@@ -318,6 +309,7 @@ def generate_yaml(num_clients, client_files):
                     'INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}',
                     "LOGGING_LEVEL=INFO",
                     "REVIEWS_LOW_LIMIT=5000",
+                    f"PREVIOUS_LANGUAGE_NODES={language_num_nodes}",
                 ],
             },
             "percentile_accumulator": {
@@ -351,6 +343,7 @@ def generate_yaml(num_clients, client_files):
         game_file = client_files[client_name]["game_file"]
         review_file = client_files[client_name]["review_file"]
         
+        
         base_config["services"][client_name] = {
             "container_name": f"client{i}",
             "build": {"context": ".", "dockerfile": "./client/Dockerfile"},
@@ -369,7 +362,23 @@ def generate_yaml(num_clients, client_files):
             ],
             "volumes": ["./data:/data", "./results:/results"],
         }
-
+        
+    for i in range(1, language_num_nodes + 1):
+        base_config["services"][f"language_filter_{i}"] = {
+            "container_name": f"language_filter_{i}",
+            "build": {
+                "context": ".",
+                "dockerfile": "./language_filter/Dockerfile",
+            },
+            "image": "language_filter:latest",
+            "networks": ["testing_net"],
+            "environment": [
+                'OUTPUT_EXCHANGES=["english_reviews"]',
+                f'INPUT_QUEUES={{"games_reviews_action_queue_{i}":"games_reviews_action"}}',
+                "LOGGING_LEVEL=INFO",
+                'INSTANCE_ID=0'
+            ],
+        }
     return base_config
 
 
@@ -377,13 +386,13 @@ def save_yaml(config, filename="docker-compose-system.yaml"):
     with open(filename, "w") as file:
         yaml.dump(config, file, default_flow_style=False, sort_keys=False)
 
-def load_client_files(config_file="config.ini"):
+def load_node_files(config_file="config.ini"):
     config = configparser.ConfigParser()
     config.read(config_file)
 
     # Read number of clients
     num_clients = int(config["global"]["num_clients"])
-
+    language_num_nodes = int(config["language_filter"]["instances"])
     # Collect client-specific file information
     client_files = {}
     for i in range(1, num_clients + 1):
@@ -393,12 +402,12 @@ def load_client_files(config_file="config.ini"):
             "review_file": config[client_name]["review_file"]
         }
     
-    return num_clients, client_files
+    return num_clients, client_files, language_num_nodes
 
 
 # Ejemplo de uso
 if __name__== "__main__":
-    num_clients, client_files = load_client_files()
-    config = generate_yaml(num_clients, client_files)
+    num_clients, client_files, language_num_nodes = load_node_files()
+    config = generate_yaml(num_clients, client_files, language_num_nodes)
     save_yaml(config)
     print(f"Archivo YAML generado con {num_clients} clientes.")

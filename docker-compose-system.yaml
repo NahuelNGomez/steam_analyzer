@@ -22,9 +22,10 @@ services:
     - indie_game_review_filter3
     - indie_game_review_filter4
     - action_game_review_filter
-    - language_filter
     - action_name_accumulator
     - percentile_accumulator
+    - language_filter_1
+    - language_filter_2
     environment:
     - LOGGING_LEVEL=INFO
     - OUTPUT_QUEUE=reviews_queue
@@ -267,8 +268,8 @@ services:
     - INPUT_GAMES_QUEUE=["action_games_queue","action_games"]
     - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
     - PREVIOUS_REVIEW_NODES=1
-    - AMOUNT_OF_LANGUAGE_FILTERS=3
     - LOGGING_LEVEL=INFO
+    - AMOUNT_OF_LANGUAGE_FILTERS=2
     volumes:
     - ./game_review_filter/data:/data
   game_review_positive_counter:
@@ -283,45 +284,6 @@ services:
     - OUTPUT_EXCHANGES=["result_queue"]
     - INPUT_QUEUES={"games_reviews_queue":"games_reviews_indie"}
     - LOGGING_LEVEL=INFO
-  language_filter:
-    container_name: language_filter
-    build:
-      context: .
-      dockerfile: ./language_filter/Dockerfile
-    image: language_filter:latest
-    networks:
-      - testing_net
-    environment:
-      - OUTPUT_EXCHANGES=["english_reviews"]
-      - INPUT_QUEUES={"games_reviews_action_queue_1":"games_reviews_action"}
-      - LOGGING_LEVEL=INFO
-      - INSTANCE_ID=0
-  language_filter_2:
-    container_name: language_filter_2
-    build:
-      context: .
-      dockerfile: ./language_filter/Dockerfile
-    image: language_filter:latest
-    networks:
-      - testing_net
-    environment:
-      - OUTPUT_EXCHANGES=["english_reviews"]
-      - INPUT_QUEUES={"games_reviews_action_queue_2":"games_reviews_action"}
-      - LOGGING_LEVEL=INFO
-      - INSTANCE_ID=0
-  language_filter_3:
-    container_name: language_filter_3
-    build:
-      context: .
-      dockerfile: ./language_filter/Dockerfile
-    image: language_filter:latest
-    networks:
-      - testing_net
-    environment:
-      - OUTPUT_EXCHANGES=["english_reviews"]
-      - INPUT_QUEUES={"games_reviews_action_queue_3":"games_reviews_action"}
-      - LOGGING_LEVEL=INFO
-      - INSTANCE_ID=0
   action_name_accumulator:
     container_name: action_name_accumulator
     build:
@@ -335,7 +297,7 @@ services:
     - INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}
     - LOGGING_LEVEL=INFO
     - REVIEWS_LOW_LIMIT=5000
-    - PREVIOUS_LANGUAGE_NODES = 3
+    - PREVIOUS_LANGUAGE_NODES=2
   percentile_accumulator:
     container_name: percentile_accumulator
     build:
@@ -394,6 +356,32 @@ services:
     volumes:
     - ./data:/data
     - ./results:/results
+  language_filter_1:
+    container_name: language_filter_1
+    build:
+      context: .
+      dockerfile: ./language_filter/Dockerfile
+    image: language_filter:latest
+    networks:
+    - testing_net
+    environment:
+    - OUTPUT_EXCHANGES=["english_reviews"]
+    - INPUT_QUEUES={"games_reviews_action_queue_1":"games_reviews_action"}
+    - LOGGING_LEVEL=INFO
+    - INSTANCE_ID=0
+  language_filter_2:
+    container_name: language_filter_2
+    build:
+      context: .
+      dockerfile: ./language_filter/Dockerfile
+    image: language_filter:latest
+    networks:
+    - testing_net
+    environment:
+    - OUTPUT_EXCHANGES=["english_reviews"]
+    - INPUT_QUEUES={"games_reviews_action_queue_2":"games_reviews_action"}
+    - LOGGING_LEVEL=INFO
+    - INSTANCE_ID=0
 networks:
   testing_net:
     driver: bridge

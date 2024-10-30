@@ -70,9 +70,6 @@
         ]
     },
     {
-        "game_exceeding_limit": []
-    },
-    {
         "negative_count_percentile": [
             {
                 "game_id": "10",
@@ -199,6 +196,9 @@
                 "name": "Watch_Dogs® 2"
             }
         ]
+    },
+    {
+        "game_exceeding_limit": []
     },
     {
         "top_5_indie_games_positive_reviews": [
