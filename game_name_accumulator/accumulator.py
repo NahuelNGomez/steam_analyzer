@@ -29,6 +29,8 @@ class GameNamesAccumulator:
             self._finCallBack,
         )
         self.datasent_by_client = defaultdict(bool)
+        self.total_fin = 2
+        self.received_fin:dict = {}
 
     def start(self):
         """
@@ -91,13 +93,17 @@ class GameNamesAccumulator:
             fin = Fin.decode(data)
             client_id = fin.client_id
             logging.info(f"Fin de la transmisión recibido para el cliente {client_id}")
+            if client_id not in self.received_fin:
+                self.received_fin[client_id] = 1
+            else:
+                self.received_fin[client_id] += 1
+            if self.received_fin[client_id] == self.total_fin:
+                if not self.datasent_by_client[client_id]:
+                    message = {"game_exceeding_limit": {"client_id " + client_id: []}}
+                    self.middleware.send(json.dumps(message))
 
-            if not self.datasent_by_client[client_id]:
-                message = {"game_exceeding_limit": {"client_id " + client_id: []}}
-                self.middleware.send(json.dumps(message))
-
-            message2 ={"final_check_low_limit": {"client_id " + client_id: True}}
-            self.middleware.send(json.dumps(message2))
+                message2 ={"final_check_low_limit": {"client_id " + client_id: True}}
+                self.middleware.send(json.dumps(message2))
 
         except Exception as e:
             logging.error(f"Error al procesar el mensaje de fin: {e}")

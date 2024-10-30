@@ -15,7 +15,9 @@ class Top5ReviewCounter:
             output_exchanges=output_exchanges,
             intance_id=instance_id,
             callback=self._process_callback,
-            eofCallback=self._eof_callback
+            eofCallback=self._eof_callback,
+            exchange_input_type="direct",
+            
         )
         # Diccionario para almacenar los datos por client_id
         self.games_dict_by_client = {}

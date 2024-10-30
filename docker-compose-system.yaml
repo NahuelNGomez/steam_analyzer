@@ -267,6 +267,7 @@ services:
     - INPUT_GAMES_QUEUE=["action_games_queue","action_games"]
     - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
     - PREVIOUS_REVIEW_NODES=1
+    - AMOUNT_OF_LANGUAGE_FILTERS=2
     - LOGGING_LEVEL=INFO
     volumes:
     - ./game_review_filter/data:/data
@@ -289,11 +290,25 @@ services:
       dockerfile: ./language_filter/Dockerfile
     image: language_filter:latest
     networks:
-    - testing_net
+      - testing_net
     environment:
-    - OUTPUT_EXCHANGES=["english_reviews"]
-    - INPUT_QUEUES={"games_reviews_action_queue":"games_reviews_action"}
-    - LOGGING_LEVEL=INFO
+      - OUTPUT_EXCHANGES=["english_reviews"]
+      - INPUT_QUEUES={"games_reviews_action_queue_1":"games_reviews_action"}
+      - LOGGING_LEVEL=INFO
+      - INSTANCE_ID=0
+  language_filter_2:
+    container_name: language_filter_2
+    build:
+      context: .
+      dockerfile: ./language_filter/Dockerfile
+    image: language_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["english_reviews"]
+      - INPUT_QUEUES={"games_reviews_action_queue_2":"games_reviews_action"}
+      - LOGGING_LEVEL=INFO
+      - INSTANCE_ID=0
   action_name_accumulator:
     container_name: action_name_accumulator
     build:

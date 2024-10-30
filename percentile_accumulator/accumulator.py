@@ -20,7 +20,7 @@ class PercentileAccumulator:
         self.games_by_client = defaultdict(lambda: defaultdict(lambda: {'name': '', 'count': 0}))
         self.percentile = percentile
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
-                                     self._callBack, self._finCallBack)
+                                     self._callBack, self._finCallBack, 1, "fanout", "direct")
         self.counter = 0
 
     def start(self):

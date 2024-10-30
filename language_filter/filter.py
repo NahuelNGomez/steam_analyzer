@@ -15,7 +15,7 @@ class LanguageFilter:
         :param output_exchanges: Lista de exchanges de salida.
         :param instance_id: ID de instancia para identificar colas únicas.
         """
-        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
+        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack, 1, "fanout", "direct" )
 
     def start(self):
         """
@@ -35,7 +35,7 @@ class LanguageFilter:
             game_review = GameReview.decode(json.loads(data))
             result_text = game_review.review_text
             language, confidence = langid.classify(result_text)
-            logging.info(f"Mensaje decodificado: {game_review}")
+            logging.info(f"Mensaje decodificado: {result_text}")
             if language == 'en':
                 game = GameReview(game_review.game_id, game_review.game_name, None, game_review.client_id)
                 game_str = json.dumps(game.getData())

@@ -19,6 +19,7 @@ class GameReviewFilter:
         output_queues,
         instance_id,
         previous_review_nodes,
+        amount_of_language_filters,
     ):
         """
         :param input_queues: Lista de colas de entrada (e.g., ['action_games_queue', 'positive_reviews_queue']).
@@ -43,6 +44,8 @@ class GameReviewFilter:
         self.total_batches: dict = {} 
         self.the_plan_1 = 0
         self.the_plan_2 = 0
+        self.amount_of_language_filters = amount_of_language_filters
+        self.next_instance = 1
 
         self.games: dict = {}
 
@@ -59,6 +62,7 @@ class GameReviewFilter:
             output_queues=self.output_queues,  ## ???
             output_exchanges=self.output_exchanges,  ## ???
             intance_id=self.instance_id,
+            exchange_output_type="direct"
         )
         self.books_middleware.start()
 
@@ -67,9 +71,10 @@ class GameReviewFilter:
             input_queues={self.reviews_input_queue[0]: self.reviews_input_queue[1]},
             callback=self._add_review,
             eofCallback=self.handle_review_eof,
-            output_queues=self.output_queues,  ## ???
+            output_queues=[],  ## ???
             output_exchanges=self.output_exchanges,  ## ???
             intance_id=self.instance_id,
+            exchange_output_type="direct",
         )
         self.reviews_middleware.start()
 
@@ -148,10 +153,21 @@ class GameReviewFilter:
                 with self.file_lock:
                     self.save_last_reviews(client_id)
                     self.process_reviews(f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt",client_id)
-                    self.reviews_middleware.send(Fin(0, client_id).encode())
+                    #self.reviews_middleware.send(Fin(0, client_id).encode())
+                    self.send_fin(client_id)
 
                 self.sended_fin[client_id] = True
 
+    def send_fin(self, client_id):
+        print("envío fin", flush=True)
+        self.reviews_middleware.send(Fin(0, client_id).encode(), routing_key="games_reviews_queue_0")
+        self.reviews_middleware.send(Fin(0, client_id).encode(), routing_key="games_reviews_action_queue_3")
+        for i in range(1, self.amount_of_language_filters + 1):
+            routing = f"games_reviews_action_queue_{i}_0"
+            print("Enviando FIN - ", routing, flush=True)
+            self.reviews_middleware.send(data=Fin(0, client_id).encode(), routing_key=routing)
+        
+        
     def handle_game_eof(self, message):
         """
         Maneja el mensaje de fin de juegos.
@@ -186,7 +202,8 @@ class GameReviewFilter:
             self.sended_fin[client_id] = True
             logging.info("Fin de la transmisión de datos")
             self.process_reviews(f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt",fin.client_id)
-            self.reviews_middleware.send(message)
+            #self.reviews_middleware.send(message)
+            self.send_fin(client_id)
 
     def save_last_reviews(self,client_id):
         """
@@ -203,8 +220,6 @@ class GameReviewFilter:
         """
         Maneja el mensaje de fin de reviews y asegura que todas las reviews se escriban en el archivo.
         """
-        
-        
         print("Recibiendo EOF - con THE PLAN:", self.the_plan_2, flush=True)
         print("Recibiendo EOF - con THE PLAN:", self.the_plan_1, flush=True)
         message_fin = Fin.decode(message)
@@ -247,9 +262,8 @@ class GameReviewFilter:
                         f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt",
                         message_fin.client_id,
                     )
-                    self.reviews_middleware.send(
-                        Fin(self.total_batches, message_fin.client_id).encode()
-                    )
+                    #self.reviews_middleware.send(Fin(self.total_batches, message_fin.client_id).encode())
+                    self.send_fin(client_id)
                     self.sended_fin[client_id] = True
 
     def process_reviews(self, path, client_id):
@@ -266,10 +280,15 @@ class GameReviewFilter:
                     game = client_games[review.game_id]
                     if "action" in self.games_input_queue[1].lower():
                         game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
+                        game_str = json.dumps(game_review.getData())
+                        routing = f"games_reviews_action_queue_{self.next_instance}_0"
+                        self.reviews_middleware.send(data=game_str,routing_key=routing)
+                        self.reviews_middleware.send(data=game_str,routing_key="games_reviews_action_queue_3")
+                        self.next_instance = 1 if self.next_instance == 2 else 2
                     else:
                         game_review = GameReview(review.game_id, game, None, review.client_id)
-                    game_str = json.dumps(game_review.getData())
-                    self.reviews_middleware.send(game_str)
+                        game_str = json.dumps(game_review.getData())
+                        self.reviews_middleware.send(game_str, routing_key="games_reviews_queue_0")
                 else:
                     pass
 

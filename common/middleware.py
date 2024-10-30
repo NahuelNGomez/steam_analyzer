@@ -106,7 +106,7 @@ class Middleware:
         def callback_wrapper(ch, method, properties, body):
             response = 0
             mensaje_str = body.decode("utf-8")
-            logging.debug("Received %s", mensaje_str)
+            #logging.info("Received %s", mensaje_str)
             if "fin\n\n" in mensaje_str:
                 eofCallback(mensaje_str)
             else:
@@ -135,7 +135,7 @@ class Middleware:
                 self.send_to_queue(f"{queue}_0", data)
         for exchange in self.output_exchanges:
             self.channel.basic_publish(exchange=exchange, routing_key=routing_key, body=data)
-            logging.debug("Sent to exchange %s: %s", exchange, data)
+            #logging.info("Sent to exchange %s: %s - %s", exchange, routing_key,data)
 
     def send_to_queue(self, queue: str, data: str):
         self.channel.basic_publish(exchange="", routing_key=queue, body=data)
