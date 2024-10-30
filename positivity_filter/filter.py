@@ -33,20 +33,19 @@ class PositivityFilter:
         logging.info("FilterPositivity started")
 
     def _callback(self, message):
-
         try:
             batch = message.split("\n")
-            finalList = ""
+            finalList = []
 
             for row in batch:
                 if not row.strip():
                     continue
                 result_review = Review.decode(json.loads(row))
-
                 review_score = result_review.review_score
+                
                 if int(review_score) == self.positivity:
-                    finalList += f"{json.dumps(result_review.getData())}\n"
-            
+                    finalList.append(json.dumps(result_review.getData()))
+
             client_id = int(Review.decode(json.loads(batch[0])).client_id)
 
             if client_id not in self.batch_counter:
@@ -55,17 +54,19 @@ class PositivityFilter:
             if client_id not in self.expected_batches:
                 print(f"Client id {client_id} not in expected_batches", flush=True)
                 self.expected_batches[client_id] = 0
-            self.middleware.send(finalList)
-            self.batch_counter[client_id] += 1
-            print(f"Batch counter: {self.batch_counter[client_id]}", flush=True)
             
+            if finalList:
+                # Unir todas las líneas con \n solo cuando hay contenido válido
+                finalList = "\n".join(finalList)
+                self.middleware.send(finalList)
+                self.batch_counter[client_id] += 1
+            print(f"Batch counter: {self.batch_counter[client_id]}", flush=True)
             
             if self.batch_counter[client_id] >= self.expected_batches[client_id] and self.expected_batches[client_id] !=0:
                 self.middleware.send(Fin(self.expected_batches[client_id], client_id).encode())
-            
-            
+
         except Exception as e:
-            logging.error(f"Error in FilterPositivity callback: {e}")
+            print(f"Error processing batch: {e}", flush=True)
 
     def _finCallback(self, message):
         if not message:

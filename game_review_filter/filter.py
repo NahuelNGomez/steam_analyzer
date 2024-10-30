@@ -98,6 +98,8 @@ class GameReviewFilter:
         Agrega una review a la lista y escribe en el archivo cuando llega a 1000.
         """
         batch = message.split("\n")
+       # print("Recibiendo REVIEW - batch:", len(batch), flush=True)
+       # print("Recibiendo REVIEW - batch:", batch, flush=True)
         client_id = int(Review.decode(json.loads(batch[0])).client_id)
         print("Recibiendo REVIEW - client_id:", client_id, flush=True)
         if client_id not in self.batch_counter:
