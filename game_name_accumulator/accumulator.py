@@ -7,7 +7,7 @@ from common.packet_fin import Fin
 
 
 class GameNamesAccumulator:
-    def __init__(self, input_queues, output_exchanges, instance_id, reviews_low_limit):
+    def __init__(self, input_queues, output_exchanges, instance_id, reviews_low_limit, previous_language_nodes):
         """
         Inicializa el acumulador de nombres de juegos con los parámetros especificados.
 
@@ -29,7 +29,7 @@ class GameNamesAccumulator:
             self._finCallBack,
         )
         self.datasent_by_client = defaultdict(bool)
-        self.total_fin = 2
+        self.total_fin = int(previous_language_nodes)
         self.received_fin:dict = {}
 
     def start(self):

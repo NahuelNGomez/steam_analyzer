@@ -284,7 +284,7 @@ class GameReviewFilter:
                         routing = f"games_reviews_action_queue_{self.next_instance}_0"
                         self.reviews_middleware.send(data=game_str,routing_key=routing)
                         self.reviews_middleware.send(data=game_str,routing_key="games_reviews_action_queue_3")
-                        self.next_instance = 1 if self.next_instance == 2 else 2
+                        self.next_instance = (self.next_instance % self.amount_of_language_filters) + 1                    
                     else:
                         game_review = GameReview(review.game_id, game, None, review.client_id)
                         game_str = json.dumps(game_review.getData())

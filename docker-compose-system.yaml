@@ -267,7 +267,7 @@ services:
     - INPUT_GAMES_QUEUE=["action_games_queue","action_games"]
     - INPUT_REVIEWS_QUEUE=["negative_review_queue","negative_reviews"]
     - PREVIOUS_REVIEW_NODES=1
-    - AMOUNT_OF_LANGUAGE_FILTERS=2
+    - AMOUNT_OF_LANGUAGE_FILTERS=3
     - LOGGING_LEVEL=INFO
     volumes:
     - ./game_review_filter/data:/data
@@ -309,6 +309,19 @@ services:
       - INPUT_QUEUES={"games_reviews_action_queue_2":"games_reviews_action"}
       - LOGGING_LEVEL=INFO
       - INSTANCE_ID=0
+  language_filter_3:
+    container_name: language_filter_3
+    build:
+      context: .
+      dockerfile: ./language_filter/Dockerfile
+    image: language_filter:latest
+    networks:
+      - testing_net
+    environment:
+      - OUTPUT_EXCHANGES=["english_reviews"]
+      - INPUT_QUEUES={"games_reviews_action_queue_3":"games_reviews_action"}
+      - LOGGING_LEVEL=INFO
+      - INSTANCE_ID=0
   action_name_accumulator:
     container_name: action_name_accumulator
     build:
@@ -322,6 +335,7 @@ services:
     - INPUT_QUEUES={"action_english_reviews_queue":"english_reviews"}
     - LOGGING_LEVEL=INFO
     - REVIEWS_LOW_LIMIT=5000
+    - PREVIOUS_LANGUAGE_NODES = 3
   percentile_accumulator:
     container_name: percentile_accumulator
     build:
@@ -349,6 +363,28 @@ services:
     environment:
     - LOGGING_LEVEL=INFO
     - CLIENT_ID=1
+    - BOUNDARY_IP=gateway
+    - BOUNDARY_PORT=12345
+    - DELAY=5
+    - RETRIES=5
+    - GAME_FILE=sample_10_por_ciento_games.csv
+    - REVIEW_FILE=sample_10_por_ciento_review.csv
+    volumes:
+    - ./data:/data
+    - ./results:/results
+  client2:
+    container_name: client2
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    image: client:latest
+    networks:
+    - testing_net
+    depends_on:
+    - gateway
+    environment:
+    - LOGGING_LEVEL=INFO
+    - CLIENT_ID=2
     - BOUNDARY_IP=gateway
     - BOUNDARY_PORT=12345
     - DELAY=5
