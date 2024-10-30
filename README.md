@@ -48,7 +48,19 @@ Facultad de Ingeniería, Universidad de Buenos Aires
 
 ## Ejecución
 
-Lo primero que se debe hacer es correr rabbitmq:
+
+### Creación del docker compose
+Existe un archivo ```config.ini``` el cual contiene:
+- Numeros de clientes que se ejecutarán.
+- Listado de los archivos de Games y Reviews para cada cliente
+
+Luego de tener preparado el archivo ```config.ini```, se deberá ejecutar:
+
+```bash
+python generador_compose.py
+```
+
+Luego, lo que se debe hacer es correr rabbitmq:
 
 ```bash
 make docker-rabbit-up
@@ -61,14 +73,17 @@ make docker-compose-up
 
 
 
-Comparador de resultados
+### Comparador de resultados
 ```bash
-diff -w responses.json serial_queries_1_results.json
+python compare_results.py <expected_result.json> <result.json>
 ```
 
-$ diff -w responses.json serial_queries_1_results.json
----
-
+### Ejecución repetitiva de un cliente
+ Luego de la primera ejecución y que el cliente N cierre. Se puede volver a prender el container utilizando el comando:
+```bash
+docker start <CONTAINER ID>
+```
+Esto provocará que, el servidor reconozca el ID del cliente y le devuelva los resultados que almacenó en una primera instancia.
 ## Introducción
 
 El objetivo de este sistema es procesar 5 queries sobre un dataset de juegos y otro dataset de reviews. Las queries son las siguientes:
