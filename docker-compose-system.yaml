@@ -329,8 +329,8 @@ services:
     - BOUNDARY_PORT=12345
     - DELAY=5
     - RETRIES=5
-    - GAME_FILE=games.csv
-    - REVIEW_FILE=dataset.csv
+    - GAME_FILE=sample_10_por_ciento_games.csv
+    - REVIEW_FILE=sample_10_por_ciento_reviews.csv
     volumes:
     - ./data:/data
     - ./results:/results
@@ -351,8 +351,8 @@ services:
     - BOUNDARY_PORT=12345
     - DELAY=5
     - RETRIES=5
-    - GAME_FILE=sample_10_por_ciento_games.csv
-    - REVIEW_FILE=sample_10_por_ciento_review.csv
+    - GAME_FILE=games.csv
+    - REVIEW_FILE=dataset.csv
     volumes:
     - ./data:/data
     - ./results:/results

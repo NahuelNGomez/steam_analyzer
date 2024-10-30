@@ -27,7 +27,8 @@ class PositivityFilter:
             self.instance_id = int(output_exchange[0].split("_")[-1])
         else:
             self.instance_id = 1
-
+        self.null_counts = {}
+        
     def start(self):
         self.middleware.start()
         logging.info("FilterPositivity started")
@@ -54,16 +55,22 @@ class PositivityFilter:
             if client_id not in self.expected_batches:
                 print(f"Client id {client_id} not in expected_batches", flush=True)
                 self.expected_batches[client_id] = 0
-            
+            if client_id not in self.null_counts:
+                print(f"Client id {client_id} not in null_counts", flush=True)
+                self.null_counts[client_id] = 0
+                
             if finalList:
                 # Unir todas las líneas con \n solo cuando hay contenido válido
                 finalList = "\n".join(finalList)
                 self.middleware.send(finalList)
                 self.batch_counter[client_id] += 1
+            else:
+                self.null_counts[client_id] += 1
+                print(f"Null count: {self.null_counts[client_id]}", flush=True)
+                                
             print(f"Batch counter: {self.batch_counter[client_id]}", flush=True)
-            
-            if self.batch_counter[client_id] >= self.expected_batches[client_id] and self.expected_batches[client_id] !=0:
-                self.middleware.send(Fin(self.expected_batches[client_id], client_id).encode())
+            if ((self.batch_counter[client_id] + self.null_counts[client_id]) >= self.expected_batches[client_id]) and self.expected_batches[client_id] !=0:
+                self.middleware.send(Fin(self.batch_counter[client_id], client_id).encode())
 
         except Exception as e:
             print(f"Error processing batch: {e}", flush=True)
@@ -87,6 +94,6 @@ class PositivityFilter:
             #self.middleware.send(message)
             return
         
-        if self.batch_counter[int(json_row.client_id)] >= self.expected_batches[int(json_row.client_id)]:
-            self.middleware.send(Fin(self.expected_batches[int(json_row.client_id)], int(json_row.client_id)).encode())
+        if (self.batch_counter[int(json_row.client_id)] + self.null_counts[int(json_row.client_id)]) >= self.expected_batches[int(json_row.client_id)]:
+            self.middleware.send(Fin(self.batch_counter[int(json_row.client_id)], int(json_row.client_id)).encode())
         logging.info("FilterPositivity finished")
