@@ -35,7 +35,6 @@ class LanguageFilter:
             game_review = GameReview.decode(json.loads(data))
             result_text = game_review.review_text
             language, confidence = langid.classify(result_text)
-            logging.info(f"Mensaje decodificado: {result_text}")
             if language == 'en':
                 game = GameReview(game_review.game_id, game_review.game_name, None, game_review.client_id)
                 game_str = json.dumps(game.getData())
