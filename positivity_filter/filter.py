@@ -50,13 +50,13 @@ class PositivityFilter:
             client_id = int(Review.decode(json.loads(batch[0])).client_id)
 
             if client_id not in self.batch_counter:
-                print(f"Client id {client_id} not in batch_counter", flush=True)
+                # print(f"Client id {client_id} not in batch_counter", flush=True)
                 self.batch_counter[client_id] = 0
             if client_id not in self.expected_batches:
-                print(f"Client id {client_id} not in expected_batches", flush=True)
+                # print(f"Client id {client_id} not in expected_batches", flush=True)
                 self.expected_batches[client_id] = 0
             if client_id not in self.null_counts:
-                print(f"Client id {client_id} not in null_counts", flush=True)
+                # print(f"Client id {client_id} not in null_counts", flush=True)
                 self.null_counts[client_id] = 0
                 
             if finalList:
@@ -66,9 +66,9 @@ class PositivityFilter:
                 self.batch_counter[client_id] += 1
             else:
                 self.null_counts[client_id] += 1
-                print(f"Null count: {self.null_counts[client_id]}", flush=True)
+                # print(f"Null count: {self.null_counts[client_id]}", flush=True)
                                 
-            print(f"Batch counter: {self.batch_counter[client_id]}", flush=True)
+            # print(f"Batch counter: {self.batch_counter[client_id]}", flush=True)
             if ((self.batch_counter[client_id] + self.null_counts[client_id]) >= self.expected_batches[client_id]) and self.expected_batches[client_id] !=0:
                 self.middleware.send(Fin(self.batch_counter[client_id], client_id).encode())
 
@@ -81,7 +81,7 @@ class PositivityFilter:
         
         json_row = Fin.decode(message)
         # fin_message = Fin(self.batch_counter[int(json_row.client_id)], json_row.client_id)
-        print("llega batch id: ", json_row.batch_id,flush=True)
+        # print("llega batch id: ", json_row.batch_id,flush=True)
         if self.positivity == 1:
             remainder = int(json_row.batch_id) % 4
             division_result = int(json_row.batch_id) // 4

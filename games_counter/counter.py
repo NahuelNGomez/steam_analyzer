@@ -24,7 +24,7 @@ class GamesCounter:
             mac = game.mac
             linux = game.linux
             client_id = game.client_id
-            logging.info(f"Juego '{game_name}' recibido del cliente {client_id}")
+            # logging.info(f"Juego '{game_name}' recibido del cliente {client_id}")
             
             # Convertir a booleano de forma robusta
             windows = self._convert_to_boolean(windows)

@@ -75,9 +75,13 @@ class Top5ReviewCounter:
         """
         Callback function to process messages.
         """
-        json_data = json.loads(data)
-        game_review = GameReview.decode(json_data)
-        self.process_game(game_review)
+        batch = data.split("\n")
+        for row in batch:
+            if not row.strip():
+                continue
+            json_data = json.loads(row)
+            game_review = GameReview.decode(json_data)
+            self.process_game(game_review)
 
     def _eof_callback(self, data):
         """

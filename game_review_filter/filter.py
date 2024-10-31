@@ -101,7 +101,7 @@ class GameReviewFilter:
        # print("Recibiendo REVIEW - batch:", len(batch), flush=True)
        # print("Recibiendo REVIEW - batch:", batch, flush=True)
         client_id = int(Review.decode(json.loads(batch[0])).client_id)
-        print("Recibiendo REVIEW - client_id:", client_id, flush=True)
+        # print("Recibiendo REVIEW - client_id:", client_id, flush=True)
         if client_id not in self.batch_counter:
             self.batch_counter[client_id] = 0
         if client_id not in self.reviews_to_add:
@@ -161,7 +161,7 @@ class GameReviewFilter:
                 self.sended_fin[client_id] = True
 
     def send_fin(self, client_id):
-        print("envío fin", flush=True)
+        # print("envío fin", flush=True)
         self.reviews_middleware.send(Fin(0, client_id).encode(), routing_key="games_reviews_queue_0")
         self.reviews_middleware.send(Fin(0, client_id).encode(), routing_key="games_reviews_action_queue_3")
         for i in range(1, self.amount_of_language_filters + 1):
@@ -178,7 +178,7 @@ class GameReviewFilter:
         fin = Fin.decode(message)
 
         client_id = int(fin.client_id)
-        print("Recibiendo EOF - ", type(client_id), flush=True)
+        # print("Recibiendo EOF - ", type(client_id), flush=True)
 
         self.completed_games[client_id] = True
         if client_id not in self.batch_counter:
@@ -211,7 +211,7 @@ class GameReviewFilter:
         """
         Guarda las reviews restantes en el archivo.
         """
-        print(" EOF Recibiendo- ", flush=True)
+        # print(" EOF Recibiendo- ", flush=True)
         name = f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt"
         with open(name, "a") as file:
             for review in self.reviews_to_add[client_id]:
@@ -222,8 +222,7 @@ class GameReviewFilter:
         """
         Maneja el mensaje de fin de reviews y asegura que todas las reviews se escriban en el archivo.
         """
-        print("Recibiendo EOF - con THE PLAN:", self.the_plan_2, flush=True)
-        print("Recibiendo EOF - con THE PLAN:", self.the_plan_1, flush=True)
+
         message_fin = Fin.decode(message)
         client_id = int(message_fin.client_id)
         if client_id not in self.batch_counter:
@@ -243,12 +242,12 @@ class GameReviewFilter:
         self.completed_reviews[client_id] = True
         self.nodes_completed[client_id] += 1
         self.total_batches[client_id] = int(message_fin.batch_id)
-        print("Recibiendo EOF - counter nodes_completed", self.nodes_completed[client_id] , flush=True)
-        print("Recibiendo EOF - Client_id", client_id, flush=True)
-        print("Recibiendo EOF - TypeBatch_id", type(message_fin.batch_id), flush=True)
-        print("Recibiendo EOF - Batch_id", message_fin.batch_id, flush=True)
-        print("Recibiendo EOF - TypeTotalBatch", type(self.total_batches[client_id]), flush=True)
-        print("Recibiendo EOF - TotalBatch", self.total_batches[client_id], flush=True)
+        # print("Recibiendo EOF - counter nodes_completed", self.nodes_completed[client_id] , flush=True)
+        # print("Recibiendo EOF - Client_id", client_id, flush=True)
+        # print("Recibiendo EOF - TypeBatch_id", type(message_fin.batch_id), flush=True)
+        # print("Recibiendo EOF - Batch_id", message_fin.batch_id, flush=True)
+        # print("Recibiendo EOF - TypeTotalBatch", type(self.total_batches[client_id]), flush=True)
+        # print("Recibiendo EOF - TotalBatch", self.total_batches[client_id], flush=True)
         
 
         if (self.nodes_completed[client_id] == self.previous_review_nodes) and not self.sended_fin[client_id]:
@@ -273,6 +272,8 @@ class GameReviewFilter:
         Procesa las reviews y realiza el join con los juegos específicos del client_id.
         """
         client_games = self.games.get(int(client_id), {})
+        batch_size = 200
+        final_list = []
 
         name = path
         with open(name, "r") as file:
@@ -290,13 +291,20 @@ class GameReviewFilter:
                     else:
                         game_review = GameReview(review.game_id, game, None, review.client_id)
                         game_str = json.dumps(game_review.getData())
-                        self.reviews_middleware.send(game_str, routing_key="games_reviews_queue_0")
+                        final_list.append(game_str)
+                        if (len(final_list) >= batch_size):
+                            final_list = "\n".join(final_list)
+                            self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
+                            final_list = []
                 else:
                     pass
-
-        logging.info("Fin de la ejecución de reviews para el cliente %s", client_id)
+        if final_list:
+            final_list = "\n".join(final_list)
+            self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
+            final_list = []
         os.remove(name)
 
+        
     def start(self):
         """
         Inicia el proceso de join.
