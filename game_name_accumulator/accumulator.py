@@ -38,33 +38,60 @@ class GameNamesAccumulator:
         """
         self.middleware.start()
         logging.info("GameNamesAccumulator started")
-
+    
     def process_game(self, game):
         """
         Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas por cliente.
         Si el número de reseñas supera el límite definido, envía el nombre del juego.
         """
         try:
-            client_id = game.client_id  # Obtener el client_id
-            game_id = game.game_id
+            # Validación de datos de entrada
+            if not hasattr(game, 'client_id'):
+                raise ValueError(f"Game object missing client_id attribute: {game._dict_}")
+            if not hasattr(game, 'game_id'):
+                raise ValueError(f"Game object missing game_id attribute: {game._dict_}")
+            if not hasattr(game, 'game_name'):
+                raise ValueError(f"Game object missing game_name attribute: {game._dict_}")
+
+            # Conversión con manejo de errores explícito
+            try:
+                client_id = int(game.client_id)
+            except (ValueError, TypeError) as e:
+                raise ValueError(f"Invalid client_id format: {game.client_id}. Error: {str(e)}")
+
+            try:
+                game_id = int(game.game_id)
+            except (ValueError, TypeError) as e:
+                raise ValueError(f"Invalid game_id format: {game.game_id}. Error: {str(e)}")
+
+
+            # Inicialización de estructuras de datos con logging detallado
+            if client_id not in self.games_by_client:
+                self.games_by_client[client_id] = {}
+            
+            if client_id not in self.sent_games_by_client:
+                self.sent_games_by_client[client_id] = []
 
             games = self.games_by_client[client_id]
             sent_games = self.sent_games_by_client[client_id]
 
+            # Procesamiento del juego con logging detallado
             if game_id in games:
                 games[game_id]["count"] += 1
             else:
-                if games[game_id] not in sent_games:
+                if game_id not in sent_games:
                     games[game_id] = {"name": game.game_name, "count": 1}
 
+            # Verificación de límite y envío
             if (
-                games[game_id]["count"] > self.reviews_low_limit
-                and game_id not in sent_games
+                game_id in games and
+                games[game_id]["count"] > self.reviews_low_limit and
+                game_id not in sent_games
             ):
                 message = {
-                    f"game_exceeding_limit": {
-                        "client id "
-                        + str(client_id): {{"game_name": games[game_id]["name"]}}
+                    
+                    "game_exceeding_limit": {
+                        f"client_id {client_id}": [{"game_name": games[game_id]["name"]}]
                     }
                 }
                 self.middleware.send(json.dumps(message))
@@ -73,7 +100,9 @@ class GameNamesAccumulator:
                 self.datasent_by_client[client_id] = True
 
         except Exception as e:
-            logging.error(f"Error in process_game: {e}")
+            logging.error(f"Error in process_game: {str(e)}")
+            logging.error(f"Full game object: {game._dict_}")
+
 
     def get_games(self, client_id):
         """
@@ -91,7 +120,7 @@ class GameNamesAccumulator:
         """
         try:
             fin = Fin.decode(data)
-            client_id = fin.client_id
+            client_id = int(fin.client_id)
             logging.info(f"Fin de la transmisión recibido para el cliente {client_id}")
             if client_id not in self.received_fin:
                 self.received_fin[client_id] = 1
@@ -99,10 +128,9 @@ class GameNamesAccumulator:
                 self.received_fin[client_id] += 1
             if self.received_fin[client_id] == self.total_fin:
                 if not self.datasent_by_client[client_id]:
-                    message = {"game_exceeding_limit": {"client_id " + client_id: []}}
+                    message = {"game_exceeding_limit": {"client_id " + str(client_id): []}}
                     self.middleware.send(json.dumps(message))
-
-                message2 ={"final_check_low_limit": {"client_id " + client_id: True}}
+                message2 ={"final_check_low_limit": {"client_id " +  str(client_id): True}}
                 self.middleware.send(json.dumps(message2))
 
         except Exception as e:
@@ -114,7 +142,7 @@ class GameNamesAccumulator:
         """
         try:
             game = GameReview.decode(json.loads(data))
-            logging.debug(f"Mensaje decodificado: {game}")
+            # logging.info(f"Mensaje decodificado: {game}")
             self.process_game(game)
 
         except Exception as e:

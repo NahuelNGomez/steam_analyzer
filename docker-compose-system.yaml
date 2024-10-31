@@ -330,7 +330,7 @@ services:
     - DELAY=5
     - RETRIES=5
     - GAME_FILE=sample_10_por_ciento_games.csv
-    - REVIEW_FILE=sample_10_por_ciento_reviews.csv
+    - REVIEW_FILE=sample_10_por_ciento_review.csv
     volumes:
     - ./data:/data
     - ./results:/results
