@@ -3,9 +3,7 @@ import logging
 from collections import defaultdict
 from common.game_review import GameReview
 from common.middleware import Middleware
-from common.utils import split_complex_string
 from common.packet_fin import Fin
-from common.constants import REVIEWS_APP_ID_POS, REVIEWS_TEXT_POS
 
 class PercentileAccumulator:
     def __init__(self, input_queues, output_exchanges, instance_id, percentile=90):
@@ -21,7 +19,6 @@ class PercentileAccumulator:
         self.percentile = percentile
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
                                      self._callBack, self._finCallBack, 1, "fanout", "direct")
-        self.counter = 0
 
     def start(self):
         """
@@ -35,7 +32,6 @@ class PercentileAccumulator:
         Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas para cada cliente.
         """
         try:
-            self.counter += 1
             game_id = game.game_id
             client_id = int(game.client_id)
 
@@ -105,6 +101,8 @@ class PercentileAccumulator:
         fin_msg = Fin.decode(data)
         client_id = int(fin_msg.client_id)
         self.calculate_90th_percentile(client_id)
+        if client_id in self.games_by_client:
+            del self.games_by_client[client_id]
     
     def _callBack(self, data):
         """

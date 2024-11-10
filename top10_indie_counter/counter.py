@@ -99,10 +99,17 @@ class Top10IndieCounter:
         """
         try:
             logging.info("End of file received. Sending top 10 indie games data for each client.")
-            # Enviar el top 10 para cada cliente
             fin_msg = Fin.decode(data)
             client_id = int(fin_msg.client_id)
+
+            # Enviar el top 10 para el cliente
             self.middleware.send(json.dumps(self.get_games(client_id)))
+
+            # Limpiar la memoria para el cliente actual
+            if client_id in self.game_playtimes_by_client:
+                del self.game_playtimes_by_client[client_id]
+
+            logging.info(f"Top 10 indie games data sent and memory cleared for client {client_id}.")
             
         except Exception as e:
             logging.error(f"Error in _eof_callback: {e}")

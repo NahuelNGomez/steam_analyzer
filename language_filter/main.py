@@ -1,9 +1,7 @@
 import json
 import logging
 import os
-import time
 from filter import LanguageFilter
-import configparser
  
 def main():
     logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),

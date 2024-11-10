@@ -1,16 +1,12 @@
 # games_filter/filter.py
 
-import csv
-import io
 import logging
 from collections import defaultdict
 from common.game import Game
 from common.middleware import Middleware
-from common.utils import split_complex_string
 from common.packet_fin import Fin
-from common.constants import GAMES_NAME_POS, GAMES_WINDOWS_POS, GAMES_MAC_POS, GAMES_LINUX_POS
-from datetime import datetime
 import json
+
 class GamesCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
         #self.platform_counts = defaultdict(int)
@@ -91,6 +87,8 @@ class GamesCounter:
                 }
             }
             self.middleware.send(json.dumps(response, indent=4))
+            if client_id in self.platform_counts:
+                del self.platform_counts[client_id]
         except Exception as e:
             logging.error(f"Error al procesar el mensaje de fin: {e}")
     

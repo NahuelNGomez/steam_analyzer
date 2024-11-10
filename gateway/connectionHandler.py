@@ -68,6 +68,7 @@ class ConnectionHandler:
         self.completed_games:dict = {}
         self.next_instance = 0
         self.remaining_responses = 5
+        self.should_stop = False
         self.filtrados = 0
         self.client_id = -1
         self.result_queue = modify_queue_key(address[0])
@@ -270,7 +271,9 @@ class ConnectionHandler:
                 except OSError:
                     logging.error("Middleware closed")
                     break
+            self.shutdown_event.set()
             self.protocol.send_message("close\n\n")
+            
         except Exception as e:
             logging.error(f"Error al enviar resultados al cliente: {e}")
 

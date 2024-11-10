@@ -4,10 +4,7 @@ import os
 import pika
 import json
 import logging
-import time
-from collections import defaultdict
 from counter import GamesCounter
-import configparser
 
 def main():
     logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),

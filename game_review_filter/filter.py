@@ -206,6 +206,7 @@ class GameReviewFilter:
             self.process_reviews(f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt",fin.client_id)
             #self.reviews_middleware.send(message)
             self.send_fin(client_id)
+            self.clear_data(client_id)
 
     def save_last_reviews(self,client_id):
         """
@@ -266,6 +267,39 @@ class GameReviewFilter:
                     #self.reviews_middleware.send(Fin(self.total_batches, message_fin.client_id).encode())
                     self.send_fin(client_id)
                     self.sended_fin[client_id] = True
+                    self.clear_data(client_id)
+                    
+    def clear_data(self, client_id):
+        """
+        Limpia los datos del cliente.
+        """
+        if client_id in self.games:
+            del self.games[client_id]
+        
+        # Limpieza de contadores y flags
+        if client_id in self.batch_counter:
+            del self.batch_counter[client_id]
+        if client_id in self.total_batches:
+            del self.total_batches[client_id]
+        
+        # Limpieza de estados de completitud
+        if client_id in self.completed_games:
+            del self.completed_games[client_id]
+        if client_id in self.completed_reviews:
+            del self.completed_reviews[client_id]
+        if client_id in self.sended_fin:
+            del self.sended_fin[client_id]
+            
+        # Limpieza de buffers y contadores de reviews
+        if client_id in self.reviews_to_add:
+            self.reviews_to_add[client_id].clear()  # Limpiamos la lista antes de eliminarla
+            del self.reviews_to_add[client_id]
+        if client_id in self.review_file_size:
+            del self.review_file_size[client_id]
+        
+        # Limpieza de contadores de nodos
+        if client_id in self.nodes_completed:
+            del self.nodes_completed[client_id]
 
     def process_reviews(self, path, client_id):
         """

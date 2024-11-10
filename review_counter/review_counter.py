@@ -2,10 +2,8 @@ import json
 import logging
 from common.game_review import GameReview
 from common.middleware import Middleware
-from common.utils import split_complex_string
 from common.packet_fin import Fin
-from common.constants import GAMES_APP_ID_POS, GAMES_NAME_POS, GAMES_AVERAGE_PLAYTIME_FOREVER_POS
-from datetime import datetime
+
 
 class Top5ReviewCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
@@ -103,6 +101,8 @@ class Top5ReviewCounter:
         # for client_id in self.games_dict_by_client:
         #     top5_games = json.dumps(self.get_games(client_id), indent=4)
         #     self.middleware.send(top5_games)
+        del self.games_dict_by_client[client_id]
+        del self.remaining_fin[client_id]
         logging.info(f"Top 5 indie games positive reviews data sent for client {client_id}.")
     
         
