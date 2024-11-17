@@ -265,7 +265,7 @@ class ConnectionHandler:
                         self.protocol.send_message(data)
                     else:
                         self.protocol.send_message(data.decode())
-                except Empty:
+                except Empty: #revisar exception
                     continue
                 except OSError:
                     logging.error("Middleware closed")
@@ -313,7 +313,7 @@ class ConnectionHandler:
                 
                 logging.debug(f"Dispatched message {packet[:50]}...")
             except Empty:
-                continue
+                continue #revisar except
             except OSError:
                 logging.error("Middleware closed")
                 break
@@ -351,11 +351,8 @@ class ConnectionHandler:
                 self.reviews_from_client_queue.put(finalList)
                 self.reviews_from_client_queue_to_positive.put(finalList)
                 logging.info("Review batch processed")
-                
-                
-
             except Empty:
-                continue
+                continue #revisar except, consume mucho CPU
             except Exception as e:
                 logging.error(f"Error en process_review: {e}")
                 

@@ -26,7 +26,9 @@ class Review(Packet):
             cleaned_fields[0], cleaned_fields[1], cleaned_fields[2],
             cleaned_fields[3], cleaned_fields[4], cleaned_fields[5]
         )
+    #Revisar DECODE
 
+    
     def __str__(self):
         return f"Review({self.game_id}, {self.app_name}, {self.review_text}, {self.review_score}, {self.id}, {self.client_id})"
     
