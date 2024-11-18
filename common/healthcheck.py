@@ -2,12 +2,12 @@ import socket
 import logging
 import threading
 
-class HealthCheckServer:
-    HEALTH_CHECK_PORT = 7777
+HEALTH_CHECK_PORT = 7777
 
+class HealthCheckServer:
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind(('0.0.0.0', self.HEALTH_CHECK_PORT))
+        self.socket.bind(('0.0.0.0', HEALTH_CHECK_PORT))
         self.socket.listen(1)
 
     def start(self):
@@ -24,4 +24,4 @@ class HealthCheckServer:
     def start_in_thread(self):
         thread = threading.Thread(target=self.start)
         thread.start()
-        logging.info(f"Health check server started on port {self.HEALTH_CHECK_PORT}")
+        logging.info(f"Health check server started on port {HEALTH_CHECK_PORT}")
