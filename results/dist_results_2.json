@@ -1,21 +1,5 @@
 [
     {
-        "supported_platforms": [
-            {
-                "platform": "Windows",
-                "game_count": 9230
-            },
-            {
-                "platform": "Mac",
-                "game_count": 1773
-            },
-            {
-                "platform": "Linux",
-                "game_count": 1280
-            }
-        ]
-    },
-    {
         "top_10_indie_games_2010s": [
             {
                 "rank": 1,

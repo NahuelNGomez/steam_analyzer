@@ -18,15 +18,15 @@ class GamesCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
         logging.info(f"Iniciando GamesCounter con ID de instancia: {instance_id}")
         # Inicializar el FaultManager
-        self.fault_manager = FaultManager(storage_dir="fault_data/games_counter")
+        self.fault_manager = FaultManager(storage_dir="../persistence/")
         # Cargar el estado existente si existe
-        initial_state = self.fault_manager.get(f"platforms_counter_{instance_id}")
-        if initial_state is None:
-            logging.info("No se encontró estado previo, inicializando estado vacío.")
-            self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0})
-        else:
-            logging.info(f"Estado cargado desde FaultManager: {initial_state}")
-            self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0}, {instance_id: initial_state})
+        #initial_state = self.fault_manager.get(f"platforms_counter_{instance_id}")
+        # if initial_state is None:
+        #     logging.info("No se encontró estado previo, inicializando estado vacío.")
+        self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0})
+        # else:
+        #     logging.info(f"Estado cargado desde FaultManager: {initial_state}")
+        #     self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0}, {instance_id: initial_state})
         
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
 
@@ -55,7 +55,7 @@ class GamesCounter:
             if linux:
                 self.platform_counts[client_id]['Linux'] += 1
                 logging.info(f"Juego '{game_name}' soporta Linux. Total: {self.platform_counts[client_id]['Linux']}")
-
+            self.fault_manager.append(f"platforms_counter_{client_id}", f"{self.platform_counts[client_id]['Windows']} {self.platform_counts[client_id]['Mac']} {self.platform_counts[client_id]['Linux']}\n")
         except Exception as e:
             logging.error(f"Error al filtrar el juego '{game_name}': {e}")
     
@@ -114,9 +114,9 @@ class GamesCounter:
                 package_number = 0
 
             # Actualizar el estado en FaultManager
-            self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Windows'], package_number)
-            self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Mac'], package_number)
-            self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Linux'], package_number)
+            # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Windows'], package_number)
+            # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Mac'], package_number)
+            # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Linux'], package_number)
             logging.info(f"Estado actualizado en FaultManager para el cliente {client_id}")
         except Exception as e:
             logging.error(f"Error al procesar el mensaje de fin: {e}")

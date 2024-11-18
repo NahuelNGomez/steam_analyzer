@@ -49,7 +49,7 @@ services:
     - OUTPUT_EXCHANGES=["result_queue"]
     - LOGGING_LEVEL=INFO
     volumes:
-      - ./fault_data/games_counter:/fault_data/games_counter
+    - ./games_counter/persistence:/persistence
   indie_filter:
     container_name: indie_filter
     build:
@@ -316,14 +316,15 @@ services:
     - PERCENTILE=90
     - INSTANCE_ID=3
   client1:
+    container_name: client1
     build:
       context: .
       dockerfile: ./client/Dockerfile
     image: client:latest
     networks:
     - testing_net
-    # depends_on:
-    # - gateway
+    depends_on:
+    - gateway
     environment:
     - LOGGING_LEVEL=INFO
     - CLIENT_ID=1
@@ -331,74 +332,11 @@ services:
     - BOUNDARY_PORT=12345
     - DELAY=5
     - RETRIES=5
-    - GAME_FILE=sample_30_games.csv
-    - REVIEW_FILE=sample_30_reviews.csv
+    - GAME_FILE=sample_10_por_ciento_games.csv
+    - REVIEW_FILE=sample_10_por_ciento_review.csv
     volumes:
     - ./data:/data
     - ./results:/results
-  # client2222:
-  #   build:
-  #     context: .
-  #     dockerfile: ./client/Dockerfile
-  #   image: client:latest
-  #   networks:
-  #   - testing_net
-  #   # depends_on:
-  #   # - gateway
-  #   environment:
-  #   - LOGGING_LEVEL=INFO
-  #   - CLIENT_ID=2222
-  #   - BOUNDARY_IP=gateway
-  #   - BOUNDARY_PORT=12345
-  #   - DELAY=5
-  #   - RETRIES=5
-  #   - GAME_FILE=sample_30_games.csv
-  #   - REVIEW_FILE=sample_30_reviews.csv
-  #   volumes:
-  #   - ./data:/data
-  #   - ./results:/results
-  # client3333:
-  #   build:
-  #     context: .
-  #     dockerfile: ./client/Dockerfile
-  #   image: client:latest
-  #   networks:
-  #   - testing_net
-  #   # depends_on:
-  #   # - gateway
-  #   environment:
-  #   - LOGGING_LEVEL=INFO
-  #   - CLIENT_ID=3333
-  #   - BOUNDARY_IP=gateway
-  #   - BOUNDARY_PORT=12345
-  #   - DELAY=5
-  #   - RETRIES=5
-  #   - GAME_FILE=sample_30_games.csv
-  #   - REVIEW_FILE=sample_30_reviews.csv
-  #   volumes:
-  #   - ./data:/data
-  #   - ./results:/results
-  # client4444:
-  #   build:
-  #     context: .
-  #     dockerfile: ./client/Dockerfile
-  #   image: client:latest
-  #   networks:
-  #   - testing_net
-  #   # depends_on:
-  #   # - gateway
-  #   environment:
-  #   - LOGGING_LEVEL=INFO
-  #   - CLIENT_ID=4444
-  #   - BOUNDARY_IP=gateway
-  #   - BOUNDARY_PORT=12345
-  #   - DELAY=5
-  #   - RETRIES=5
-  #   - GAME_FILE=sample_30_games.csv
-  #   - REVIEW_FILE=sample_30_reviews.csv
-  #   volumes:
-  #   - ./data:/data
-  #   - ./results:/results
   language_filter_1:
     container_name: language_filter_1
     build:
