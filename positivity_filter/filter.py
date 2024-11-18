@@ -60,9 +60,7 @@ class PositivityFilter:
             for row in batch:
                 if not row.strip():
                     continue
-                result_review = Review.decode(json.loads(row))
-                if client_id is None:
-                    client_id = int(result_review.client_id)
+                result_review = Review.decode(json.loads(row))   #mandar los msj por csv
                 review_score = result_review.review_score
                 
                 if int(review_score) == self.positivity:

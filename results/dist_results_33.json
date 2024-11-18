@@ -1,5 +1,21 @@
 [
     {
+        "supported_platforms": [
+            {
+                "platform": "Windows",
+                "game_count": 27754
+            },
+            {
+                "platform": "Mac",
+                "game_count": 5301
+            },
+            {
+                "platform": "Linux",
+                "game_count": 3701
+            }
+        ]
+    },
+    {
         "top_10_indie_games_2010s": [
             {
                 "rank": 1,
@@ -54,13 +70,6 @@
         ]
     },
     {
-        "game_exceeding_limit": [
-            {
-                "game_name": "PAYDAY 2"
-            }
-        ]
-    },
-    {
         "top_5_indie_games_positive_reviews": [
             {
                 "rank": 1,
@@ -86,6 +95,13 @@
                 "rank": 5,
                 "name": "Goat Simulator",
                 "positive_review_count": 6382
+            }
+        ]
+    },
+    {
+        "game_exceeding_limit": [
+            {
+                "game_name": "PAYDAY 2"
             }
         ]
     },

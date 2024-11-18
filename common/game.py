@@ -32,7 +32,8 @@ class Game(Packet):
             cleaned_fields[3], cleaned_fields[4], cleaned_fields[5],
             cleaned_fields[6], cleaned_fields[7], cleaned_fields[8] 
         )
-    
+    #Revisar DECODE
+
     def checkNanElements(self):
         if self.windows == None or self.windows == "nan" or self.windows == "": 
             return True

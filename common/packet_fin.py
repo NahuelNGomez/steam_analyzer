@@ -7,6 +7,7 @@ class Fin():
     def decode(message):
         res = message.split("\n\n")
         return Fin(res[1], res[2])
-    
+    #Revisar DECODE
+
     def encode(self):
         return f"fin\n\n{self.batch_id}\n\n{self.client_id}\n\n"
