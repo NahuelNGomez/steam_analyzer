@@ -1,21 +1,19 @@
 # games_filter/filter.py
 
-import csv
-import io
 import logging
 from collections import defaultdict
 from common.game import Game
 from common.middleware import Middleware
-from common.utils import split_complex_string
 from common.packet_fin import Fin
-from common.constants import GAMES_NAME_POS, GAMES_WINDOWS_POS, GAMES_MAC_POS, GAMES_LINUX_POS
-from datetime import datetime
+from common.healthcheck import HealthCheckServer
 import json
+
 class GamesCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
         #self.platform_counts = defaultdict(int)
         self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0})
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
+        self.healtcheck_server = HealthCheckServer()
 
     def counterGames(self, game):
         try:
@@ -25,7 +23,7 @@ class GamesCounter:
             linux = game.linux
             client_id = game.client_id
             # logging.info(f"Juego '{game_name}' recibido del cliente {client_id}")
-            
+
             # Convertir a booleano de forma robusta
             windows = self._convert_to_boolean(windows)
             mac = self._convert_to_boolean(mac)
@@ -43,7 +41,7 @@ class GamesCounter:
 
         except Exception as e:
             logging.error(f"Error al filtrar el juego '{game_name}': {e}")
-    
+
     def _convert_to_boolean(self, value):
         """
         Convierte un valor a booleano, considerando posibles valores de entrada como str o bool.
@@ -69,10 +67,10 @@ class GamesCounter:
                     self.counterGames(game)
                 except Exception as e:
                     logging.error(f"Error al procesar la fila '{row}': {e}")
-                
+
         except Exception as e:
             logging.error(f"Error en _callBack al procesar el mensaje: {e}")
-    
+
     def _finCallBack(self, data):
         """
         Callback para manejar el mensaje de fin.
@@ -93,9 +91,10 @@ class GamesCounter:
             self.middleware.send(json.dumps(response, indent=4))
         except Exception as e:
             logging.error(f"Error al procesar el mensaje de fin: {e}")
-    
+
     def start(self):
         """
         Inicia el middleware.
         """
+        self.healtcheck_server.start_in_thread()
         self.middleware.start()
