@@ -1,10 +1,8 @@
 import json
 import logging
-from collections import defaultdict
 from common.game import Game
 from common.middleware import Middleware
-from common.utils import split_complex_string
-from common.constants import GAMES_GENRES_POS
+from common.healthcheck import HealthCheckServer
 
 class GenreFilter:
     def __init__(self, input_queues, output_exchanges, instance_id, genre):
@@ -79,4 +77,5 @@ class GenreFilter:
         """
         Inicia el middleware.
         """
+        HealthCheckServer().start_in_thread()
         self.middleware.start()

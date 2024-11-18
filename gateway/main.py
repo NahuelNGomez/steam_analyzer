@@ -8,6 +8,7 @@ import configparser
 import socket
 import threading
 from connectionHandler import ConnectionHandler
+from common.healthcheck import HealthCheckServer
 
 def load_config(config_file='config.ini'):
     """
@@ -38,6 +39,7 @@ def start_server(config, shutdown_event, active_connections):
     """
     Inicia el servidor que escucha por conexiones entrantes y maneja cada conexión.
     """
+    HealthCheckServer().start_in_thread()
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Permite reutilizar la dirección
     server.bind((config['gateway_IP'], int(config['gateway_PORT'])))

@@ -11,18 +11,24 @@ class Doctor:
         result = subprocess.run(["docker", "ps", "-af", "network=tp1_testing_net",  "--format", "{{.Names}}"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         self.host_list = result.stdout.decode().split('\n')
+        if len(self.host_list) > 0 and self.host_list[-1] == '':
+            self.host_list.pop()
+
         for host in self.host_list:
             for not_include_host in self.not_include_host_regexes:
                 if re.search(not_include_host, host):
                     self.host_list.remove(host)
 
     def start(self):
+        self.check_health_loop()
+
+    def check_health_loop(self):
         logging.info(f"Starting health check for {len(self.host_list)} hosts: {self.host_list}")
         while True:
+            time.sleep(10)
             for host in self.host_list:
                 logging.info(f"Checking health of {host}")
                 self.check_health(host)
-            time.sleep(10)
     
     def check_health(self, host):
         try:
