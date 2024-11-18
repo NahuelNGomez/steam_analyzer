@@ -28,19 +28,37 @@ class Doctor:
             time.sleep(10)
             for host in self.host_list:
                 logging.info(f"Checking health of {host}")
-                self.check_health(host)
+                res: int = self.check_health(host)
+                if res == 0:
+                    self.restart_container(host)
+                    logging.error(f"Worker {host} is down. Restarting it.")
+                elif res == 1:
+                    logging.info(f"Health check of {host} OK")
     
     def check_health(self, host):
+        retries=0
+        while retries < 3:
+            try:
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.settimeout(3)
+                    s.connect((host, HEALTH_CHECK_PORT))
+                    s.send(b'1')
+                    data = s.recv(1)
+                    if data != b'1':
+                        raise Exception("Invalid data received")
+                    return int(data)
+            except Exception as e:
+                logging.error(f"Error checking health of {host}: {e}. retrying")
+
+            retries+=1
+            time.sleep(1)
+
+        return 0
+    
+    def restart_container(self, container: str):
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(3)
-            s.connect((host, HEALTH_CHECK_PORT))
-            s.send(b'1')
-            data = s.recv(1)
-            if data == b'1':
-                logging.info(f"Health check of {host} OK")
-            else:
-                logging.error(f"Error checking health of {host}. Invalid response: {data}")
+            result = subprocess.run(["docker", "start", container], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            result.check_returncode()
         except Exception as e:
-            logging.error(f"Error checking health of {host}: {e}")
+            logging.error(f"Error restarting worker: {e}")
 
