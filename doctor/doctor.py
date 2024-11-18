@@ -3,19 +3,23 @@ import logging
 from common.healthcheck import HEALTH_CHECK_PORT
 import socket
 import time
+import re
 
 class Doctor:
+    not_include_host_regexes = ["rabbitmq", "doctor\d?", "client\d"]
     def __init__(self):
-        pass
+        result = subprocess.run(["docker", "ps", "-af", "network=tp1_testing_net",  "--format", "{{.Names}}"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        self.host_list = result.stdout.decode().split('\n')
+        for host in self.host_list:
+            for not_include_host in self.not_include_host_regexes:
+                if re.search(not_include_host, host):
+                    self.host_list.remove(host)
 
     def start(self):
-        # result = subprocess.run(['bash', '-c', ''], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # logging.info('Command executed. Result={}. Output={}. Error={}'.format(result.returncode, result.stdout, result.stderr))
-        # Start health check server
-
-        host_list = ["games_counter"]
+        logging.info(f"Starting health check for {len(self.host_list)} hosts: {self.host_list}")
         while True:
-            for host in host_list:
+            for host in self.host_list:
                 logging.info(f"Checking health of {host}")
                 self.check_health(host)
             time.sleep(10)
