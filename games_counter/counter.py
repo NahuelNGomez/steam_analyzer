@@ -29,7 +29,7 @@ class GamesCounter:
         #     self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0}, {instance_id: initial_state})
         
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
-
+        self.init_state()
     def counterGames(self, game):
         try:
             game_name = game.name
@@ -55,7 +55,7 @@ class GamesCounter:
             if linux:
                 self.platform_counts[client_id]['Linux'] += 1
                 logging.info(f"Juego '{game_name}' soporta Linux. Total: {self.platform_counts[client_id]['Linux']}")
-            self.fault_manager.append(f"platforms_counter_{client_id}", f"{self.platform_counts[client_id]['Windows']} {self.platform_counts[client_id]['Mac']} {self.platform_counts[client_id]['Linux']}\n")
+            self.fault_manager.update(f"platforms_counter_{client_id}", f"{self.platform_counts[client_id]['Windows']} {self.platform_counts[client_id]['Mac']} {self.platform_counts[client_id]['Linux']}\n")
         except Exception as e:
             logging.error(f"Error al filtrar el juego '{game_name}': {e}")
     
@@ -122,3 +122,11 @@ class GamesCounter:
         """
         logging.info("Iniciando el middleware para GamesCounter")
         self.middleware.start()
+    def init_state(self):
+        for key in self.fault_manager.get_keys("platforms_counter"):
+            client_id = key.split("_")[2]
+            state = self.fault_manager.get(key)
+            if state is not None:
+                state = state.split(" ")
+                self.platform_counts[client_id] = {'Windows': int(state[0]), 'Mac': int(state[1]), 'Linux': int(state[2])}
+            

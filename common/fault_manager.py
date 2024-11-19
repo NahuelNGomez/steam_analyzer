@@ -30,12 +30,31 @@ class FaultManager:
     def _init_state(self):
         for file_name in os.listdir(self.storage_dir):
             if file_name.startswith(KEYS_INDEX_KEY_PREFIX):
-                self._load_keys_index(file_name)        
-        
+                self._keys_index = {}   
+                with open(f'{self.storage_dir}/{file_name}', 'r') as f:
+                    while True:
+                        # Leer los primeros 4 bytes (longitud)
+                        length_bytes = f.read(4)
+                        if not length_bytes:
+                            break  # Fin del archivo
+                        length = struct.unpack('>I', length_bytes)[0]
+                        
+                        # Leer los siguientes `length` bytes (datos en JSON)
+                        data = f.read(length).decode('unicode_escape')
+                        
+                        # Parsear la línea en JSON
+                        key, internal_key = json.loads(data)
+                        
+                        # Agregar al diccionario
+                        self._keys_index[key] = internal_key
+                        
+                        # Leer el separador '\n'
+                        f.read(1)  # Salta el salto de línea
+        print(self._keys_index)
     # Text incluye el package_number
     def _append(self, path: str, text: str):
         try:
-            logging.info(f"Appending to {path}")
+            logging.info(f"Appending to {path} - {str}")
             data = text.encode('unicode_escape')
             length = len(data)
             
@@ -88,20 +107,38 @@ class FaultManager:
     def delete_key(self, key:str):
         try:
             path = f'{self.storage_dir}/{self._get_internal_key(key)}'
-            os.remove(path)
-            self._keys_index.pop(key)
+            #os.remove(path)
+            #self._keys_index.pop(key)
         except Exception as e:
             logging.error(f"Error deleting key: {key}: {e}")
         
 
 
+    def get_keys(self, prefix: str) -> List[str]:
+        keys = [key for key in self._keys_index.keys() if key.startswith(prefix)]
+        logging.info(f"Keys found with prefix '{prefix}': {keys}")
+        return keys
 
+    def get(self, key: str) -> Optional[str]:
+        try:
+            path = f'{self.storage_dir}/{self._get_internal_key(key)}'
+            with open(path, 'rb') as f:
+                length_bytes = f.read(LENGTH_BYTES)
+                if not length_bytes:
+                    return None
+                length = int.from_bytes(length_bytes, byteorder='big')
+                data = f.read(length).decode('unicode_escape')
+                return data
+        except Exception as e:  
+            logging.error(f"Error getting key: {key}: {e}")
+            return None
 
-
-
-
-
-
+    def update(self, key: str, value: str):
+        try:
+            path = f'{self.storage_dir}/{self._get_internal_key(key)}'
+            self._write(path, value)
+        except Exception as e:
+            logging.error(f"Error updating key: {key}: {e}")
 
 
     # def _load_translator(self):
