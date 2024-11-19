@@ -124,12 +124,17 @@ class GamesCounter:
         self.middleware.start()
     def init_state(self):
         for key in self.fault_manager.get_keys("platforms_counter"):
-            client_id = key.split("_")[2]
+            client_id = int(key.split("_")[2])
             state = self.fault_manager.get(key)
             print("Estado: ", state, flush=True)
             print("Client_id: ", client_id, flush=True)
             if state is not None:
                 state = state.split(" ")
-                print("State: ", state)
-                self.platform_counts[client_id] = {'Windows': int(state[0]), 'Mac': int(state[1]), 'Linux': int(state[2])}
-            
+                
+                state_cleaned = [item.strip() for item in state]
+                print("state_cleaned: ", state_cleaned, flush=True)
+                self.platform_counts[client_id]['Windows'] = int(state_cleaned[0])
+                self.platform_counts[client_id]['Mac'] = int(state_cleaned[1])
+                self.platform_counts[client_id]['Linux'] = int(state_cleaned[2])
+                #self.platform_counts[client_id] = {'Windows': int(state[0]), 'Mac': int(state[1]), 'Linux': int(state[2])}
+                print(dict(self.platform_counts), flush=True)
