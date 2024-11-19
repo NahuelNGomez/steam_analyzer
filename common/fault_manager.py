@@ -107,11 +107,18 @@ class FaultManager:
     def delete_key(self, key:str):
         try:
             path = f'{self.storage_dir}/{self._get_internal_key(key)}'
-            #os.remove(path)
-            #self._keys_index.pop(key)
+            os.remove(path)
+            self._keys_index.pop(key)
+            
+            updated_keys = [json.dumps([k, v]) for k, v in self._keys_index.items()]
+            if len(updated_keys) == 0:
+                os.remove(f'{self.storage_dir}/{KEYS_INDEX_KEY_PREFIX}')
+            else:
+                self._write(f'{self.storage_dir}/{KEYS_INDEX_KEY_PREFIX}', '\n'.join(updated_keys))
+                
+                
         except Exception as e:
             logging.error(f"Error deleting key: {key}: {e}")
-        
 
 
     def get_keys(self, prefix: str) -> List[str]:

@@ -27,9 +27,10 @@ class GamesCounter:
         # else:
         #     logging.info(f"Estado cargado desde FaultManager: {initial_state}")
         #     self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0}, {instance_id: initial_state})
-        
-        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
         self.init_state()
+        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
+    
+    
     def counterGames(self, game):
         try:
             game_name = game.name
@@ -122,6 +123,8 @@ class GamesCounter:
         """
         logging.info("Iniciando el middleware para GamesCounter")
         self.middleware.start()
+    
+    
     def init_state(self):
         for key in self.fault_manager.get_keys("platforms_counter"):
             client_id = int(key.split("_")[2])
