@@ -126,7 +126,10 @@ class GamesCounter:
         for key in self.fault_manager.get_keys("platforms_counter"):
             client_id = key.split("_")[2]
             state = self.fault_manager.get(key)
+            print("Estado: ", state, flush=True)
+            print("Client_id: ", client_id, flush=True)
             if state is not None:
                 state = state.split(" ")
+                print("State: ", state)
                 self.platform_counts[client_id] = {'Windows': int(state[0]), 'Mac': int(state[1]), 'Linux': int(state[2])}
             

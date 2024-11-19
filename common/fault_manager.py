@@ -24,14 +24,14 @@ class FaultManager:
         self._keys_index: dict[str, dict[str, str]] = {}
         
         
-        #self._init_state()
+        self._init_state()
         
 
     def _init_state(self):
         for file_name in os.listdir(self.storage_dir):
             if file_name.startswith(KEYS_INDEX_KEY_PREFIX):
                 self._keys_index = {}   
-                with open(f'{self.storage_dir}/{file_name}', 'r') as f:
+                with open(f'{self.storage_dir}/{file_name}', 'rb') as f:
                     while True:
                         # Leer los primeros 4 bytes (longitud)
                         length_bytes = f.read(4)
@@ -122,6 +122,7 @@ class FaultManager:
     def get(self, key: str) -> Optional[str]:
         try:
             path = f'{self.storage_dir}/{self._get_internal_key(key)}'
+            print("leo el path->", path, flush=True)
             with open(path, 'rb') as f:
                 length_bytes = f.read(LENGTH_BYTES)
                 if not length_bytes:
