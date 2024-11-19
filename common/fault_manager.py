@@ -11,7 +11,7 @@ import logging
 
 LENGTH_BYTES = 4
 AUX_FILE = '_aux'
-KEYS_INDEX_KEY_PREFIX = 'keys_index_'
+KEYS_INDEX_KEY_PREFIX = 'keys_index'
 
 logging.basicConfig(level=logging.INFO)
 
@@ -26,7 +26,11 @@ class FaultManager:
         
         #self._init_state()
         
-        
+
+    def _init_state(self):
+        for file_name in os.listdir(self.storage_dir):
+            if file_name.startswith(KEYS_INDEX_KEY_PREFIX):
+                self._load_keys_index(file_name)        
         
     # Text incluye el package_number
     def _append(self, path: str, text: str):
@@ -35,7 +39,7 @@ class FaultManager:
             data = text.encode('unicode_escape')
             length = len(data)
             
-            # Empaqueta la longitud en los primeros 4 bytes como un entero sin signo (big-endian)
+            # (big-endian)
             length_bytes = struct.pack('>I', length)
             data += b'\n'
             with open(path, 'ab') as f:
@@ -61,7 +65,7 @@ class FaultManager:
             data += b'\n'
             length_bytes = len(data).to_bytes(
                 LENGTH_BYTES, byteorder='big')
-            temp_path = f'{self.storage_path}/{AUX_FILE}'
+            temp_path = f'{self.storage_dir}/{AUX_FILE}'
             with open(temp_path, 'wb') as f:
                 f.write(length_bytes + data)
                 f.flush()
@@ -73,17 +77,22 @@ class FaultManager:
     def _get_internal_key(self, key: str) -> str:
         internal_key = self._keys_index.get(key)
         if internal_key is None:
-            logging.debug(f"Generating internal key for key: {key}")
+            logging.info(f"Generating internal key for key: {key}")
             internal_key = str(uuid.uuid4())
             self._keys_index[key] = internal_key
-            self._append(f'{self.storage_path}/{KEYS_INDEX_KEY_PREFIX}',
+            self._append(f'{self.storage_dir}/{KEYS_INDEX_KEY_PREFIX}',
                          json.dumps([key, internal_key]))
         return internal_key
 
 
-
-
-
+    def delete_key(self, key:str):
+        try:
+            path = f'{self.storage_dir}/{self._get_internal_key(key)}'
+            os.remove(path)
+            self._keys_index.pop(key)
+        except Exception as e:
+            logging.error(f"Error deleting key: {key}: {e}")
+        
 
 
 

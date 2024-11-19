@@ -98,7 +98,7 @@ class GamesCounter:
             logging.info(f"Fin de transmisión recibido del cliente {client_id}")
             response = {
                 "supported_platforms": {
-                    f"client_id_{client_id}": [
+                    "client_id " + str(client_id): [
                         {"platform": "Windows", "game_count": self.platform_counts[client_id]['Windows']},
                         {"platform": "Mac", "game_count": self.platform_counts[client_id]['Mac']},
                         {"platform": "Linux", "game_count": self.platform_counts[client_id]['Linux']}
@@ -107,12 +107,7 @@ class GamesCounter:
             }
             logging.info(f"Enviando respuesta al cliente {client_id}: {response}")
             self.middleware.send(json.dumps(response, indent=4))
-            # Obtener el número de paquete (debe ser parte del estado o del mensaje)
-            package_number = getattr(fin, 'package_number', None)  # Asumiendo que Fin contiene package_number
-            if package_number is None:
-                logging.warning(f"No se encontró package_number en el mensaje Fin para cliente {client_id}")
-                package_number = 0
-
+            self.fault_manager.delete_key(f"platforms_counter_{client_id}")
             # Actualizar el estado en FaultManager
             # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Windows'], package_number)
             # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Mac'], package_number)

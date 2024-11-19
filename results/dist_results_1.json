@@ -54,6 +54,22 @@
         ]
     },
     {
+        "supported_platforms": [
+            {
+                "platform": "Windows",
+                "game_count": 9230
+            },
+            {
+                "platform": "Mac",
+                "game_count": 1773
+            },
+            {
+                "platform": "Linux",
+                "game_count": 1280
+            }
+        ]
+    },
+    {
         "top_5_indie_games_positive_reviews": [
             {
                 "rank": 1,
