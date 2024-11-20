@@ -1,5 +1,5 @@
-# games_filter/filter.py
-
+import csv
+import io
 import logging
 from collections import defaultdict
 from common.game import Game
@@ -7,12 +7,29 @@ from common.middleware import Middleware
 from common.packet_fin import Fin
 from common.healthcheck import HealthCheckServer
 import json
+from common.fault_manager import FaultManager  # Importar FaultManager
+
+# Configuración de logging
+logging.basicConfig(level=logging.INFO)
 
 class GamesCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
-        #self.platform_counts = defaultdict(int)
+        logging.info(f"Iniciando GamesCounter con ID de instancia: {instance_id}")
+        # Inicializar el FaultManager
+        self.fault_manager = FaultManager(storage_dir="../persistence/")
+        # Cargar el estado existente si existe
+        #initial_state = self.fault_manager.get(f"platforms_counter_{instance_id}")
+        # if initial_state is None:
+        #     logging.info("No se encontró estado previo, inicializando estado vacío.")
         self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0})
+        # else:
+        #     logging.info(f"Estado cargado desde FaultManager: {initial_state}")
+        #     self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0}, {instance_id: initial_state})
+        self.init_state()
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
+        self.last_client_id = None
+        self.processed_batches = []
+    
         self.healtcheck_server = HealthCheckServer()
 
     def counterGames(self, game):
@@ -32,13 +49,15 @@ class GamesCounter:
             # Verificar si los valores ya eran booleanos
             if windows:
                 self.platform_counts[client_id]['Windows'] += 1
+                logging.info(f"Juego '{game_name}' soporta Windows. Total: {self.platform_counts[client_id]['Windows']}")
             if mac:
                 self.platform_counts[client_id]['Mac'] += 1
-                #logging.info(f"Juego '{game_name}' soporta Mac.")
+                logging.info(f"Juego '{game_name}' soporta Mac. Total: {self.platform_counts[client_id]['Mac']}")
             if linux:
                 self.platform_counts[client_id]['Linux'] += 1
-                #logging.info(f"Juego '{game_name}' soporta Linux.")
-
+                logging.info(f"Juego '{game_name}' soporta Linux. Total: {self.platform_counts[client_id]['Linux']}")
+            self.last_client_id = client_id
+            
         except Exception as e:
             logging.error(f"Error al filtrar el juego '{game_name}': {e}")
 
@@ -59,6 +78,7 @@ class GamesCounter:
         :param data: Datos recibidos.
         """
         try:
+            logging.info(f"Mensaje recibido para procesamiento: {data}")
             batch = data.split('\n')
             for row in batch:
                 try:
@@ -67,6 +87,7 @@ class GamesCounter:
                     self.counterGames(game)
                 except Exception as e:
                     logging.error(f"Error al procesar la fila '{row}': {e}")
+            self.fault_manager.update(f"platforms_counter_{self.last_client_id}", f"{self.platform_counts[self.last_client_id]['Windows']} {self.platform_counts[self.last_client_id]['Mac']} {self.platform_counts[self.last_client_id]['Linux']}\n")
 
         except Exception as e:
             logging.error(f"Error en _callBack al procesar el mensaje: {e}")
@@ -78,7 +99,7 @@ class GamesCounter:
         try:
             fin = Fin.decode(data)
             client_id = int(fin.client_id)
-            logging.info(f"Fin de la transmisión de juegos del cliente {client_id}")
+            logging.info(f"Fin de transmisión recibido del cliente {client_id}")
             response = {
                 "supported_platforms": {
                     "client_id " + str(client_id): [
@@ -88,7 +109,14 @@ class GamesCounter:
                     ]
                 }
             }
+            logging.info(f"Enviando respuesta al cliente {client_id}: {response}")
             self.middleware.send(json.dumps(response, indent=4))
+            self.fault_manager.delete_key(f"platforms_counter_{client_id}")
+            # Actualizar el estado en FaultManager
+            # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Windows'], package_number)
+            # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Mac'], package_number)
+            # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Linux'], package_number)
+            logging.info(f"Estado actualizado en FaultManager para el cliente {client_id}")
         except Exception as e:
             logging.error(f"Error al procesar el mensaje de fin: {e}")
 
@@ -97,4 +125,23 @@ class GamesCounter:
         Inicia el middleware.
         """
         self.healtcheck_server.start_in_thread()
+        logging.info("Iniciando el middleware para GamesCounter")
         self.middleware.start()
+    
+    
+    def init_state(self):
+        for key in self.fault_manager.get_keys("platforms_counter"):
+            client_id = int(key.split("_")[2])
+            state = self.fault_manager.get(key)
+            print("Estado: ", state, flush=True)
+            print("Client_id: ", client_id, flush=True)
+            if state is not None:
+                state = state.split(" ")
+                
+                state_cleaned = [item.strip() for item in state]
+                print("state_cleaned: ", state_cleaned, flush=True)
+                self.platform_counts[client_id]['Windows'] = int(state_cleaned[0])
+                self.platform_counts[client_id]['Mac'] = int(state_cleaned[1])
+                self.platform_counts[client_id]['Linux'] = int(state_cleaned[2])
+                #self.platform_counts[client_id] = {'Windows': int(state[0]), 'Mac': int(state[1]), 'Linux': int(state[2])}
+                print(dict(self.platform_counts), flush=True)

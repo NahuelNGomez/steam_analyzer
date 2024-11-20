@@ -59,6 +59,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
                     'OUTPUT_EXCHANGES=["result_queue"]',
                     "LOGGING_LEVEL=INFO",
                 ],
+                "volumes": ["./games_counter/persistence:/persistence"],
             },
             "indie_filter": {
                 "container_name": "indie_filter",

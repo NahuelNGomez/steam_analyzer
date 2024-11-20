@@ -26,7 +26,7 @@ class Middleware:
         self.amount_output_instances = amount_output_instances
         self.connection = self._connect_with_retries()
         self.channel = self.connection.channel()
-        self.channel.basic_qos(prefetch_count=100)
+        self.channel.basic_qos(prefetch_count=10)
         self.input_queues: dict[str, str] = {}
         self.output_queues = output_queues
         self.output_exchanges = output_exchanges
