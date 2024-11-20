@@ -29,6 +29,8 @@ class GamesCounter:
         #     self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0}, {instance_id: initial_state})
         self.init_state()
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
+        self.last_client_id = None
+        self.processed_batches = []
     
     
     def counterGames(self, game):
@@ -56,7 +58,8 @@ class GamesCounter:
             if linux:
                 self.platform_counts[client_id]['Linux'] += 1
                 logging.info(f"Juego '{game_name}' soporta Linux. Total: {self.platform_counts[client_id]['Linux']}")
-            self.fault_manager.update(f"platforms_counter_{client_id}", f"{self.platform_counts[client_id]['Windows']} {self.platform_counts[client_id]['Mac']} {self.platform_counts[client_id]['Linux']}\n")
+            self.last_client_id = client_id
+            
         except Exception as e:
             logging.error(f"Error al filtrar el juego '{game_name}': {e}")
     
@@ -86,6 +89,8 @@ class GamesCounter:
                     self.counterGames(game)
                 except Exception as e:
                     logging.error(f"Error al procesar la fila '{row}': {e}")
+            self.fault_manager.update(f"platforms_counter_{self.last_client_id}", f"{self.platform_counts[self.last_client_id]['Windows']} {self.platform_counts[self.last_client_id]['Mac']} {self.platform_counts[self.last_client_id]['Linux']}\n")
+
         except Exception as e:
             logging.error(f"Error en _callBack al procesar el mensaje: {e}")
     
