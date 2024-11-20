@@ -4,8 +4,7 @@ from common.game import Game
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.packet_fin import Fin
-from common.constants import GAMES_APP_ID_POS, GAMES_NAME_POS, GAMES_AVERAGE_PLAYTIME_FOREVER_POS
-from datetime import datetime
+from common.healthcheck import HealthCheckServer
 
 class Top10IndieCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
@@ -111,4 +110,5 @@ class Top10IndieCounter:
         """
         Start middleware to begin consuming messages.
         """
+        HealthCheckServer().start_in_thread()
         self.middleware.start()

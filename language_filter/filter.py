@@ -5,6 +5,7 @@ from common.game_review import GameReview
 from common.middleware import Middleware
 from common.utils import split_complex_string
 import langid
+from common.healthcheck import HealthCheckServer
 
 class LanguageFilter:
     def __init__(self, input_queues, output_exchanges, instance_id):
@@ -21,6 +22,7 @@ class LanguageFilter:
         """
         Inicia el filtro.
         """
+        HealthCheckServer().start_in_thread()
         langid.set_languages(['en'])  
         self.middleware.start()
         logging.info("LanguageFilter started")

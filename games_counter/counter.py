@@ -4,10 +4,8 @@ import logging
 from collections import defaultdict
 from common.game import Game
 from common.middleware import Middleware
-from common.utils import split_complex_string
 from common.packet_fin import Fin
-from common.constants import GAMES_NAME_POS, GAMES_WINDOWS_POS, GAMES_MAC_POS, GAMES_LINUX_POS
-from datetime import datetime
+from common.healthcheck import HealthCheckServer
 import json
 from common.fault_manager import FaultManager  # Importar FaultManager
 
@@ -32,7 +30,8 @@ class GamesCounter:
         self.last_client_id = None
         self.processed_batches = []
     
-    
+        self.healtcheck_server = HealthCheckServer()
+
     def counterGames(self, game):
         try:
             game_name = game.name
@@ -40,8 +39,7 @@ class GamesCounter:
             mac = game.mac
             linux = game.linux
             client_id = game.client_id
-            
-            logging.info(f"Procesando juego '{game_name}' del cliente {client_id}")
+            # logging.info(f"Juego '{game_name}' recibido del cliente {client_id}")
 
             # Convertir a booleano de forma robusta
             windows = self._convert_to_boolean(windows)
@@ -62,7 +60,7 @@ class GamesCounter:
             
         except Exception as e:
             logging.error(f"Error al filtrar el juego '{game_name}': {e}")
-    
+
     def _convert_to_boolean(self, value):
         """
         Convierte un valor a booleano, considerando posibles valores de entrada como str o bool.
@@ -93,7 +91,7 @@ class GamesCounter:
 
         except Exception as e:
             logging.error(f"Error en _callBack al procesar el mensaje: {e}")
-    
+
     def _finCallBack(self, data):
         """
         Callback para manejar el mensaje de fin.
@@ -121,11 +119,12 @@ class GamesCounter:
             logging.info(f"Estado actualizado en FaultManager para el cliente {client_id}")
         except Exception as e:
             logging.error(f"Error al procesar el mensaje de fin: {e}")
-    
+
     def start(self):
         """
         Inicia el middleware.
         """
+        self.healtcheck_server.start_in_thread()
         logging.info("Iniciando el middleware para GamesCounter")
         self.middleware.start()
     

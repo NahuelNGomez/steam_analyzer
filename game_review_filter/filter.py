@@ -7,7 +7,8 @@ from common.game_review import GameReview
 from common.middleware import Middleware
 from common.packet_fin import Fin
 from common.review import Review
-from common.utils import split_complex_string
+from common.middleware import Middleware
+from common.healthcheck import HealthCheckServer
 
 
 class GameReviewFilter:
@@ -53,6 +54,8 @@ class GameReviewFilter:
 
         self.games_receiver = threading.Thread(target=self._games_receiver)
         self.reviews_receiver = threading.Thread(target=self._reviews_receiver)
+
+        self.healtcheck_server = HealthCheckServer()
 
     def _games_receiver(self):
         self.books_middleware = Middleware(
@@ -310,6 +313,7 @@ class GameReviewFilter:
         Inicia el proceso de join.
         """
         logging.info("Iniciando GameReviewFilter...")
+        self.healtcheck_server.start_in_thread()
         self.games_receiver.start()
         self.reviews_receiver.start()
         logging.info("GameReviewFilter finalizado.")

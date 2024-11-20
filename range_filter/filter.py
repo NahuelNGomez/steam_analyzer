@@ -3,8 +3,7 @@ import logging
 from datetime import datetime
 from common.game import Game
 from common.middleware import Middleware
-from common.utils import split_complex_string
-from common.constants import GAMES_RELEASE_DATE_POS
+from common.healthcheck import HealthCheckServer
 
 class RangeFilter:
     def __init__(self, start_year, end_year, input_queues, output_exchanges, instance_id):
@@ -71,5 +70,6 @@ class RangeFilter:
         
 
     def start(self):
+        HealthCheckServer().start_in_thread()
         self.middleware.start()
         

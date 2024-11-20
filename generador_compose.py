@@ -6,6 +6,16 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
     base_config = {
         "name": "tp1",
         "services": {
+            "doctor": {
+                "container_name": "doctor",
+                "build": {"context": ".", "dockerfile": "./doctor/Dockerfile"},
+                "image": "doctor:latest",
+                "networks": ["testing_net"],
+                "environment": [
+                    "LOGGING_LEVEL=INFO",
+                ],
+                "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
+            },
             "gateway": {
                 "container_name": "gateway",
                 "build": {"context": ".", "dockerfile": "./gateway/Dockerfile"},
