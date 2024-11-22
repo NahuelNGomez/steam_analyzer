@@ -123,7 +123,7 @@ services:
     - INPUT_QUEUES={"indie_range_games_queue":"indie_range_games"}
     - LOGGING_LEVEL=INFO
     volumes:
-    - ./top10_indie_counter/data:/data
+    - ./top10_indie_counter/persistence:/persistence
     entrypoint: python3 main.py
   positive_review_filter:
     container_name: positive_review_filter
