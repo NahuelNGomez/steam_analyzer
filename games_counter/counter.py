@@ -29,6 +29,7 @@ class GamesCounter:
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
         self.last_client_id = None
         self.processed_batches = []
+        self.last_processed_packet = None
     
         self.healtcheck_server = HealthCheckServer()
 
@@ -82,6 +83,9 @@ class GamesCounter:
             batch = data.split('\n')
             packet_id = batch[0]
             print("Packet ID: ", packet_id, flush=True)
+            if packet_id == self.last_processed_packet:
+                logging.warning(f"Paquete {packet_id} ya fue procesado, saltando...")
+                return
             batch = batch[1:]
             for row in batch:
                 try:
@@ -90,7 +94,12 @@ class GamesCounter:
                     self.counterGames(game)
                 except Exception as e:
                     logging.error(f"Error al procesar la fila '{row}': {e}")
-            self.fault_manager.update(f"platforms_counter_{self.last_client_id}", f"{self.platform_counts[self.last_client_id]['Windows']} {self.platform_counts[self.last_client_id]['Mac']} {self.platform_counts[self.last_client_id]['Linux']}\n")
+            self.fault_manager.update(f"platforms_counter_{self.last_client_id}", 
+            f"{self.platform_counts[self.last_client_id]['Windows']} "
+            f"{self.platform_counts[self.last_client_id]['Mac']} "
+            f"{self.platform_counts[self.last_client_id]['Linux']} "
+            f"{packet_id}\n"
+        )
 
         except Exception as e:
             logging.error(f"Error en _callBack al procesar el mensaje: {e}")
@@ -140,11 +149,16 @@ class GamesCounter:
             print("Client_id: ", client_id, flush=True)
             if state is not None:
                 state = state.split(" ")
-                
                 state_cleaned = [item.strip() for item in state]
                 print("state_cleaned: ", state_cleaned, flush=True)
-                self.platform_counts[client_id]['Windows'] = int(state_cleaned[0])
-                self.platform_counts[client_id]['Mac'] = int(state_cleaned[1])
-                self.platform_counts[client_id]['Linux'] = int(state_cleaned[2])
-                #self.platform_counts[client_id] = {'Windows': int(state[0]), 'Mac': int(state[1]), 'Linux': int(state[2])}
+
+                # Asegurarte de que el array tiene los elementos esperados
+                if len(state_cleaned) >= 4:
+                    self.platform_counts[client_id]['Windows'] = int(state_cleaned[0])
+                    self.platform_counts[client_id]['Mac'] = int(state_cleaned[1])
+                    self.platform_counts[client_id]['Linux'] = int(state_cleaned[2])
+                    self.last_processed_packet = int(state_cleaned[3])  # Nuevo campo para packet_id
+                else:
+                    print("Error: Estado no tiene el formato esperado.", flush=True)
+                
                 print(dict(self.platform_counts), flush=True)
