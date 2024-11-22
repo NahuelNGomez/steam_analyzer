@@ -75,6 +75,7 @@ class ConnectionHandler:
         self.batch_id_reviews = -1
         self.batch_id_review_positive = [0, 0, 0, 0]
         self.json_data = {}
+        self.packet_id = 0
             
         self.gamesHeader = []
         self.shutdown_event = threading.Event()
@@ -217,7 +218,7 @@ class ConnectionHandler:
                             self.completed_games[parts[1]] = True
                     if data_type == "games":
                         games_list = parts[2].strip().split("\n")
-                        finalList = ''
+                        finalList = str(self.packet_id) + "\n"
                         for row in games_list:
                             try:
                                 game = Game.from_csv_row(row, int(parts[1]))
@@ -234,6 +235,7 @@ class ConnectionHandler:
                             logging.info("No hay datos para enviar después del filtrado.")
                         self.games_from_client_queue.put(finalList)
                         self.protocol.send_message("OK\n\n")
+                        self.packet_id += 1
                 except Exception as e:
                     logging.error(f"Error al procesar el CSV: {e}")
                     self.protocol.send_message("Error processing data")

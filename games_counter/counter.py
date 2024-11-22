@@ -80,6 +80,9 @@ class GamesCounter:
         try:
             logging.info(f"Mensaje recibido para procesamiento: {data}")
             batch = data.split('\n')
+            packet_id = batch[0]
+            print("Packet ID: ", packet_id, flush=True)
+            batch = batch[1:]
             for row in batch:
                 try:
                     json_row = json.loads(row)

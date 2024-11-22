@@ -13,7 +13,10 @@ class RangeFilter:
         self.end_year = end_year
         
     def _callBack(self, data):
-        json_row = json.loads(data)
+        aux = data.strip().split("\n")
+        client_id = aux[0]
+        print(f"Recibido paquete con ID: {client_id}", flush=True)
+        json_row = json.loads(aux[1])
         game = Game.decode(json_row)
         logging.debug(f"Mensaje decodificado: {game}")
 

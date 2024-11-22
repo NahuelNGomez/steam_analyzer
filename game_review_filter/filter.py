@@ -86,7 +86,9 @@ class GameReviewFilter:
         Agrega un juego al diccionario de juegos, organizados por client_id.
         """
         try:
-            game = Game.decode(json.loads(game))
+            aux = game.strip().split("\n")
+            client_id = aux[0]
+            game = Game.decode(json.loads(aux[1]))
             print(
                 "Recibiendo GAME", flush=True)
             client_id = game.client_id
