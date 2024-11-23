@@ -26,7 +26,7 @@ class Middleware:
         self.amount_output_instances = amount_output_instances
         self.connection = self._connect_with_retries()
         self.channel = self.connection.channel()
-        self.channel.basic_qos(prefetch_count=10)
+        self.channel.basic_qos(prefetch_count=1)
         self.input_queues: dict[str, str] = {}
         self.output_queues = output_queues
         self.output_exchanges = output_exchanges
@@ -113,7 +113,6 @@ class Middleware:
                 response = callback(mensaje_str)
             if not self.auto_ack:
                 self.ack(method.delivery_tag)
-
         return callback_wrapper
 
     def ack(self, delivery_tag):

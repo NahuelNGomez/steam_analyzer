@@ -16,6 +16,7 @@ class GenreFilter:
         """
         self.genre = genre
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
+        self.packet_id = 0
 
     def filter_games_by_genre(self, message):
         """
@@ -49,6 +50,9 @@ class GenreFilter:
         try:
             clean_data = data.strip()
             batch = clean_data.split('\n')
+            packet_id = batch[0]
+            logging.info(f"Recibido paquete con ID: {packet_id}")
+            batch = batch[1:]
 
             for row in batch:
                 row = row.strip()
@@ -63,7 +67,9 @@ class GenreFilter:
                 filtered_game = self.filter_games_by_genre(game)
                 if filtered_game:
                     game_str = json.dumps(filtered_game.getData())
+                    game_str = f"{self.packet_id}\n{game_str}\n"
                     self.middleware.send(game_str)
+                    self.packet_id += 1
                     logging.info(f"Juego filtrado enviado: {filtered_game}")
                 else:
                     logging.info("Juego no cumple con el filtro de género.")
