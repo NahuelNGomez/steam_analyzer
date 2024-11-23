@@ -57,6 +57,7 @@ class Doctor:
     
     def restart_container(self, container: str):
         try:
+            result = subprocess.run(["docker", "stop", container], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             result = subprocess.run(["docker", "start", container], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             result.check_returncode()
         except Exception as e:

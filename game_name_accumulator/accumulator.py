@@ -5,7 +5,6 @@ from common.game_review import GameReview
 from common.middleware import Middleware
 from common.packet_fin import Fin
 from common.middleware import Middleware
-from common.healthcheck import HealthCheckServer
 
 class GameNamesAccumulator:
     def __init__(self, input_queues, output_exchanges, instance_id, reviews_low_limit, previous_language_nodes):
@@ -31,14 +30,12 @@ class GameNamesAccumulator:
         )
         self.datasent_by_client = defaultdict(bool)
         self.total_fin = int(previous_language_nodes)
-        self.healtcheck_server = HealthCheckServer()
         self.received_fin:dict = {}
 
     def start(self):
         """
         Inicia el acumulador.
         """
-        self.healtcheck_server.start_in_thread()
         self.middleware.start()
         logging.info("GameNamesAccumulator started")
     
