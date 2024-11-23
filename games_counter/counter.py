@@ -1,11 +1,8 @@
-import csv
-import io
 import logging
 from collections import defaultdict
 from common.game import Game
 from common.middleware import Middleware
 from common.packet_fin import Fin
-from common.healthcheck import HealthCheckServer
 import json
 from common.fault_manager import FaultManager  # Importar FaultManager
 
@@ -29,8 +26,6 @@ class GamesCounter:
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
         self.last_client_id = None
         self.processed_batches = []
-    
-        self.healtcheck_server = HealthCheckServer()
 
     def counterGames(self, game):
         try:
@@ -124,7 +119,6 @@ class GamesCounter:
         """
         Inicia el middleware.
         """
-        self.healtcheck_server.start_in_thread()
         logging.info("Iniciando el middleware para GamesCounter")
         self.middleware.start()
     

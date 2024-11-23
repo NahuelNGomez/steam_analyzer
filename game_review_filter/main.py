@@ -1,9 +1,9 @@
 import json
 import logging
 import os
-import time
 from filter import GameReviewFilter
-import configparser
+from common.healthcheck import HealthCheckServer
+import threading
 
 def main():
     logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),
@@ -15,7 +15,10 @@ def main():
     amount_of_language_filters = int(os.getenv("AMOUNT_OF_LANGUAGE_FILTERS", "0"))
     instance_id = '1'
     gameReviewFilter = GameReviewFilter(input_game_queue,input_review_queue, output_exchanges, [], instance_id,previous_review_nodes, amount_of_language_filters)
+
     gameReviewFilter.start()
+    threads_to_check = [gameReviewFilter.games_receiver, gameReviewFilter.reviews_receiver]
+    HealthCheckServer(threads_to_check).start()
 
 if __name__ == '__main__':
     main()

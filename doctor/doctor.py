@@ -25,7 +25,7 @@ class Doctor:
     def check_health_loop(self):
         logging.info(f"Starting health check for {len(self.host_list)} hosts: {self.host_list}")
         while True:
-            time.sleep(10)
+            time.sleep(15)
             for host in self.host_list:
                 logging.info(f"Checking health of {host}")
                 res: int = self.check_health(host)

@@ -3,7 +3,6 @@ import logging
 from collections import defaultdict
 from common.game_review import GameReview
 from common.middleware import Middleware
-from common.healthcheck import HealthCheckServer
 
 class GameNamesAccumulator:
     def __init__(self, input_queues, output_exchanges, instance_id, reviews_low_limit):
@@ -28,7 +27,6 @@ class GameNamesAccumulator:
         """
         Inicia el acumulador.
         """
-        HealthCheckServer().start_in_thread()
         self.middleware.start()
         logging.info("GameNamesAccumulator started")
     
