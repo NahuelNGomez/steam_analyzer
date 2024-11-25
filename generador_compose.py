@@ -1,6 +1,7 @@
 import configparser
 import yaml
 
+
 def generate_yaml(num_clients, client_files, language_num_nodes):
     # Base configuration
     base_config = {
@@ -38,7 +39,8 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
                     "action_name_accumulator",
                     "percentile_accumulator",
                     # Agregar dinámicamente los language_filter_i
-                ] + [f"language_filter_{i}" for i in range(1, language_num_nodes + 1)],
+                ]
+                + [f"language_filter_{i}" for i in range(1, language_num_nodes + 1)],
                 "environment": [
                     "LOGGING_LEVEL=INFO",
                     "OUTPUT_QUEUE=reviews_queue",
@@ -306,7 +308,6 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
                     "LOGGING_LEVEL=INFO",
                 ],
             },
-
             "action_name_accumulator": {
                 "container_name": "action_name_accumulator",
                 "build": {
@@ -338,6 +339,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
                     "PERCENTILE=90",
                     "INSTANCE_ID=3",
                 ],
+                "volumes": ["./percentile_accumulator/persistence:/persistence"],
             },
         },
         "networks": {
@@ -353,8 +355,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
         client_name = f"client{i}"
         game_file = client_files[client_name]["game_file"]
         review_file = client_files[client_name]["review_file"]
-        
-        
+
         base_config["services"][client_name] = {
             "container_name": f"client{i}",
             "build": {"context": ".", "dockerfile": "./client/Dockerfile"},
@@ -373,7 +374,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
             ],
             "volumes": ["./data:/data", "./results:/results"],
         }
-        
+
     for i in range(1, language_num_nodes + 1):
         base_config["services"][f"language_filter_{i}"] = {
             "container_name": f"language_filter_{i}",
@@ -387,7 +388,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
                 'OUTPUT_EXCHANGES=["english_reviews"]',
                 f'INPUT_QUEUES={{"games_reviews_action_queue_{i}":"games_reviews_action"}}',
                 "LOGGING_LEVEL=INFO",
-                'INSTANCE_ID=0'
+                "INSTANCE_ID=0",
             ],
         }
     return base_config
@@ -396,6 +397,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
 def save_yaml(config, filename="docker-compose-system.yaml"):
     with open(filename, "w") as file:
         yaml.dump(config, file, default_flow_style=False, sort_keys=False)
+
 
 def load_node_files(config_file="config.ini"):
     config = configparser.ConfigParser()
@@ -410,14 +412,14 @@ def load_node_files(config_file="config.ini"):
         client_name = f"client{i}"
         client_files[client_name] = {
             "game_file": config[client_name]["game_file"],
-            "review_file": config[client_name]["review_file"]
+            "review_file": config[client_name]["review_file"],
         }
-    
+
     return num_clients, client_files, language_num_nodes
 
 
 # Ejemplo de uso
-if __name__== "__main__":
+if __name__ == "__main__":
     num_clients, client_files, language_num_nodes = load_node_files()
     config = generate_yaml(num_clients, client_files, language_num_nodes)
     save_yaml(config)

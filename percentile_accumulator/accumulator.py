@@ -5,6 +5,7 @@ from common.game_review import GameReview
 from common.middleware import Middleware
 from common.packet_fin import Fin
 from common.healthcheck import HealthCheckServer
+from common.fault_manager import FaultManager
 
 class PercentileAccumulator:
     def __init__(self, input_queues, output_exchanges, instance_id, percentile=90):
@@ -20,7 +21,8 @@ class PercentileAccumulator:
         self.percentile = percentile
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
                                      self._callBack, self._finCallBack, 1, "fanout", "direct")
-        self.counter = 0
+        self.fault_manager = FaultManager('../persistence/')
+        self.init_state()
 
     def start(self):
         """
@@ -35,7 +37,6 @@ class PercentileAccumulator:
         Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas para cada cliente.
         """
         try:
-            self.counter += 1
             game_id = game.game_id
             client_id = int(game.client_id)
 
@@ -48,6 +49,7 @@ class PercentileAccumulator:
                     'name': game.game_name,
                     'count': 1
                 }
+            self.fault_manager.append(f"percentile_{client_id}", game_id)
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
     
@@ -91,6 +93,7 @@ class PercentileAccumulator:
             }
             self.middleware.send(json.dumps(response))
             self.games_by_client[client_id].clear()
+            
 
         except Exception as e:
             logging.error(f"Error al calcular el percentil 90 para cliente {client_id}: {e}")
@@ -105,6 +108,7 @@ class PercentileAccumulator:
         fin_msg = Fin.decode(data)
         client_id = int(fin_msg.client_id)
         self.calculate_90th_percentile(client_id)
+        self.fault_manager.delete_key(f"percentile_{client_id}")
     
     def _callBack(self, data):
         """
@@ -116,9 +120,16 @@ class PercentileAccumulator:
             game_review  = GameReview.decode(json.loads(data))
             logging.debug(f"Mensaje decodificado: {game_review}")
             self.process_game(game_review)
+            
         except Exception as e:
             logging.error(f"Error en PercentileAccumulator callback: {e}")
 
 
-
+    def init_state(self):
+        
+        for key in self.fault_manager.get_keys("percentile"):
+            client_id = int(key.split("_")[1])
+            state = self.fault_manager.get(key)
+            print("Estado: ", state, flush=True)
+            print("Client_id: ", client_id, flush=True)
 
