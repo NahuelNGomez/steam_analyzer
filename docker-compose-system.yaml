@@ -327,6 +327,8 @@ services:
     - LOGGING_LEVEL=INFO
     - PERCENTILE=90
     - INSTANCE_ID=3
+    volumes:
+    - ./percentile_accumulator/persistence:/persistence
   client1:
     container_name: client1
     build:
