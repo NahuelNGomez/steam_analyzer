@@ -58,9 +58,9 @@ class FaultManager:
             data = text.encode('unicode_escape')
             
             # (big-endian)
+            data += b'\n'
             length_bytes = len(data).to_bytes(
                 LENGTH_BYTES, byteorder='big')
-            data += b'\n'
             with open(path, 'ab') as f:
                 f.write(length_bytes + data)
                 f.flush()
@@ -134,8 +134,8 @@ class FaultManager:
                 while (length_bytes := f.read(LENGTH_BYTES)):
                     length = int.from_bytes(length_bytes, byteorder='big')
                     
-                    content = f.readline()
-                    
+                    content = f.read(length)
+                                        
                     if len(content) == length:
                         data += content.decode('unicode_escape')
                     else:
@@ -152,7 +152,6 @@ class FaultManager:
             self._write(path, value)
         except Exception as e:
             logging.error(f"Error updating key: {key}: {e}")
-
 
     # def _load_translator(self):
     #     with TRANSLATOR_LOCK:

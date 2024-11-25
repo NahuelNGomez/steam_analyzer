@@ -49,10 +49,15 @@ class PercentileAccumulator:
                     'name': game.game_name,
                     'count': 1
                 }
-            self.fault_manager.append(f"percentile_{client_id}", game_id)
+            # Guardar el estado en formato JSON
+            game_data = {
+                'game_id': game_id,
+                'game_name': game.game_name
+            }
+            self.fault_manager.append(f"percentile_{client_id}", json.dumps(game_data))
         except Exception as e:
-            logging.error(f"Error in process_game: {e}")
-    
+            logging.error(f"Error in process_game: {e}")
+            
     def calculate_90th_percentile(self, client_id):
         """
         Calcula los juegos dentro del percentil 90 de reseñas negativas para un cliente específico.
@@ -94,9 +99,10 @@ class PercentileAccumulator:
             self.middleware.send(json.dumps(response))
             self.games_by_client[client_id].clear()
             
-
         except Exception as e:
             logging.error(f"Error al calcular el percentil 90 para cliente {client_id}: {e}")
+            
+            
     def _finCallBack(self, data):
         """
         Callback para manejar el mensaje de fin.
@@ -127,7 +133,7 @@ class PercentileAccumulator:
 
     def init_state(self):
         """
-        Inicializa el estado de `games_by_client` desde los datos persistidos en `fault_manager`.
+        Inicializa el estado de games_by_client desde los datos persistidos en fault_manager.
         """
         for key in self.fault_manager.get_keys("percentile"):
             client_id = int(key.split("_")[1])
@@ -135,16 +141,23 @@ class PercentileAccumulator:
 
             logging.info(f"Inicializando estado para client_id {client_id}")
             if state:
-                game_ids = state.strip().split("\n")
+                game_entries = state.strip().split("\n")
                 
-                if client_id not in self.games_by_client:
-                    self.games_by_client[client_id] = defaultdict(lambda: {'name': '', 'count': 0})
+                # if client_id not in self.games_by_client:
+                #     self.games_by_client[client_id] = defaultdict(lambda: {'name': '', 'count': 0})
                 
-                for game_id in game_ids:
-                    if game_id in self.games_by_client[client_id]:
-                        self.games_by_client[client_id][game_id]['count'] += 1
-                    else:
-                        self.games_by_client[client_id][game_id] = {'name': '', 'count': 1}
+                for entry in game_entries:
+                    try:
+                        game_data = json.loads(entry)
+                        game_id = game_data['game_id']
+                        game_name = game_data['game_name']
+                        
+                        if game_id in self.games_by_client[client_id]:
+                            self.games_by_client[client_id][game_id]['count'] += 1
+                        else:
+                            self.games_by_client[client_id][game_id] = {'name': game_name, 'count': 1}
+                    except json.JSONDecodeError as e:
+                        logging.error(f"Error al decodificar entrada: {entry}. Detalles: {e}")
                 
                 logging.info(f"Estado inicializado para client_id {client_id}: {self.games_by_client[client_id]}")
 

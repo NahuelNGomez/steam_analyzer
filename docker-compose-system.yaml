@@ -346,7 +346,7 @@ services:
     - BOUNDARY_PORT=12345
     - DELAY=5
     - RETRIES=5
-    - GAME_FILE=games.csv
+    - GAME_FILE=sample_30_games.csv
     - REVIEW_FILE=sample_30_reviews.csv
     volumes:
     - ./data:/data
