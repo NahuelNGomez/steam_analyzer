@@ -113,7 +113,6 @@ class Middleware:
                 response = callback(mensaje_str)
             if not self.auto_ack:
                 self.ack(method.delivery_tag)
-
         return callback_wrapper
 
     def ack(self, delivery_tag):
