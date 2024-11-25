@@ -1,7 +1,7 @@
 name: tp1
 services:
-  doctor:
-    container_name: doctor
+  doctor0:
+    container_name: doctor0
     build:
       context: .
       dockerfile: ./doctor/Dockerfile
@@ -10,6 +10,33 @@ services:
     - testing_net
     environment:
     - LOGGING_LEVEL=INFO
+    - ID=0
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  doctor1:
+    container_name: doctor1
+    build:
+      context: .
+      dockerfile: ./doctor/Dockerfile
+    image: doctor:latest
+    networks:
+    - testing_net
+    environment:
+    - LOGGING_LEVEL=INFO
+    - ID=1
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  doctor2:
+    container_name: doctor2
+    build:
+      context: .
+      dockerfile: ./doctor/Dockerfile
+    image: doctor:latest
+    networks:
+    - testing_net
+    environment:
+    - LOGGING_LEVEL=INFO
+    - ID=2
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
   gateway:
