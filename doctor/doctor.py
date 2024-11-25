@@ -62,8 +62,7 @@ class Doctor:
                 if self.leader_id is not None:
                     client_socket.send(self.leader_id.to_bytes(4, byteorder='big'))
                     continue
-
-                if leader_id_recv == self.id:
+                elif leader_id_recv == self.id:
                     self.leader_id = self.id
                     logging.info(f"Leader elected: {self.doctors[self.leader_id]}")
 
@@ -74,19 +73,18 @@ class Doctor:
 
                     self.check_health_thread = threading.Thread(target=self.check_health_loop, args=(self.host_list,))
                     self.check_health_thread.start()
-                    continue
-
-                if leader_id_recv > curr_leader_id:
+                elif leader_id_recv > curr_leader_id:
                     curr_leader_id = leader_id_recv
-
-                self.send_leader_id(curr_leader_id)
+                    self.send_leader_id(curr_leader_id)
 
             elif message_type == HEALTH:
                 logging.info(f"HEALTH message received")
-                if self.leader_id == self.id:
-                    # if self.check_health_thread:
-                    #     is_alive = self.check_health_thread.is_alive()
-                    client_socket.send(self.leader_id.to_bytes(4, byteorder='big'))
+                if self.leader_id != self.id:
+                    client_socket.send(b'1')
+                elif self.check_health_thread and self.check_health_thread.is_alive():
+                    client_socket.send(b'1')
+                else:   
+                    client_socket.send(b'0')
             else:
                 logging.error(f"Invalid message type: {message_type}")
 
@@ -176,7 +174,7 @@ class Doctor:
                     data = s.recv(1)
                     if data != b'1':
                         raise Exception("Invalid data received")
-                    return int(data)
+                    return 1
             except Exception as e:
                 logging.error(f"Error checking health of {host}: {e}. retrying")
 
