@@ -48,7 +48,12 @@ class Doctor:
             message_type = client_socket.recv(1)
 
             if message_type == DECISION:
-                self.leader_id = int.from_bytes(client_socket.recv(4), byteorder='big')
+                new_leader_id = int.from_bytes(client_socket.recv(4), byteorder='big')
+                if self.leader_id == new_leader_id:
+                    continue
+
+                self.leader_id = new_leader_id
+                self.curr_leader_id = new_leader_id
 
                 logging.info(f"DECISION. Leader elected: {self.doctors[self.leader_id]}")
                 t1 = threading.Thread(target=self.check_health_loop_leader)
@@ -57,23 +62,30 @@ class Doctor:
                 leader_id_recv = int.from_bytes(client_socket.recv(4), byteorder='big')
                 logging.info(f"VOTE. Id received: {leader_id_recv}")
 
-                if self.leader_id is not None:
-                    client_socket.send(self.leader_id.to_bytes(4, byteorder='big'))
-                    continue
-                elif leader_id_recv == self.id:
-                    self.leader_id = self.id
-                    logging.info(f"Leader elected: {self.doctors[self.leader_id]}")
+                if leader_id_recv == self.id:
+                    if self.leader_id == self.id:
+                        self.send_decision()
+                        continue
 
+                    self.leader_id = self.id
                     self.send_decision()
 
-                    # if self.prev_leader_id is not None:
-                    #     self.restart_container(self.doctors[self.prev_leader_id])
+                    logging.info(f"Leader elected: {self.doctors[self.leader_id]}")
+
+                    if self.prev_leader_id is not None:
+                        self.restart_container(self.doctors[self.prev_leader_id])
 
                     self.check_health_thread = threading.Thread(target=self.check_health_loop, args=(self.host_list,))
                     self.check_health_thread.start()
-                elif leader_id_recv > self.curr_leader_id:
+                    continue
+
+                if leader_id_recv > self.curr_leader_id:
                     self.curr_leader_id = leader_id_recv
-                    self.send_leader_id(self.curr_leader_id)
+
+                if self.leader_id is not None: 
+                    self.curr_leader_id = self.leader_id
+
+                self.send_leader_id(self.curr_leader_id)
 
             elif message_type == HEALTH:
                 logging.info(f"HEALTH message received")
@@ -184,6 +196,7 @@ class Doctor:
     
     def restart_container(self, container: str):
         try:
+            logging.info(f"Restarting worker: {container}")
             result = subprocess.run(["docker", "stop", container], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             result = subprocess.run(["docker", "start", container], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             result.check_returncode()
