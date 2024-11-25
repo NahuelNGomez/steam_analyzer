@@ -21,7 +21,7 @@ class Doctor:
         self.leader_id: int = None
         self.id: int = int(os.getenv("ID", '0'))
         self.prev_leader_id: int = None
-
+        self.curr_leader_id = self.id
         result = subprocess.run(["docker", "ps", "-af", "network=tp1_testing_net",  "--format", "{{.Names}}"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         self.host_list = result.stdout.decode().split('\n')
@@ -41,8 +41,6 @@ class Doctor:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(('0.0.0.0', LEADER_PORT))
         s.listen(1)
-
-        curr_leader_id = self.id
 
         while True:
             logging.info("Listening to leader messages")
@@ -73,18 +71,17 @@ class Doctor:
 
                     self.check_health_thread = threading.Thread(target=self.check_health_loop, args=(self.host_list,))
                     self.check_health_thread.start()
-                elif leader_id_recv > curr_leader_id:
-                    curr_leader_id = leader_id_recv
-                    self.send_leader_id(curr_leader_id)
+                elif leader_id_recv > self.curr_leader_id:
+                    self.curr_leader_id = leader_id_recv
+                    self.send_leader_id(self.curr_leader_id)
 
             elif message_type == HEALTH:
                 logging.info(f"HEALTH message received")
-                if self.leader_id != self.id:
-                    client_socket.send(b'1')
-                elif self.check_health_thread and self.check_health_thread.is_alive():
+                if self.check_health_thread and self.check_health_thread.is_alive():
                     client_socket.send(b'1')
                 else:   
                     client_socket.send(b'0')
+                    return
             else:
                 logging.error(f"Invalid message type: {message_type}")
 
@@ -99,7 +96,9 @@ class Doctor:
             res: int = self.check_health(leader_hostname, port=LEADER_PORT)
             if res == 0:
                 logging.error(f"Leader {leader_hostname} is down. Sending vote to next doctor.")
+                self.prev_leader_id = self.leader_id
                 self.leader_id = None
+                self.curr_leader_id = self.id
                 self.send_leader_id(self.id)
                 return 0
             elif res == 1:
