@@ -3,15 +3,15 @@
         "supported_platforms": [
             {
                 "platform": "Windows",
-                "game_count": 92534
+                "game_count": 11939
             },
             {
                 "platform": "Mac",
-                "game_count": 17703
+                "game_count": 1446
             },
             {
                 "platform": "Linux",
-                "game_count": 12307
+                "game_count": 1208
             }
         ]
     },
@@ -29,13 +29,13 @@
             },
             {
                 "rank": 3,
-                "name": "Undertale",
-                "positive_review_count": 14850
+                "name": "Rocket League®",
+                "positive_review_count": 15215
             },
             {
                 "rank": 4,
-                "name": "Rocket League®",
-                "positive_review_count": 11444
+                "name": "Undertale",
+                "positive_review_count": 14850
             },
             {
                 "rank": 5,

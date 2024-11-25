@@ -56,10 +56,10 @@ class FaultManager:
         try:
             logging.info(f"Appending to {path} - {str}")
             data = text.encode('unicode_escape')
-            length = len(data)
             
             # (big-endian)
-            length_bytes = struct.pack('>I', length)
+            length_bytes = len(data).to_bytes(
+                LENGTH_BYTES, byteorder='big')
             data += b'\n'
             with open(path, 'ab') as f:
                 f.write(length_bytes + data)
@@ -129,14 +129,19 @@ class FaultManager:
     def get(self, key: str) -> Optional[str]:
         try:
             path = f'{self.storage_dir}/{self._get_internal_key(key)}'
-            print("leo el path->", path, flush=True)
             with open(path, 'rb') as f:
-                length_bytes = f.read(LENGTH_BYTES)
-                if not length_bytes:
-                    return None
-                length = int.from_bytes(length_bytes, byteorder='big')
-                data = f.read(length).decode('unicode_escape')
+                data = ''
+                while (length_bytes := f.read(LENGTH_BYTES)):
+                    length = int.from_bytes(length_bytes, byteorder='big')
+                    
+                    content = f.readline()
+                    
+                    if len(content) == length:
+                        data += content.decode('unicode_escape')
+                    else:
+                        logging.error(f"Error reading key: {key}")
                 return data
+                    
         except Exception as e:  
             logging.error(f"Error getting key: {key}: {e}")
             return None

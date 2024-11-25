@@ -19,10 +19,10 @@ class PercentileAccumulator:
         """
         self.games_by_client = defaultdict(lambda: defaultdict(lambda: {'name': '', 'count': 0}))
         self.percentile = percentile
-        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
-                                     self._callBack, self._finCallBack, 1, "fanout", "direct")
         self.fault_manager = FaultManager('../persistence/')
         self.init_state()
+        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
+                                     self._callBack, self._finCallBack, 1, "fanout", "direct")
 
     def start(self):
         """
@@ -126,10 +126,25 @@ class PercentileAccumulator:
 
 
     def init_state(self):
-        
+        """
+        Inicializa el estado de `games_by_client` desde los datos persistidos en `fault_manager`.
+        """
         for key in self.fault_manager.get_keys("percentile"):
             client_id = int(key.split("_")[1])
             state = self.fault_manager.get(key)
-            print("Estado: ", state, flush=True)
-            print("Client_id: ", client_id, flush=True)
+
+            logging.info(f"Inicializando estado para client_id {client_id}")
+            if state:
+                game_ids = state.strip().split("\n")
+                
+                if client_id not in self.games_by_client:
+                    self.games_by_client[client_id] = defaultdict(lambda: {'name': '', 'count': 0})
+                
+                for game_id in game_ids:
+                    if game_id in self.games_by_client[client_id]:
+                        self.games_by_client[client_id][game_id]['count'] += 1
+                    else:
+                        self.games_by_client[client_id][game_id] = {'name': '', 'count': 1}
+                
+                logging.info(f"Estado inicializado para client_id {client_id}: {self.games_by_client[client_id]}")
 
