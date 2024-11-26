@@ -310,6 +310,7 @@ class GameReviewFilter:
                     pass
         if final_list:
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
+            self.packet_id += 1
         os.remove(name)
 
     def start(self):

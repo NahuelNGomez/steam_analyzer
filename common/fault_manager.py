@@ -54,7 +54,6 @@ class FaultManager:
     # Text incluye el package_number
     def _append(self, path: str, text: str):
         try:
-            logging.info(f"Appending to {path} - {str}")
             data = text.encode('unicode_escape')
             
             # (big-endian)
@@ -72,7 +71,6 @@ class FaultManager:
     def append(self, key: str, value: str):
         try:
             path = f'{self.storage_dir}/{self._get_internal_key(key)}'
-            logging.info(f"Appending value: {value} for key: {key}")
             self._append(path, value)
         except Exception as e:
             logging.error(f"Error appending value: {value} for key: {key}: {e}")
