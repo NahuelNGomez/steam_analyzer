@@ -47,10 +47,12 @@ class GameReviewFilter:
         self.the_plan_2 = 0
         self.amount_of_language_filters = amount_of_language_filters
         self.next_instance = 1
-        self.packet_id = 0
+        if "action" in self.games_input_queue[1].lower():
+            self.packet_id = 1
+        else:
+            self.packet_id = int(self.reviews_input_queue[0].split("_")[-1])
 
         self.games: dict = {}
-
         self.file_lock = threading.Lock()
 
         self.games_receiver = threading.Thread(target=self._games_receiver)
@@ -302,7 +304,7 @@ class GameReviewFilter:
                         batch_counter += 1
                         if (batch_counter >= batch_size):
                             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-                            self.packet_id += 1
+                            self.packet_id += 4
                             final_list = str(self.packet_id) + "\n"
                             batch_counter = 0
                             
@@ -310,7 +312,7 @@ class GameReviewFilter:
                     pass
         if final_list:
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-            self.packet_id += 1
+            self.packet_id += 4
         os.remove(name)
 
     def start(self):
