@@ -307,6 +307,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
                     'INPUT_QUEUES={"games_reviews_queue":"games_reviews_indie"}',
                     "LOGGING_LEVEL=INFO",
                 ],
+                "volumes": ["./review_counter/persistence:/persistence"],
             },
             "action_name_accumulator": {
                 "container_name": "action_name_accumulator",
