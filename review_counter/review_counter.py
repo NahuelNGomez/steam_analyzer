@@ -11,8 +11,9 @@ class Top5ReviewCounter:
         self.games_dict_by_client = {}
         self.remaining_fin : dict = {}
         self.fault_manager = FaultManager("../persistence/")
-        self.init_state()
         self.last_packet_id = None
+        self.last_games = ''
+        self.init_state()
         
         self.middleware = Middleware(
             input_queues=input_queues,
@@ -72,10 +73,11 @@ class Top5ReviewCounter:
                 }
             game_data = {
                 'game_id': game_id,
-                'game_name': name,
-                'packet_id': packet_id
+                'game_name': name
             }
-            self.fault_manager.append(f"top5_review_counter_{str(client_id)}", json.dumps(game_data))
+            self.last_games += json.dumps(game_data) + "\n"
+            
+            #self.fault_manager.append(f"top5_review_counter_{str(client_id)}", json.dumps(game_data))
             
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
@@ -87,6 +89,9 @@ class Top5ReviewCounter:
         batch = data.split("\n")
         packet_id = batch[0]
         batch = batch[1:]
+        self.last_games = str(packet_id) + "\n"
+        
+        
         logging.info(f"Received batch with packet_id {packet_id}")
         if packet_id == self.last_packet_id:
             logging.info("Ignoring duplicate packet.")
@@ -98,6 +103,9 @@ class Top5ReviewCounter:
             json_data = json.loads(row)
             game_review = GameReview.decode(json_data)
             self.process_game(game_review, packet_id)
+        self.fault_manager.append(f"top5_review_counter_{str(game_review.client_id)}", self.last_games)
+        self.last_games = ''
+        
         
     def _eof_callback(self, data):
         """
@@ -148,6 +156,10 @@ class Top5ReviewCounter:
                     
                 for entry in game_entries:
                     try:
+                        if entry.isdigit():
+                            self.last_packet_id = int(entry)
+                            continue
+
                         game_data = json.loads(entry)
                         game_id = game_data['game_id']
                         game_name = game_data['game_name']
@@ -161,7 +173,5 @@ class Top5ReviewCounter:
                             }
                     except Exception as e:
                         logging.error(f"Error in init_state: {e}")
-                
-                self.last_packet_id = json.loads(game_entries[-1])['packet_id']
                 logging.info(f"Last packet_id: {self.last_packet_id}")
                         
