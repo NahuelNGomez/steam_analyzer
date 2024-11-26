@@ -47,6 +47,7 @@ class GameReviewFilter:
         self.the_plan_2 = 0
         self.amount_of_language_filters = amount_of_language_filters
         self.next_instance = 1
+        self.packet_id = 0
 
         self.games: dict = {}
 
@@ -278,7 +279,8 @@ class GameReviewFilter:
         """
         client_games = self.games.get(int(client_id), {})
         batch_size = 200
-        final_list = []
+        final_list = str(self.packet_id) + "\n"
+        batch_counter = 0
 
         name = path
         with open(name, "r") as file:
@@ -296,20 +298,20 @@ class GameReviewFilter:
                     else:
                         game_review = GameReview(review.game_id, game, None, review.client_id)
                         game_str = json.dumps(game_review.getData())
-                        final_list.append(game_str)
-                        if (len(final_list) >= batch_size):
-                            final_list = "\n".join(final_list)
+                        final_list += f"{game_str}\n"
+                        batch_counter += 1
+                        if (batch_counter >= batch_size):
                             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-                            final_list = []
+                            self.packet_id += 1
+                            final_list = str(self.packet_id) + "\n"
+                            batch_counter = 0
+                            
                 else:
                     pass
         if final_list:
-            final_list = "\n".join(final_list)
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-            final_list = []
         os.remove(name)
 
-        
     def start(self):
         """
         Inicia el proceso de join.

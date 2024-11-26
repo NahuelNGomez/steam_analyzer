@@ -84,6 +84,10 @@ class Top5ReviewCounter:
         Callback function to process messages.
         """
         batch = data.split("\n")
+        packet_id = batch[0]
+        batch = batch[1:]
+        logging.info(f"Received batch with packet_id {packet_id}")
+        
         for row in batch:
             if not row.strip():
                 continue
@@ -108,12 +112,11 @@ class Top5ReviewCounter:
         top_5_games = self.get_games(client_id)
         
         self.middleware.send(json.dumps(top_5_games))
+        self.fault_manager.delete_key(f"top5_review_counter_{str(client_id)}")
         # for client_id in self.games_dict_by_client:
         #     top5_games = json.dumps(self.get_games(client_id), indent=4)
         #     self.middleware.send(top5_games)
         logging.info(f"Top 5 indie games positive reviews data sent for client {client_id}.")
-    
-        
 
     def start(self):
         """
