@@ -3,7 +3,6 @@ import logging
 from common.game_review import GameReview
 from common.middleware import Middleware
 from common.packet_fin import Fin
-from common.healthcheck import HealthCheckServer
 
 class Top5ReviewCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
@@ -109,5 +108,4 @@ class Top5ReviewCounter:
         """
         Start middleware to begin consuming messages.
         """
-        HealthCheckServer().start_in_thread()
         self.middleware.start()

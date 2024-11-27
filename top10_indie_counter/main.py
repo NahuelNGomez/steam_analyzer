@@ -2,6 +2,8 @@ import json
 import logging
 import os
 from counter import Top10IndieCounter
+import threading
+from common.healthcheck import HealthCheckServer
 
 def main():
     logging.basicConfig(
@@ -22,7 +24,11 @@ def main():
     instance_id = json.loads(instance_id) if instance_id else 0
 
     counter = Top10IndieCounter(input_queues=input_queues, output_exchanges=output_exchanges, instance_id=instance_id)
-    counter.start()
+
+    t1 = threading.Thread(target=counter.start)
+    t1.start()
+    HealthCheckServer([t1]).start()
+    t1.join()
 
 if __name__ == '__main__':
     main()

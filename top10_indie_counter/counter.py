@@ -4,8 +4,11 @@ from common.game import Game
 from common.middleware import Middleware
 from common.utils import split_complex_string
 from common.packet_fin import Fin
+<<<<<<< HEAD
 from common.healthcheck import HealthCheckServer
 from common.fault_manager import FaultManager
+=======
+>>>>>>> doctor_improvements
 
 class Top10IndieCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
@@ -140,5 +143,4 @@ class Top10IndieCounter:
         """
         Start middleware to begin consuming messages.
         """
-        HealthCheckServer().start_in_thread()
         self.middleware.start()

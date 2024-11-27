@@ -3,7 +3,6 @@ import logging
 from common.middleware import Middleware
 from common.packet_fin import Fin
 from common.review import Review
-from common.healthcheck import HealthCheckServer
 
 class PositivityFilter:
     def __init__(
@@ -28,7 +27,6 @@ class PositivityFilter:
         self.null_counts = {}
         
     def start(self):
-        HealthCheckServer().start_in_thread()
         self.middleware.start()
         logging.info("FilterPositivity started")
 
