@@ -17,21 +17,16 @@ LEADER_PORT=8888
 class Doctor:
     not_include_host_regexes = ["rabbitmq", "doctor\d?", "client\d"]
     def __init__(self):
-        self.doctors: list[str] = ["doctor0", "doctor1", "doctor2"]
-        self.leader_id: int = None
+        doctors = int(os.getenv("NUM_DOCTORS", '1'))
+        self.doctors: list[str] = [f"doctor{i}" for i in range(int(doctors))]
+
         self.id: int = int(os.getenv("ID", '0'))
+        self.host_list = os.getenv("WORKERS", "").split(",")
+
+        self.leader_id: int = None
         self.prev_leader_id: int = None
         self.curr_leader_id = self.id
-        result = subprocess.run(["docker", "ps", "-af", "network=tp1_testing_net",  "--format", "{{.Names}}"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        self.host_list = result.stdout.decode().split('\n')
-        if len(self.host_list) > 0 and self.host_list[-1] == '':
-            self.host_list.pop()
-
-        for host in self.host_list:
-            for not_include_host in self.not_include_host_regexes:
-                if re.search(not_include_host, host):
-                    self.host_list.remove(host)
 
     def start(self):
         self.leader_id = None

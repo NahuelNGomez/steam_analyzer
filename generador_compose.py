@@ -1,5 +1,6 @@
 import configparser
 import yaml
+import re
 
 def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
     # Base configuration
@@ -338,22 +339,6 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
         },
     }
 
-    # generate doctors
-    for i in range(0, num_doctors):
-        client_name = f"doctor{i}"
-        
-        base_config["services"][client_name] = {
-            "container_name": client_name,
-            "build": {"context": ".", "dockerfile": "./doctor/Dockerfile"},
-            "image": "doctor:latest",
-            "networks": ["testing_net"],
-            "environment": [
-                "LOGGING_LEVEL=INFO",
-                f"ID={i}",
-            ],
-            "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
-        }
-
     # Generate clients
     for i in range(1, num_clients + 1):
         client_name = f"client{i}"
@@ -396,6 +381,34 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
                 'INSTANCE_ID=0'
             ],
         }
+
+
+    not_include_host_regex = "client\d"
+    workers: list[str] = list(base_config["services"].keys())
+    for host in workers:
+        if re.search(not_include_host_regex, host):
+            workers.remove(host)
+
+    workers_str = ",".join(workers)
+    print(workers_str)
+
+    for i in range(0, num_doctors):
+        client_name = f"doctor{i}"
+        
+        base_config["services"][client_name] = {
+            "container_name": client_name,
+            "build": {"context": ".", "dockerfile": "./doctor/Dockerfile"},
+            "image": "doctor:latest",
+            "networks": ["testing_net"],
+            "environment": [
+                "LOGGING_LEVEL=INFO",
+                f"ID={i}",
+                f"WORKERS={workers_str}",
+                f"NUM_DOCTORS={num_doctors}",
+            ],
+            "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
+        }
+
     return base_config
 
 

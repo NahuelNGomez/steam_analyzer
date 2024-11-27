@@ -315,45 +315,6 @@ services:
     - LOGGING_LEVEL=INFO
     - PERCENTILE=90
     - INSTANCE_ID=3
-  doctor0:
-    container_name: doctor0
-    build:
-      context: .
-      dockerfile: ./doctor/Dockerfile
-    image: doctor:latest
-    networks:
-    - testing_net
-    environment:
-    - LOGGING_LEVEL=INFO
-    - ID=0
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-  doctor1:
-    container_name: doctor1
-    build:
-      context: .
-      dockerfile: ./doctor/Dockerfile
-    image: doctor:latest
-    networks:
-    - testing_net
-    environment:
-    - LOGGING_LEVEL=INFO
-    - ID=1
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-  doctor2:
-    container_name: doctor2
-    build:
-      context: .
-      dockerfile: ./doctor/Dockerfile
-    image: doctor:latest
-    networks:
-    - testing_net
-    environment:
-    - LOGGING_LEVEL=INFO
-    - ID=2
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
   client1:
     container_name: client1
     build:
@@ -415,6 +376,51 @@ services:
     - INPUT_QUEUES={"games_reviews_action_queue_3":"games_reviews_action"}
     - LOGGING_LEVEL=INFO
     - INSTANCE_ID=0
+  doctor0:
+    container_name: doctor0
+    build:
+      context: .
+      dockerfile: ./doctor/Dockerfile
+    image: doctor:latest
+    networks:
+    - testing_net
+    environment:
+    - LOGGING_LEVEL=INFO
+    - ID=0
+    - WORKERS=gateway,games_counter,indie_filter,action_filter,range_filter,top10_indie_counter,positive_review_filter,positive_review_filter4,positive_review_filter3,positive_review_filter_2,negative_review_filter,indie_game_review_filter,indie_game_review_filter2,indie_game_review_filter3,indie_game_review_filter4,action_game_review_filter,game_review_positive_counter,action_name_accumulator,percentile_accumulator,language_filter_1,language_filter_2,language_filter_3
+    - NUM_DOCTORS=3
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  doctor1:
+    container_name: doctor1
+    build:
+      context: .
+      dockerfile: ./doctor/Dockerfile
+    image: doctor:latest
+    networks:
+    - testing_net
+    environment:
+    - LOGGING_LEVEL=INFO
+    - ID=1
+    - WORKERS=gateway,games_counter,indie_filter,action_filter,range_filter,top10_indie_counter,positive_review_filter,positive_review_filter4,positive_review_filter3,positive_review_filter_2,negative_review_filter,indie_game_review_filter,indie_game_review_filter2,indie_game_review_filter3,indie_game_review_filter4,action_game_review_filter,game_review_positive_counter,action_name_accumulator,percentile_accumulator,language_filter_1,language_filter_2,language_filter_3
+    - NUM_DOCTORS=3
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  doctor2:
+    container_name: doctor2
+    build:
+      context: .
+      dockerfile: ./doctor/Dockerfile
+    image: doctor:latest
+    networks:
+    - testing_net
+    environment:
+    - LOGGING_LEVEL=INFO
+    - ID=2
+    - WORKERS=gateway,games_counter,indie_filter,action_filter,range_filter,top10_indie_counter,positive_review_filter,positive_review_filter4,positive_review_filter3,positive_review_filter_2,negative_review_filter,indie_game_review_filter,indie_game_review_filter2,indie_game_review_filter3,indie_game_review_filter4,action_game_review_filter,game_review_positive_counter,action_name_accumulator,percentile_accumulator,language_filter_1,language_filter_2,language_filter_3
+    - NUM_DOCTORS=3
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
 networks:
   testing_net:
     driver: bridge
