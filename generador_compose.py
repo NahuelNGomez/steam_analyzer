@@ -1,21 +1,11 @@
 import configparser
 import yaml
 
-def generate_yaml(num_clients, client_files, language_num_nodes):
+def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
     # Base configuration
     base_config = {
         "name": "tp1",
         "services": {
-            "doctor": {
-                "container_name": "doctor",
-                "build": {"context": ".", "dockerfile": "./doctor/Dockerfile"},
-                "image": "doctor:latest",
-                "networks": ["testing_net"],
-                "environment": [
-                    "LOGGING_LEVEL=INFO",
-                ],
-                "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
-            },
             "gateway": {
                 "container_name": "gateway",
                 "build": {"context": ".", "dockerfile": "./gateway/Dockerfile"},
@@ -347,6 +337,22 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
             }
         },
     }
+
+    # generate doctors
+    for i in range(0, num_doctors):
+        client_name = f"doctor{i}"
+        
+        base_config["services"][client_name] = {
+            "container_name": client_name,
+            "build": {"context": ".", "dockerfile": "./doctor/Dockerfile"},
+            "image": "doctor:latest",
+            "networks": ["testing_net"],
+            "environment": [
+                "LOGGING_LEVEL=INFO",
+                f"ID={i}",
+            ],
+            "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
+        }
 
     # Generate clients
     for i in range(1, num_clients + 1):

@@ -1,44 +1,5 @@
 name: tp1
 services:
-  doctor0:
-    container_name: doctor0
-    build:
-      context: .
-      dockerfile: ./doctor/Dockerfile
-    image: doctor:latest
-    networks:
-    - testing_net
-    environment:
-    - LOGGING_LEVEL=INFO
-    - ID=0
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-  doctor1:
-    container_name: doctor1
-    build:
-      context: .
-      dockerfile: ./doctor/Dockerfile
-    image: doctor:latest
-    networks:
-    - testing_net
-    environment:
-    - LOGGING_LEVEL=INFO
-    - ID=1
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-  doctor2:
-    container_name: doctor2
-    build:
-      context: .
-      dockerfile: ./doctor/Dockerfile
-    image: doctor:latest
-    networks:
-    - testing_net
-    environment:
-    - LOGGING_LEVEL=INFO
-    - ID=2
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
   gateway:
     container_name: gateway
     build:
@@ -354,6 +315,45 @@ services:
     - LOGGING_LEVEL=INFO
     - PERCENTILE=90
     - INSTANCE_ID=3
+  doctor0:
+    container_name: doctor0
+    build:
+      context: .
+      dockerfile: ./doctor/Dockerfile
+    image: doctor:latest
+    networks:
+    - testing_net
+    environment:
+    - LOGGING_LEVEL=INFO
+    - ID=0
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  doctor1:
+    container_name: doctor1
+    build:
+      context: .
+      dockerfile: ./doctor/Dockerfile
+    image: doctor:latest
+    networks:
+    - testing_net
+    environment:
+    - LOGGING_LEVEL=INFO
+    - ID=1
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  doctor2:
+    container_name: doctor2
+    build:
+      context: .
+      dockerfile: ./doctor/Dockerfile
+    image: doctor:latest
+    networks:
+    - testing_net
+    environment:
+    - LOGGING_LEVEL=INFO
+    - ID=2
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
   client1:
     container_name: client1
     build:
