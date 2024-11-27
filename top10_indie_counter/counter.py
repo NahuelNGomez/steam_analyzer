@@ -132,7 +132,9 @@ class Top10IndieCounter:
             client_id = int(fin_msg.client_id)
             self.middleware.send(json.dumps(self.get_games(client_id)))
             self.fault_manager.delete_key(f"top10_indie_counter_{client_id}")
-            
+            if client_id in self.game_playtimes_by_client:
+                del self.game_playtimes_by_client[client_id]
+            logging.info(f"Top 10 indie games data sent and memory cleared for client {client_id}.")
         except Exception as e:
             logging.error(f"Error in _eof_callback: {e}")
 

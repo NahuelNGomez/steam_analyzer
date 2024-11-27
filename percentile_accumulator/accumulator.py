@@ -115,6 +115,8 @@ class PercentileAccumulator:
         client_id = int(fin_msg.client_id)
         self.calculate_90th_percentile(client_id)
         self.fault_manager.delete_key(f"percentile_{client_id}")
+        if client_id in self.games_by_client:
+            del self.games_by_client[client_id]
     
     def _callBack(self, data):
         """

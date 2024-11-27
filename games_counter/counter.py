@@ -117,6 +117,8 @@ class GamesCounter:
             logging.info(f"Enviando respuesta al cliente {client_id}: {response}")
             self.middleware.send(json.dumps(response, indent=4))
             self.fault_manager.delete_key(f"platforms_counter_{client_id}")
+            if client_id in self.platform_counts:
+                del self.platform_counts[client_id]
             # Actualizar el estado en FaultManager
             # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Windows'], package_number)
             # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Mac'], package_number)
