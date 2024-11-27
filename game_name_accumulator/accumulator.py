@@ -45,7 +45,7 @@ class GameNamesAccumulator:
         self.middleware.start()
         logging.info("GameNamesAccumulator started")
     
-    def process_game(self, game):
+    def process_game(self, game, packet_id):
         """
         Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas por cliente.
         Si el número de reseñas supera el límite definido, envía el nombre del juego.
@@ -108,7 +108,8 @@ class GameNamesAccumulator:
             
             game_data = {
                 'game_id': game_id,
-                'game_name': game.game_name
+                'game_name': game.game_name,
+                'packet_id': packet_id
             }
 
             self.fault_manager.append(f'game_names_accumulator_{str(client_id)}', json.dumps(game_data))
@@ -157,9 +158,12 @@ class GameNamesAccumulator:
         Callback para procesar los mensajes recibidos.
         """
         try:
-            game = GameReview.decode(json.loads(data))
+            aux = data.strip().split("\n")
+            packet_id = aux[0]
+            logging.info(f"Paquete recibido con ID: {packet_id}")
+            game = GameReview.decode(json.loads(aux[1]))
             # logging.info(f"Mensaje decodificado: {game}")
-            self.process_game(game)
+            self.process_game(game, packet_id)
 
         except Exception as e:
             logging.error(f"Error en GameNamesAccumulator callback: {e}")

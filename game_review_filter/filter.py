@@ -52,6 +52,7 @@ class GameReviewFilter:
         else:
             self.packet_id = int(self.reviews_input_queue[0].split("_")[-1])
 
+        self.action_packet_id = 1
         self.games: dict = {}
         self.file_lock = threading.Lock()
 
@@ -293,9 +294,11 @@ class GameReviewFilter:
                     if "action" in self.games_input_queue[1].lower():
                         game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
                         game_str = json.dumps(game_review.getData())
+                        data_to_send = f"{self.action_packet_id}\n{game_str}\n"
                         routing = f"games_reviews_action_queue_{self.next_instance}_0"
-                        self.reviews_middleware.send(data=game_str,routing_key=routing)
-                        self.reviews_middleware.send(data=game_str,routing_key="games_reviews_action_queue_3")
+                        self.reviews_middleware.send(data=data_to_send,routing_key=routing)
+                        self.reviews_middleware.send(data=data_to_send,routing_key="games_reviews_action_queue_3")
+                        self.action_packet_id += 1
                         self.next_instance = (self.next_instance % self.amount_of_language_filters) + 1                    
                     else:
                         game_review = GameReview(review.game_id, game, None, review.client_id)

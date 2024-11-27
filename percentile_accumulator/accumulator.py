@@ -32,7 +32,7 @@ class PercentileAccumulator:
         self.middleware.start()
         logging.info("PercentileAccumulator started")
     
-    def process_game(self, game):
+    def process_game(self, game, packet_id):
         """
         Procesa cada mensaje (juego) recibido y acumula las reseñas positivas y negativas para cada cliente.
         """
@@ -52,7 +52,8 @@ class PercentileAccumulator:
             # Guardar el estado en formato JSON
             game_data = {
                 'game_id': game_id,
-                'game_name': game.game_name
+                'game_name': game.game_name,
+                'packet_id': packet_id
             }
             self.fault_manager.append(f"percentile_{client_id}", json.dumps(game_data))
         except Exception as e:
@@ -125,9 +126,11 @@ class PercentileAccumulator:
         :param data: Datos recibidos.
         """
         try:
-            game_review  = GameReview.decode(json.loads(data))
-            logging.debug(f"Mensaje decodificado: {game_review}")
-            self.process_game(game_review)
+            aux = data.strip().split("\n")
+            packet_id = aux[0]
+            game_review  = GameReview.decode(json.loads(aux[1]))
+            logging.debug(f"Mensaje decodificado: {game_review}, packet_id: {packet_id}")
+            self.process_game(game_review, packet_id)
             
         except Exception as e:
             logging.error(f"Error en PercentileAccumulator callback: {e}")
