@@ -19,6 +19,7 @@ class PercentileAccumulator:
         """
         self.games_by_client = defaultdict(lambda: defaultdict(lambda: {'name': '', 'count': 0}))
         self.percentile = percentile
+        self.last_packet_id = []
         self.fault_manager = FaultManager('../persistence/')
         self.init_state()
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
@@ -128,8 +129,12 @@ class PercentileAccumulator:
         try:
             aux = data.strip().split("\n")
             packet_id = aux[0]
+            if packet_id in self.last_packet_id:
+                logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
+                self.last_packet_id.remove(packet_id)
+                return
             game_review  = GameReview.decode(json.loads(aux[1]))
-            logging.debug(f"Mensaje decodificado: {game_review}, packet_id: {packet_id}")
+            # logging.info(f"Mensaje recivido, packet_id: {packet_id}")
             self.process_game(game_review, packet_id)
             
         except Exception as e:
@@ -150,7 +155,7 @@ class PercentileAccumulator:
                 
                 # if client_id not in self.games_by_client:
                 #     self.games_by_client[client_id] = defaultdict(lambda: {'name': '', 'count': 0})
-                
+                self.last_packet_id.append(json.loads(game_entries[-1])['packet_id'])
                 for entry in game_entries:
                     try:
                         game_data = json.loads(entry)
@@ -164,5 +169,7 @@ class PercentileAccumulator:
                     except json.JSONDecodeError as e:
                         logging.error(f"Error al decodificar entrada: {entry}. Detalles: {e}")
                 
+        
                 logging.info(f"Estado inicializado para client_id {client_id}: {self.games_by_client[client_id]}")
+        logging.info(f"Último packet_id de cada cliente: {self.last_packet_id}")
 
