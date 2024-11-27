@@ -6,6 +6,7 @@ from common.middleware import Middleware
 from common.packet_fin import Fin
 from common.middleware import Middleware
 from common.healthcheck import HealthCheckServer
+from common.fault_manager import FaultManager
 
 class GameNamesAccumulator:
     def __init__(self, input_queues, output_exchanges, instance_id, reviews_low_limit, previous_language_nodes):
@@ -21,6 +22,7 @@ class GameNamesAccumulator:
         self.games_by_client = defaultdict(lambda: defaultdict(int))
         self.sent_games_by_client = defaultdict(list)
         self.reviews_low_limit = reviews_low_limit
+        self.fault_manager = FaultManager("../persistence/")
         self.middleware = Middleware(
             input_queues,
             [],
@@ -33,7 +35,8 @@ class GameNamesAccumulator:
         self.total_fin = int(previous_language_nodes)
         self.healtcheck_server = HealthCheckServer()
         self.received_fin:dict = {}
-
+        self.init_state()
+        
     def start(self):
         """
         Inicia el acumulador.
@@ -98,10 +101,18 @@ class GameNamesAccumulator:
                     }
                 }
                 self.middleware.send(json.dumps(message))
+
                 sent_games.append(game_id)
                 games.pop(game_id)
                 self.datasent_by_client[client_id] = True
+            
+            game_data = {
+                'game_id': game_id,
+                'game_name': game.game_name
+            }
 
+            self.fault_manager.append(f'game_names_accumulator_{str(client_id)}', json.dumps(game_data))
+            
         except Exception as e:
             logging.error(f"Error in process_game: {str(e)}")
             logging.error(f"Full game object: {game._dict_}")
@@ -130,12 +141,14 @@ class GameNamesAccumulator:
             else:
                 self.received_fin[client_id] += 1
             if self.received_fin[client_id] == self.total_fin:
+                logging.info(f"Fin de la transmisión recibido para el cliente {client_id} y todos los nodos de lenguaje")
                 if not self.datasent_by_client[client_id]:
                     message = {"game_exceeding_limit": {"client_id " + str(client_id): []}}
                     self.middleware.send(json.dumps(message))
                 message2 ={"final_check_low_limit": {"client_id " +  str(client_id): True}}
                 self.middleware.send(json.dumps(message2))
-
+                self.fault_manager.delete_key(f'game_names_accumulator_{str(client_id)}')
+            
         except Exception as e:
             logging.error(f"Error al procesar el mensaje de fin: {e}")
 
@@ -150,3 +163,36 @@ class GameNamesAccumulator:
 
         except Exception as e:
             logging.error(f"Error en GameNamesAccumulator callback: {e}")
+
+
+    def init_state(self):
+        
+        for key in self.fault_manager.get_keys("game_names_accumulator"):
+            client_id = key.split("_")[3]
+            data = self.fault_manager.get(key)
+            data = data.strip().split("\n")
+            
+            logging.info(f"Restaurando estado para el cliente {client_id}")
+            if client_id not in self.games_by_client:
+                self.games_by_client[client_id] = {}
+            
+            if client_id not in self.sent_games_by_client:
+                self.sent_games_by_client[client_id] = []
+            
+            
+            try:
+                for game_data in data:
+                    game = json.loads(game_data)
+                    game_id = game["game_id"]
+                    game_name = game["game_name"]
+                    if game_id in self.games_by_client[client_id]:
+                        self.games_by_client[client_id][game_id]["count"] += 1
+                    else:
+                        self.games_by_client[client_id][game_id] = {"name": game_name, "count": 1}
+                logging.info(f'Estado del cliente {client_id} restaurado')
+                logging.info(f'Juegos acumulados: {self.games_by_client[client_id]}')
+            
+            except Exception as e:
+                logging.error(f"Error al inicializar el estado: {e}")
+                
+            self.datasent_by_client[client_id] = True

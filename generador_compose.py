@@ -324,6 +324,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes):
                     "REVIEWS_LOW_LIMIT=5000",
                     f"PREVIOUS_LANGUAGE_NODES={language_num_nodes}",
                 ],
+                "volumes": ["./game_name_accumulator/persistence:/persistence"],
             },
             "percentile_accumulator": {
                 "container_name": "percentile_accumulator",

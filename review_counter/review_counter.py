@@ -120,7 +120,6 @@ class Top5ReviewCounter:
         if self.remaining_fin[client_id] > 0:
             return
         logging.info("End of file received. Sending top 5 indie games positive reviews data for each client.")
-        
         top_5_games = self.get_games(client_id)
         
         self.middleware.send(json.dumps(top_5_games))
@@ -143,9 +142,7 @@ class Top5ReviewCounter:
         """
         for key in self.fault_manager.get_keys("top5_review_counter"):
             client_id = int(key.split("_")[3])
-            logging.info(f"Key {key} for client_id {client_id}")
             state = self.fault_manager.get(key)
-            
             
             logging.info(f"Initializing state for client_id {client_id}")
             if state:

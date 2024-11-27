@@ -399,8 +399,10 @@ class ConnectionHandler:
             # logging.info("JSON contains 'final_check_low_limit'")
             self.remaining_responses -= 1
         if self.remaining_responses == 0:
+            logging.info("All responses received. Sending to client.")
             self.result_to_client_queue.put("close\n\n")
 
+        
     def shutdown(self):
         if not self.shutdown_event.is_set():
             logging.info(f"Iniciando cierre ordenado de la conexión con {self.address}")
