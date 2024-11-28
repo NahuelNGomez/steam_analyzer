@@ -35,14 +35,12 @@ class GameNamesAccumulator:
         )
         self.datasent_by_client = defaultdict(bool)
         self.total_fin = int(previous_language_nodes)
-        self.healtcheck_server = HealthCheckServer()
         self.received_fin:dict = {}
         
     def start(self):
         """
         Inicia el acumulador.
         """
-        self.healtcheck_server.start_in_thread()
         self.middleware.start()
         logging.info("GameNamesAccumulator started")
     

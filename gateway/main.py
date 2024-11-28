@@ -39,7 +39,6 @@ def start_server(config, shutdown_event, active_connections):
     """
     Inicia el servidor que escucha por conexiones entrantes y maneja cada conexión.
     """
-    HealthCheckServer().start_in_thread()
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Permite reutilizar la dirección
     server.bind((config['gateway_IP'], int(config['gateway_PORT'])))
@@ -96,6 +95,8 @@ def main():
     # Iniciar el servidor en un hilo separado
     server_thread = threading.Thread(target=start_server, args=(config, shutdown_event, active_connections), name="ServerThread")
     server_thread.start()
+
+    HealthCheckServer([server_thread]).start_in_thread()
     
     logging.info("Gateway iniciado.")
     

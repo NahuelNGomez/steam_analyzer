@@ -11,7 +11,7 @@ echo "Levantando servicios..."
 make docker-rabbit-up
 
 # Esperar 5 segundos antes de que inicie rabbit
-for i in {5..1}; do
+for i in {8..1}; do
   echo "Esperando $i segundos..."
   sleep 1
 done

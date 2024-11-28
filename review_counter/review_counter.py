@@ -133,7 +133,6 @@ class Top5ReviewCounter:
         """
         Start middleware to begin consuming messages.
         """
-        HealthCheckServer().start_in_thread()
         self.middleware.start()
 
     def init_state(self):

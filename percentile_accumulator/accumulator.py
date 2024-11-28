@@ -29,7 +29,6 @@ class PercentileAccumulator:
         """
         Inicia el acumulador.
         """
-        HealthCheckServer().start_in_thread()
         self.middleware.start()
         logging.info("PercentileAccumulator started")
     

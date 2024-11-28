@@ -1,9 +1,9 @@
 import json
 import logging
 import os
-import time
 from accumulator import GameNamesAccumulator
-import configparser
+import threading
+from common.healthcheck import HealthCheckServer
 
 def main():
     logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),
@@ -16,6 +16,11 @@ def main():
     gameNamesAccumulator = GameNamesAccumulator(input_queues, 
     output_exchanges, instance_id, reviews_low_limit)
     gameNamesAccumulator.start()
+
+    t1 = threading.Thread(target=gameNamesAccumulator.start)
+    t1.start()
+    HealthCheckServer([t1]).start()
+    t1.join()
 
 if __name__ == '__main__':
     main()

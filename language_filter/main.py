@@ -1,9 +1,9 @@
 import json
 import logging
 import os
-import time
 from filter import LanguageFilter
-import configparser
+import threading
+from common.healthcheck import HealthCheckServer
  
 def main():
     logging.basicConfig(level=getattr(logging, os.getenv("LOGGING_LEVEL", "DEBUG")),
@@ -13,7 +13,12 @@ def main():
     instance_id = json.loads(os.getenv("INSTANCE_ID") or '0')
     
     languageFilter = LanguageFilter(input_queues, output_exchanges, instance_id)
-    languageFilter.start()
+
+    t1 = threading.Thread(target=languageFilter.start)
+    t1.start()
+    HealthCheckServer([t1]).start()
+    t1.join()
+
 
 if __name__ == '__main__':
     main()
