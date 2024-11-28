@@ -23,6 +23,8 @@ class GameNamesAccumulator:
         self.sent_games_by_client = defaultdict(list)
         self.reviews_low_limit = reviews_low_limit
         self.fault_manager = FaultManager("../persistence/")
+        self.last_packet_id = []
+        self.init_state()
         self.middleware = Middleware(
             input_queues,
             [],
@@ -35,7 +37,6 @@ class GameNamesAccumulator:
         self.total_fin = int(previous_language_nodes)
         self.healtcheck_server = HealthCheckServer()
         self.received_fin:dict = {}
-        self.init_state()
         
     def start(self):
         """
@@ -160,6 +161,10 @@ class GameNamesAccumulator:
         try:
             aux = data.strip().split("\n")
             packet_id = aux[0]
+            if packet_id in self.last_packet_id:
+                logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
+                self.last_packet_id.remove(packet_id)
+                return
             logging.info(f"Paquete recibido con ID: {packet_id}")
             game = GameReview.decode(json.loads(aux[1]))
             # logging.info(f"Mensaje decodificado: {game}")
@@ -183,7 +188,7 @@ class GameNamesAccumulator:
             if client_id not in self.sent_games_by_client:
                 self.sent_games_by_client[client_id] = []
             
-            
+            self.last_packet_id.append(json.loads(data[-1])['packet_id'])
             try:
                 for game_data in data:
                     game = json.loads(game_data)
@@ -200,3 +205,4 @@ class GameNamesAccumulator:
                 logging.error(f"Error al inicializar el estado: {e}")
                 
             self.datasent_by_client[client_id] = True
+        logging.info(f"Último packet_id de cada cliente: {self.last_packet_id}")

@@ -182,8 +182,9 @@ class ConnectionHandler:
                         self.protocol.send_message("True\n\n")
                         self._send_old_results()
                         self.client_results_sent = True
-                        self.shutdown_event.set()
-                        break
+                        #self.shutdown_event.set()
+                        self.shutdown()
+                        return
                     else:
                         self.protocol.send_message("False\n\n")
                     continue
@@ -253,15 +254,22 @@ class ConnectionHandler:
             self.shutdown()
         finally:
             logging.info("Conexión cerrada.")
-            self.shutdown_event.set()
             self.shutdown()
+            #self.shutdown_event.set()
     
     def _send_old_results(self):
-        logging.info("Enviando resultados antiguos al cliente")
-        path = f'../results_gateway/results_client_id_{self.client_id}.json'
-        self.read_json_file(path)
-        self.protocol.send_message("close\n\n")
-        logging.info("Resultados antiguos enviados al cliente")
+        try:
+            logging.info("Enviando resultados antiguos al cliente")
+            path = f'../results_gateway/results_client_id_{self.client_id}.json'
+            self.read_json_file(path)
+            self.protocol.send_message("close\n\n")
+            logging.info("Resultados antiguos enviados al cliente")
+        except Exception as e:
+            logging.error(f"Error al enviar resultados antiguos: {e}")
+        finally:
+            # Ensure we close everything even if there's an error
+            self.client_results_sent = True
+            #self.shutdown_event.set()
 
     def _send_results(self):
         try:
@@ -342,7 +350,28 @@ class ConnectionHandler:
         middleware = Middleware(
             input_queues, [], [], instance_id, self.get_data, self.get_data
         )
+        
+        def monitor_shutdown():
+            while not self.shutdown_event.is_set():
+                self.shutdown_event.wait()
+            
+            logging.info("Shutdown event detected. Stopping middleware receiver.")
+            middleware.stop()
+        
+        # Lanzar el thread de monitoreo
+        shutdown_monitor_thread = threading.Thread(
+            target=monitor_shutdown, 
+            name="middleware_shutdown_monitor",
+            daemon=True
+        )
+        shutdown_monitor_thread.start()
+        
+        # Iniciar el middleware
         middleware.start()
+        
+        # Esperar a que el thread de monitoreo termine
+        shutdown_monitor_thread.join()
+        
         logging.info("Middleware receiver stopped")
 
     def process_review(self):
@@ -426,9 +455,6 @@ class ConnectionHandler:
         if not self.shutdown_event.is_set():
             logging.info(f"Iniciando cierre ordenado de la conexión con {self.address}")
             self.shutdown_event.set()
-            
-            # Enviar FIN a middleware si es necesario
-            self._fin_sender(Fin(0, self.client_id).encode())
             
             # Limpiar las colas pendientes
             self._clear_queues()
