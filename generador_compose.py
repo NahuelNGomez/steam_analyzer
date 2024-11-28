@@ -211,7 +211,8 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
                     "PREVIOUS_REVIEW_NODES=1",
                     "LOGGING_LEVEL=INFO",
                 ],
-                "volumes": ["./game_review_filter/data:/data"],
+                "volumes": ["./game_review_filter/data:/data", 
+                            "./game_review_filter/persistence:/persistence"],
             },
             "indie_game_review_filter2": {
                 "container_name": "indie_game_review_filter2",
@@ -229,7 +230,8 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
                     "PREVIOUS_REVIEW_NODES=1",
                     "LOGGING_LEVEL=INFO",
                 ],
-                "volumes": ["./game_review_filter/data:/data"],
+                "volumes": ["./game_review_filter/data:/data", 
+                            "./game_review_filter/persistence:/persistence"],
             },
             "indie_game_review_filter3": {
                 "container_name": "indie_game_review_filter3",
@@ -247,7 +249,8 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
                     "PREVIOUS_REVIEW_NODES=1",
                     "LOGGING_LEVEL=INFO",
                 ],
-                "volumes": ["./game_review_filter/data:/data"],
+                "volumes": ["./game_review_filter/data:/data", 
+                            "./game_review_filter/persistence:/persistence"],
             },
             "indie_game_review_filter4": {
                 "container_name": "indie_game_review_filter4",
@@ -265,7 +268,8 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
                     "PREVIOUS_REVIEW_NODES=1",
                     "LOGGING_LEVEL=INFO",
                 ],
-                "volumes": ["./game_review_filter/data:/data"],
+                "volumes": ["./game_review_filter/data:/data", 
+                            "./game_review_filter/persistence:/persistence"],
             },
             "action_game_review_filter": {
                 "container_name": "action_game_review_filter",
@@ -287,7 +291,8 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
                     "LOGGING_LEVEL=INFO",
                     f"AMOUNT_OF_LANGUAGE_FILTERS={language_num_nodes}",
                 ],
-                "volumes": ["./game_review_filter/data:/data"],
+                "volumes": ["./game_review_filter/data:/data", 
+                            "./game_review_filter/persistence:/persistence"],
             },
             "game_review_positive_counter": {
                 "container_name": "game_review_positive_counter",

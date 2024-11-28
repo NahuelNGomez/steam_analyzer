@@ -73,9 +73,8 @@ class ConnectionHandler:
         self.result_queue = modify_queue_key(address[0])
         csv.field_size_limit(sys.maxsize)
         self.batch_id_reviews = -1
-        self.batch_id_review_positive = [0, 0, 0, 0]
-        self.json_data = {}
         self.packet_id = 0
+        self.packet_id_review = 0
             
         self.gamesHeader = []
         self.shutdown_event = threading.Event()
@@ -381,7 +380,7 @@ class ConnectionHandler:
                 data = packet[1]
                 client_id = packet[0]
                 review_list = data.strip().split("\n")
-                finalList = ''
+                finalList = str(self.packet_id_review) + "\n"
                 for row in review_list:
                     review = Review.from_csv_row(self.id_reviews, row, client_id)
                     if review.checkNanElements():
@@ -393,6 +392,7 @@ class ConnectionHandler:
                     self.id_reviews += 1
                 self.reviews_from_client_queue.put(finalList)
                 self.reviews_from_client_queue_to_positive.put(finalList)
+                self.packet_id_review += 1
                 logging.info("Review batch processed")
             except Empty:
                 continue #revisar except, consume mucho CPU
