@@ -10,26 +10,37 @@ class RangeFilter:
         
         self.start_year = start_year
         self.end_year = end_year
-        self.packet_id = 0
+        #self.packet_id = 0
         
     def _callBack(self, data):
         aux = data.strip().split("\n")
         packet_id = aux[0]
         print(f"Recibido paquete con ID: {packet_id}", flush=True)
-        json_row = json.loads(aux[1])
-        game = Game.decode(json_row)
-        logging.debug(f"Mensaje decodificado: {game}")
+        batch = aux[1:]
+        finalList = []
+        
+        for row in batch:
+            json_row = json.loads(row)
+            game = Game.decode(json_row)
+            logging.debug(f"Mensaje decodificado: {game}")
 
-        filtered_game = self.filter_by_range(game)
-        if filtered_game:
-            game_str = json.dumps(filtered_game.getData())
-            game_str = f'{packet_id}\n{game_str}\n'
-            self.middleware.send(game_str)
-            logging.info(f"Paquete enviado: {packet_id}")
-            logging.info(f"Juego filtrado enviado:{filtered_game}")
-        else:
-            logging.info("Juego no cumple con el filtro de rango.")
-
+            filtered_game = self.filter_by_range(game)
+            if filtered_game:
+                game_str = json.dumps(filtered_game.getData())
+                finalList.append(game_str)
+                # game_str = f'{packet_id}\n{game_str}\n'
+                # self.middleware.send(game_str)
+                logging.info(f"Paquete enviado: {packet_id}")
+                logging.info(f"Juego filtrado enviado:{filtered_game}")
+            else:
+                logging.info("Juego no cumple con el filtro de rango.")
+        
+        if finalList:
+            finalList = "\n".join(finalList)
+            finalList = f"{packet_id}\n{finalList}"
+            self.middleware.send(data = finalList)
+            
+            
     def filter_by_range(self, game):
         """
         Filtra juegos publicados entre start_year y end_year.

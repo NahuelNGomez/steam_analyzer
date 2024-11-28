@@ -53,7 +53,7 @@ class GameReviewFilter:
         self.action_packet_id = 1
         self.games: dict = {}
         self.file_lock = threading.Lock()
-        self.init_state()
+        #self.init_state()
         self.games_receiver = threading.Thread(target=self._games_receiver)
         self.reviews_receiver = threading.Thread(target=self._reviews_receiver)
 
@@ -88,12 +88,22 @@ class GameReviewFilter:
         try:
             aux = game.strip().split("\n")
             packet_id = aux[0]
-            game = Game.decode(json.loads(aux[1]))
-            logging.info(f"Recibido juego: {game} - {packet_id}")
-            client_id = game.client_id
-            if client_id not in self.games:
-                self.games[client_id] = {}
-            self.games[client_id][str(game.id)] = game.name
+            batch = aux[1:]
+            
+            for game in batch:
+                game = Game.decode(json.loads(game))
+                logging.info(f"Recibido juego: {game} - {packet_id}")
+                client_id = game.client_id
+                if client_id not in self.games:
+                    self.games[client_id] = {}
+                self.games[client_id][str(game.id)] = game.name
+            
+            # game = Game.decode(json.loads(aux[1]))
+            # logging.info(f"Recibido juego: {game} - {packet_id}")
+            # client_id = game.client_id
+            # if client_id not in self.games:
+            #     self.games[client_id] = {}
+            # self.games[client_id][str(game.id)] = game.name
         except Exception as e:
             logging.error(f"Error al agregar juego para cliente {game.client_id}: {e}")
 

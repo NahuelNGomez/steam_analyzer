@@ -201,6 +201,7 @@ services:
     - LOGGING_LEVEL=INFO
     volumes:
     - ./game_review_filter/data:/data
+    - ./game_review_filter/persistence:/persistence
   indie_game_review_filter2:
     container_name: indie_game_review_filter2
     build:
@@ -219,6 +220,7 @@ services:
     - LOGGING_LEVEL=INFO
     volumes:
     - ./game_review_filter/data:/data
+    - ./game_review_filter/persistence:/persistence
   indie_game_review_filter3:
     container_name: indie_game_review_filter3
     build:
@@ -237,6 +239,7 @@ services:
     - LOGGING_LEVEL=INFO
     volumes:
     - ./game_review_filter/data:/data
+    - ./game_review_filter/persistence:/persistence
   indie_game_review_filter4:
     container_name: indie_game_review_filter4
     build:
@@ -255,6 +258,7 @@ services:
     - LOGGING_LEVEL=INFO
     volumes:
     - ./game_review_filter/data:/data
+    - ./game_review_filter/persistence:/persistence
   action_game_review_filter:
     container_name: action_game_review_filter
     build:
@@ -275,6 +279,7 @@ services:
     - AMOUNT_OF_LANGUAGE_FILTERS=3
     volumes:
     - ./game_review_filter/data:/data
+    - ./game_review_filter/persistence:/persistence
   game_review_positive_counter:
     container_name: game_review_positive_counter
     build:
@@ -338,7 +343,7 @@ services:
     - BOUNDARY_PORT=12345
     - DELAY=5
     - RETRIES=5
-    - GAME_FILE=sample_30_games.csv
+    - GAME_FILE=games.csv
     - REVIEW_FILE=sample_30_reviews.csv
     volumes:
     - ./data:/data
