@@ -89,7 +89,6 @@ class GameNamesAccumulator:
                 if game_id not in sent_games:
                     games[game_id] = {"name": game.game_name, "count": 1}
 
-            # Verificación de límite y envío
             if (
                 game_id in games and
                 games[game_id]["count"] > self.reviews_low_limit and
@@ -117,7 +116,6 @@ class GameNamesAccumulator:
             
         except Exception as e:
             logging.error(f"Error in process_game: {str(e)}")
-            logging.error(f"Full game object: {game._dict_}")
 
 
     def get_games(self, client_id):
@@ -177,7 +175,7 @@ class GameNamesAccumulator:
     def init_state(self):
         
         for key in self.fault_manager.get_keys("game_names_accumulator"):
-            client_id = key.split("_")[3]
+            client_id = int(key.split("_")[3])
             data = self.fault_manager.get(key)
             data = data.strip().split("\n")
             
@@ -204,5 +202,15 @@ class GameNamesAccumulator:
             except Exception as e:
                 logging.error(f"Error al inicializar el estado: {e}")
                 
-            self.datasent_by_client[client_id] = True
+
+            for game_id, game_data in self.games_by_client[client_id].items():
+                if game_data["count"] > self.reviews_low_limit:
+                    logging.info(f"Enviando juego acumulado por límite de reseñas: {game_data['name']}")
+                    self.sent_games_by_client[client_id].append(game_id)
+                    self.datasent_by_client[client_id] = True
+            
+            # Eliminar juegos enviados de games_by_client
+            for game_id in self.sent_games_by_client[client_id]:
+                del self.games_by_client[client_id][game_id]
+
         logging.info(f"Último packet_id de cada cliente: {self.last_packet_id}")
