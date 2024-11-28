@@ -32,13 +32,17 @@ class LanguageFilter:
         :param data: Datos recibidos.
         """
         try:
-            game_review = GameReview.decode(json.loads(data))
+            aux = data.split('\n')
+            packet_id = aux[0]
+            
+            game_review = GameReview.decode(json.loads(aux[1]))
             result_text = game_review.review_text
             language, confidence = langid.classify(result_text)
             if language == 'en':
                 game = GameReview(game_review.game_id, game_review.game_name, None, game_review.client_id)
                 game_str = json.dumps(game.getData())
-                self.middleware.send(game_str)
+                data_to_send = packet_id + '\n' + game_str + '\n'
+                self.middleware.send(data_to_send)
             else:
                 logging.info("Mensaje no es en inglés, no se envía")
             

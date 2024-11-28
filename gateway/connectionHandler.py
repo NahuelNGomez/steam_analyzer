@@ -139,13 +139,16 @@ class ConnectionHandler:
             daemon=True
         )
         
-        # Iniciar todos los hilos
-        self.games_middleware_sender_thread.start()
+        self.active_threads = [
+            self.games_middleware_sender_thread,
+            self.review_middleware_sender_thread,
+            self.review_middleware_sender_thread_positive,
+            self.review_process
+        ]
+
+        for thread in self.active_threads:
+            thread.start()
         self.games_middleware_receiver_thread.start()
-        self.review_middleware_sender_thread.start()
-        #self.review_middleware_receiver_thread.start()
-        self.review_middleware_sender_thread_positive.start()
-        self.review_process.start()
 
         logging.info(f"Conexión establecida desde {self.address}")
         first = True
@@ -179,7 +182,9 @@ class ConnectionHandler:
                         self.protocol.send_message("True\n\n")
                         self._send_old_results()
                         self.client_results_sent = True
-                        break
+                        #self.shutdown_event.set()
+                        self.shutdown()
+                        return
                     else:
                         self.protocol.send_message("False\n\n")
                     continue
@@ -243,18 +248,28 @@ class ConnectionHandler:
             logging.info(f"Fin del recibo de datos {self.address}")
             if not self.client_results_sent:
                 self._send_results()
+                self.shutdown()
         except Exception as e:
             logging.error(f"Error en la conexión con {self.address}: {e}")
+            self.shutdown()
         finally:
-            #self.shutdown()
             logging.info("Conexión cerrada.")
+            self.shutdown()
+            #self.shutdown_event.set()
     
     def _send_old_results(self):
-        logging.info("Enviando resultados antiguos al cliente")
-        path = f'../results_gateway/results_client_id_{self.client_id}.json'
-        self.read_json_file(path)
-        self.protocol.send_message("close\n\n")
-        logging.info("Resultados antiguos enviados al cliente")
+        try:
+            logging.info("Enviando resultados antiguos al cliente")
+            path = f'../results_gateway/results_client_id_{self.client_id}.json'
+            self.read_json_file(path)
+            self.protocol.send_message("close\n\n")
+            logging.info("Resultados antiguos enviados al cliente")
+        except Exception as e:
+            logging.error(f"Error al enviar resultados antiguos: {e}")
+        finally:
+            # Ensure we close everything even if there's an error
+            self.client_results_sent = True
+            #self.shutdown_event.set()
 
     def _send_results(self):
         try:
@@ -263,11 +278,14 @@ class ConnectionHandler:
                     data = self.result_to_client_queue.get(block=True, timeout=1)
                     if data is None:
                         continue
+                    if data == "close\n\n":
+                        self.protocol.send_message(data)
+                        return  # Exit immediately after sending close
                     if type(data) == str:
                         self.protocol.send_message(data)
                     else:
                         self.protocol.send_message(data.decode())
-                except Empty: #revisar exception
+                except Empty:
                     continue
                 except OSError:
                     logging.error("Middleware closed")
@@ -275,6 +293,8 @@ class ConnectionHandler:
             self.protocol.send_message("close\n\n")
         except Exception as e:
             logging.error(f"Error al enviar resultados al cliente: {e}")
+        finally:
+            self.shutdown()  # Ensure shutdown is called
 
     def _fin_sender(self, msg):
         middleware = Middleware(
@@ -330,7 +350,28 @@ class ConnectionHandler:
         middleware = Middleware(
             input_queues, [], [], instance_id, self.get_data, self.get_data
         )
+        
+        def monitor_shutdown():
+            while not self.shutdown_event.is_set():
+                self.shutdown_event.wait()
+            
+            logging.info("Shutdown event detected. Stopping middleware receiver.")
+            middleware.stop()
+        
+        # Lanzar el thread de monitoreo
+        shutdown_monitor_thread = threading.Thread(
+            target=monitor_shutdown, 
+            name="middleware_shutdown_monitor",
+            daemon=True
+        )
+        shutdown_monitor_thread.start()
+        
+        # Iniciar el middleware
         middleware.start()
+        
+        # Esperar a que el thread de monitoreo termine
+        shutdown_monitor_thread.join()
+        
         logging.info("Middleware receiver stopped")
 
     def process_review(self):
@@ -384,43 +425,77 @@ class ConnectionHandler:
             with open (path, 'a') as f:
                 f.write(json.dumps(json_response))
         if 'supported_platforms' in json_response:
-            # logging.info("JSON contains 'supported_platforms'")
+            logging.info("JSON contains 'supported_platforms'")
             self.remaining_responses -= 1
+            logging.info(f"remaining_responses: {self.remaining_responses}")
         if 'top_10_indie_games_2010s' in json_response:
-            # logging.info("JSON contains 'top_10_indie_games_2010s'")
+            logging.info("JSON contains 'top_10_indie_games_2010s'")
             self.remaining_responses -= 1
+            logging.info(f"remaining_responses: {self.remaining_responses}")
         if 'top_5_indie_games_positive_reviews' in json_response:
-            # logging.info("JSON contains 'top_5_indie_games_positive_reviews'")
+            logging.info("JSON contains 'top_5_indie_games_positive_reviews'")
             self.remaining_responses -= 1
+            logging.info(f"remaining_responses: {self.remaining_responses}")
         if 'negative_count_percentile' in json_response:
-            # logging.info("JSON contains 'negative_count_percentile'")
+            logging.info("JSON contains 'negative_count_percentile'")
             self.remaining_responses -= 1
+            logging.info(f"remaining_responses: {self.remaining_responses}")
         if 'final_check_low_limit' in json_response:
-            # logging.info("JSON contains 'final_check_low_limit'")
+            logging.info("JSON contains 'final_check_low_limit'")
             self.remaining_responses -= 1
+            logging.info(f"remaining_responses: {self.remaining_responses}")
         if self.remaining_responses == 0:
+            logging.info("All responses received. Sending to client.")
             self.result_to_client_queue.put("close\n\n")
+            threading.Thread(target=self.shutdown, daemon=True).start()
+            return
 
+        
     def shutdown(self):
         if not self.shutdown_event.is_set():
             logging.info(f"Iniciando cierre ordenado de la conexión con {self.address}")
             self.shutdown_event.set()
             
-            # Enviar FIN a middleware si es necesario
-            self._fin_sender(Fin(0, self.client_id).encode())
+            # Limpiar las colas pendientes
+            self._clear_queues()
             
             # Esperar a que los hilos secundarios finalicen
-            self.games_middleware_sender_thread.join(timeout=2)
-            self.games_middleware_receiver_thread.join(timeout=2)
-            self.review_middleware_sender_thread.join(timeout=2)
-            self.review_middleware_sender_thread_positive.join(timeout=2)
-            self.review_process.join(timeout=2)
+            self._wait_for_threads()
             
             # Cerrar el socket
-            try:
-                self.client_socket.shutdown(socket.SHUT_RDWR)
-            except Exception as e:
-                logging.error(f"Error al cerrar el socket: {e}")
-            self.client_socket.close()
+            self._close_socket()
+            
             logging.info(f"Conexión con {self.address} cerrada exitosamente.")
+    
+    def _clear_queues(self):
+        """Limpia todas las colas pendientes para evitar bloqueos"""
+        queues = [
+            self.reviews_from_client_queue,
+            self.reviews_from_client_queue_to_positive,
+            self.reviews_to_process_queue,
+            self.games_from_client_queue,
+            self.result_to_client_queue
+        ]
+        for queue in queues:
+            try:
+                while not queue.empty():
+                    queue.get_nowait()
+            except Empty:
+                continue
+
+    def _wait_for_threads(self):
+        """Espera a que todos los hilos terminen con timeout, excepto el hilo actual"""
+        current_thread = threading.current_thread()
+        for thread in self.active_threads:
+            if thread.is_alive() and thread != current_thread:
+                thread.join(timeout=2)
+
+    def _close_socket(self):
+        """Cierra el socket de manera segura"""
+        try:
+            self.client_socket.shutdown(socket.SHUT_RDWR)
+        except Exception as e:
+            logging.error(f"Error al cerrar el socket: {e}")
+        finally:
+            self.client_socket.close()
 

@@ -45,9 +45,13 @@ class GameReviewFilter:
         self.the_plan_2 = 0
         self.amount_of_language_filters = amount_of_language_filters
         self.next_instance = 1
+        if "action" in self.games_input_queue[1].lower():
+            self.packet_id = 1
+        else:
+            self.packet_id = int(self.reviews_input_queue[0].split("_")[-1])
 
+        self.action_packet_id = 1
         self.games: dict = {}
-
         self.file_lock = threading.Lock()
 
         self.games_receiver = threading.Thread(target=self._games_receiver)
@@ -274,7 +278,8 @@ class GameReviewFilter:
         """
         client_games = self.games.get(int(client_id), {})
         batch_size = 200
-        final_list = []
+        final_list = str(self.packet_id) + "\n"
+        batch_counter = 0
 
         name = path
         with open(name, "r") as file:
@@ -285,27 +290,30 @@ class GameReviewFilter:
                     if "action" in self.games_input_queue[1].lower():
                         game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
                         game_str = json.dumps(game_review.getData())
+                        data_to_send = f"{self.action_packet_id}\n{game_str}\n"
                         routing = f"games_reviews_action_queue_{self.next_instance}_0"
-                        self.reviews_middleware.send(data=game_str,routing_key=routing)
-                        self.reviews_middleware.send(data=game_str,routing_key="games_reviews_action_queue_3")
+                        self.reviews_middleware.send(data=data_to_send,routing_key=routing)
+                        self.reviews_middleware.send(data=data_to_send,routing_key="games_reviews_action_queue_3")
+                        self.action_packet_id += 1
                         self.next_instance = (self.next_instance % self.amount_of_language_filters) + 1                    
                     else:
                         game_review = GameReview(review.game_id, game, None, review.client_id)
                         game_str = json.dumps(game_review.getData())
-                        final_list.append(game_str)
-                        if (len(final_list) >= batch_size):
-                            final_list = "\n".join(final_list)
+                        final_list += f"{game_str}\n"
+                        batch_counter += 1
+                        if (batch_counter >= batch_size):
                             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-                            final_list = []
+                            self.packet_id += 4
+                            final_list = str(self.packet_id) + "\n"
+                            batch_counter = 0
+                            
                 else:
                     pass
         if final_list:
-            final_list = "\n".join(final_list)
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-            final_list = []
+            self.packet_id += 4
         os.remove(name)
 
-        
     def start(self):
         """
         Inicia el proceso de join.

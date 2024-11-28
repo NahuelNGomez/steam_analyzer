@@ -139,3 +139,7 @@ class Middleware:
     def send_to_queue(self, queue: str, data: str):
         self.channel.basic_publish(exchange="", routing_key=queue, body=data)
         logging.debug("Sent to queue %s: %s", queue, data)
+        
+    def stop(self):
+        self.channel.stop_consuming()
+        logging.info("Middleware stopped consuming messages")

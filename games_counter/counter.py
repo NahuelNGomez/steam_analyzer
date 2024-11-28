@@ -14,14 +14,7 @@ class GamesCounter:
         logging.info(f"Iniciando GamesCounter con ID de instancia: {instance_id}")
         # Inicializar el FaultManager
         self.fault_manager = FaultManager(storage_dir="../persistence/")
-        # Cargar el estado existente si existe
-        #initial_state = self.fault_manager.get(f"platforms_counter_{instance_id}")
-        # if initial_state is None:
-        #     logging.info("No se encontró estado previo, inicializando estado vacío.")
         self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0})
-        # else:
-        #     logging.info(f"Estado cargado desde FaultManager: {initial_state}")
-        #     self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0}, {instance_id: initial_state})
         self.init_state()
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
         self.last_client_id = None
@@ -119,6 +112,8 @@ class GamesCounter:
             logging.info(f"Enviando respuesta al cliente {client_id}: {response}")
             self.middleware.send(json.dumps(response, indent=4))
             self.fault_manager.delete_key(f"platforms_counter_{client_id}")
+            if client_id in self.platform_counts:
+                del self.platform_counts[client_id]
             # Actualizar el estado en FaultManager
             # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Windows'], package_number)
             # self.fault_manager.update(f"platforms_counter_{client_id}", self.platform_counts[client_id]['Mac'], package_number)
