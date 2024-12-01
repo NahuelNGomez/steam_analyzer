@@ -1,6 +1,7 @@
 import pika
 import logging
 import time
+from common.fault_manager import FaultManager
 from typing import Callable
 
 RABBITMQ_HOST = "rabbitmq"
@@ -31,11 +32,15 @@ class Middleware:
         self.output_queues = output_queues
         self.output_exchanges = output_exchanges
         self.intance_id = intance_id
+        self.fault_manager = FaultManager("../persistence/")
+        self.init_state()
         self.callback = callback
         self.eofCallback = eofCallback
-        self.auto_ack = False
+        self.auto_ack = False #sacarlo
+        self.processed_packets = []
         self._init_input_queues(input_queues)
         self._init_output_queues()
+        
 
     def _connect_with_retries(self, retries=5, delay=5):
         for attempt in range(retries):
@@ -113,6 +118,16 @@ class Middleware:
                 response = callback(mensaje_str)
             if not self.auto_ack:
                 self.ack(method.delivery_tag)
+
+            mensaje_str = mensaje_str.strip().split("\n")
+            packet_id = mensaje_str[0]
+            if packet_id in self.processed_packets:
+                logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
+                return
+            self.fault_manager.append(f"middleware_{self.intance_id}", packet_id)
+            self.processed_packets.append(packet_id)
+            logging.info(f"Paquete recibido con ID: {packet_id}")
+
         return callback_wrapper
 
     def ack(self, delivery_tag):
@@ -143,3 +158,13 @@ class Middleware:
     def stop(self):
         self.channel.stop_consuming()
         logging.info("Middleware stopped consuming messages")
+        
+    def init_state(self):
+        for key in self.fault_manager.get_keys("middleware"):
+            packet_id = self.fault_manager.get(key)
+            packets = packet_id.strip().split("\n")
+            self.processed_packets = packets
+            
+            logging.info(f"Restaurando estado para el paquete {packet_id}")
+        logging.info(f'Paquetes procesados: {self.processed_packets}')
+        
