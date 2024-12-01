@@ -3,6 +3,9 @@ import logging
 import time
 from common.fault_manager import FaultManager
 from typing import Callable
+from datetime import datetime, timedelta
+import threading
+import json
 
 RABBITMQ_HOST = "rabbitmq"
 RABBITMQ_PORT = 5672
@@ -33,15 +36,15 @@ class Middleware:
         self.output_exchanges = output_exchanges
         self.intance_id = intance_id
         self.fault_manager = FaultManager("../persistence/")
+        self.processed_packets = []
         self.init_state()
         self.callback = callback
         self.eofCallback = eofCallback
         self.auto_ack = False #sacarlo
-        self.processed_packets = []
         self._init_input_queues(input_queues)
         self._init_output_queues()
+        self.start_persistence_cleaner()
         
-
     def _connect_with_retries(self, retries=5, delay=5):
         for attempt in range(retries):
             try:
@@ -124,8 +127,12 @@ class Middleware:
             if packet_id in self.processed_packets:
                 logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
                 return
-            self.fault_manager.append(f"middleware_{self.intance_id}", packet_id)
-            self.processed_packets.append(packet_id)
+            now = datetime.now()
+            logging.info(f"Paquete {packet_id} procesado a las {now}")
+           
+            
+            self.fault_manager.append(f"middleware_{self.intance_id}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}\n')
+            self.processed_packets.append(f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
             logging.info(f"Paquete recibido con ID: {packet_id}")
 
         return callback_wrapper
@@ -167,4 +174,42 @@ class Middleware:
             
             logging.info(f"Restaurando estado para el paquete {packet_id}")
         logging.info(f'Paquetes procesados: {self.processed_packets}')
+        
+    def clean_persistence(self):
+        """
+        Remove processed packets older than 2 minutes from the persistence directory.
+        """
+        now = datetime.now()
+        
+        aux = self.processed_packets
+        for packet in aux:
+            try:
+                packet_time_str = packet.split("_")[-1]
+                if not packet_time_str:
+                    logging.warning(f"Empty packet time string for packet: {packet}")
+                    continue
+
+                packet_time = datetime.strptime(packet_time_str, "%Y%m%d%H%M%S")
+                if now - packet_time > timedelta(minutes=1):
+                    aux.remove(packet)
+                    logging.info(f"Removed outdated packet: {packet}")
+            except ValueError as e:
+                logging.error(f"Error parsing packet time for packet '{packet}': {e}")
+            except Exception as e:
+                logging.error(f"Unexpected error while cleaning packet '{packet}': {e}")
+        self.fault_manager.update(f"middleware_{self.intance_id}", json.dumps("".join(aux)))
+        self.processed_packets = aux
+        
+    def start_persistence_cleaner(self):
+        def cleaner():
+            while True:
+                try:
+                    time.sleep(60)
+                    self.clean_persistence()
+                except Exception as e:
+                    logging.error(f"Error while cleaning persistence: {e}")
+        cleaner_thread = threading.Thread(target=cleaner)
+        cleaner_thread.start()
+        logging.info("Persistence cleaner started")
+    
         
