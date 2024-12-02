@@ -116,6 +116,12 @@ class Middleware:
 
         def callback_wrapper(ch, method, properties, body):
             mensaje_str = body.decode("utf-8")
+            if self.fault_manager is not None:
+                mensaje_str_aux = mensaje_str.strip().split("\n")
+                packet_id = mensaje_str_aux[0]
+                if packet_id in self.processed_packets or not "fin" in packet_id:
+                    logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
+                    return
             #logging.info("Received %s", mensaje_str)
             if "fin\n\n" in mensaje_str:
                 eofCallback(mensaje_str)
@@ -124,16 +130,11 @@ class Middleware:
             if not self.auto_ack:
                 self.ack(method.delivery_tag)
             if self.fault_manager is not None:
-                mensaje_str = mensaje_str.strip().split("\n")
-                packet_id = mensaje_str[0]
-                if packet_id in self.processed_packets:
-                    logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
-                    return
                 now = datetime.now()
                 logging.info(f"Paquete {packet_id} procesado a las {now}")
             
                 self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
-                self.processed_packets.append(f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
+                self.processed_packets.append(f'{packet_id}')
                 logging.info(f"Paquete recibido con ID: {packet_id}")
 
         return callback_wrapper
@@ -181,30 +182,30 @@ class Middleware:
         """
         Remove processed packets older than 2 minutes from the persistence directory.
         """
-        if self.fault_manager is not None:
-            now = datetime.now()
-            
-            updated_aux = []
-            for packet in self.processed_packets:
-                try:
+        for key in self.fault_manager.get_keys("middleware"):
+            state = self.fault_manager.get(key)
+            if state is not None:
+                now = datetime.now()
+                updated_aux = []
+                packets = state.strip().split("\n")
+                logging.info(f"Restaurando estado para el paquete {state}")
+                for packet in packets:
                     packet_time_str = packet.split("_")[-1]
                     if not packet_time_str:
                         logging.warning(f"Empty packet time string for packet: {packet}")
                         continue
-
                     packet_time = datetime.strptime(packet_time_str, "%Y%m%d%H%M%S")
                     if now - packet_time <= timedelta(minutes=2):
                         updated_aux.append(packet)
                     else:
                         logging.info(f"Removed outdated packet: {packet}")
-                except ValueError as e:
-                    logging.error(f"Error parsing packet time for packet '{packet}': {e}")
-                except Exception as e:
-                    logging.error(f"Unexpected error while cleaning packet '{packet}': {e}")
-
-            updated_aux_str = '\n'.join(updated_aux)
-            self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}", updated_aux_str)
-            self.processed_packets = updated_aux
+                updated_aux_str = '\n'.join(updated_aux)
+                self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}", updated_aux_str)
+        
+            aux = []
+            for packet in updated_aux:
+                aux.append(packet.split("_")[0])
+            self.processed_packets = aux
         
     def start_persistence_cleaner(self):
         if self.fault_manager is not None:
