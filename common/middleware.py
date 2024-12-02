@@ -132,7 +132,7 @@ class Middleware:
                 now = datetime.now()
                 logging.info(f"Paquete {packet_id} procesado a las {now}")
             
-                self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}\n')
+                self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
                 self.processed_packets.append(f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
                 logging.info(f"Paquete recibido con ID: {packet_id}")
 
@@ -184,8 +184,8 @@ class Middleware:
         if self.fault_manager is not None:
             now = datetime.now()
             
-            aux = self.processed_packets
-            for packet in aux:
+            updated_aux = []
+            for packet in self.processed_packets:
                 try:
                     packet_time_str = packet.split("_")[-1]
                     if not packet_time_str:
@@ -193,16 +193,18 @@ class Middleware:
                         continue
 
                     packet_time = datetime.strptime(packet_time_str, "%Y%m%d%H%M%S")
-                    if now - packet_time > timedelta(minutes=1):
-                        aux.remove(packet)
+                    if now - packet_time <= timedelta(minutes=2):
+                        updated_aux.append(packet)
+                    else:
                         logging.info(f"Removed outdated packet: {packet}")
                 except ValueError as e:
                     logging.error(f"Error parsing packet time for packet '{packet}': {e}")
                 except Exception as e:
                     logging.error(f"Unexpected error while cleaning packet '{packet}': {e}")
-            
-            self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}", json.dumps("".join(aux)))
-            self.processed_packets = aux
+
+            updated_aux_str = '\n'.join(updated_aux)
+            self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}", updated_aux_str)
+            self.processed_packets = updated_aux
         
     def start_persistence_cleaner(self):
         if self.fault_manager is not None:

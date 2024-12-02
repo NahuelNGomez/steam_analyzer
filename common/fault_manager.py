@@ -54,7 +54,7 @@ class FaultManager:
     # Text incluye el package_number
     def _append(self, path: str, text: str):
         try:
-            data = text.encode('unicode_escape')
+            data = text.encode()
             
             # (big-endian)
             data += b'\n'
@@ -78,7 +78,7 @@ class FaultManager:
     def _write(self, path, data: str):
         try:
             logging.debug(f"Writing to {path}")
-            data = data.encode('unicode_escape')
+            data = data.encode()
             data += b'\n'
             length_bytes = len(data).to_bytes(
                 LENGTH_BYTES, byteorder='big')
@@ -138,7 +138,7 @@ class FaultManager:
                     content = f.read(length)
                                         
                     if len(content) == length:
-                        data += content.decode('unicode_escape')
+                        data += content.decode()
                     else:
                         logging.error(f"Error reading key: {key}")
                 return data
