@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from queue import Queue, Empty
+import random
 import sys
 from common.game import Game
 from common.middleware import Middleware
@@ -239,6 +240,9 @@ class ConnectionHandler:
                             logging.info("No hay datos para enviar después del filtrado.")
                         self.games_from_client_queue.put(finalList)
                         self.protocol.send_message("OK\n\n")
+                        if random.random() > 0.95:
+                            logging.info(f"Paquete duplicado - {self.packet_id}")
+                            self.games_from_client_queue.put(finalList)
                         self.packet_id += 1
                 except Exception as e:
                     logging.error(f"Error al procesar el CSV: {e}")

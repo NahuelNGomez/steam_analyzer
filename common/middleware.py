@@ -119,8 +119,10 @@ class Middleware:
             if self.fault_manager is not None:
                 mensaje_str_aux = mensaje_str.strip().split("\n")
                 packet_id = mensaje_str_aux[0]
-                if packet_id in self.processed_packets or not "fin" in packet_id:
+                logging.info(f"Paquete recibido con ID: {packet_id}")
+                if packet_id in self.processed_packets and not "fin" in packet_id:
                     logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
+                    self.ack(method.delivery_tag)
                     return
             #logging.info("Received %s", mensaje_str)
             if "fin\n\n" in mensaje_str:
@@ -135,7 +137,6 @@ class Middleware:
             
                 self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
                 self.processed_packets.append(f'{packet_id}')
-                logging.info(f"Paquete recibido con ID: {packet_id}")
 
         return callback_wrapper
 
