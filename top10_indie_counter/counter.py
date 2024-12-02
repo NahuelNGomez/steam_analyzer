@@ -9,31 +9,38 @@ from common.fault_manager import FaultManager
 
 class Top10IndieCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
+        #self.game_playtimes = {i: {"nombre": None, "tiempo": None} for i in range(10)}
+        self.game_playtimes_by_client = {}
+        self.fault_manager = FaultManager(storage_dir="../persistence/")
+        self.last_processed_packet = None
+        self.last_packet_id = None
+        self.last_client_id = None
+        self._init_state()
         self.middleware = Middleware(
             input_queues=input_queues,
             output_queues=[],
             output_exchanges=output_exchanges,
             intance_id=instance_id,
             callback=self._process_callback,
-            eofCallback=self._eof_callback
+            eofCallback=self._eof_callback,
+            faultManager=self.fault_manager,
         )
-        #self.game_playtimes = {i: {"nombre": None, "tiempo": None} for i in range(10)}
-        self.game_playtimes_by_client = {}
-        self.fault_manager = FaultManager(storage_dir="../persistence/")
-        self._init_state()
-        self.last_processed_packet = None
         
     def _init_state(self):
         for key in self.fault_manager.get_keys('top10_indie_counter'):
             client_id = int(key.split("_")[3])
             state = self.fault_manager.get(key)
+            
             if state is not None:
-                data, packet_id = state.rsplit("|", 1)
-                self.game_playtimes_by_client[client_id] = json.loads(data)
+                entries = state.strip().split("\n")
+                self.game_playtimes_by_client[client_id] = json.loads(entries[1])
+                self.last_processed_packet = entries[0]
+                
                 print(f"Estado cargado desde FaultManager: {self.game_playtimes_by_client[client_id]}", flush=True)
-                self.last_processed_packet = packet_id
                 logging.info('packet id cargado: %s', self.last_processed_packet)
-        
+                    
+    
+    
     def get_games(self, client_id):
         """
         Returns the top 10 games dictionary.
@@ -98,9 +105,9 @@ class Top10IndieCounter:
                 game_playtimes[menor_puesto] = {"nombre": name, "tiempo": playtime}
 
             serialized_dict = json.dumps(self.game_playtimes_by_client[client_id])
-            value_to_store = f'{serialized_dict}|{packet_id}'
-            self.fault_manager.update(f'top10_indie_counter_{client_id}', value_to_store)
-            
+            #self.last_games += serialized_dict + '\n'
+            logging.info('process game dict: %s', serialized_dict)
+            self.last_client_id = client_id
             
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
@@ -111,15 +118,27 @@ class Top10IndieCounter:
         """
         aux = data.strip().split("\n")
         packet_id = aux[0]
-        logging.debug(f"Received packet with ID: {packet_id}")
+        logging.info(f"Received packet with ID: {packet_id}")
+        batch = aux[1:]
+        logging.info(f'Process batch: {batch}')
         
         if packet_id == self.last_processed_packet:
             logging.info(f"Packet {packet_id} has already been processed, skipping...")
             return
         
-        json_row = json.loads(aux[1])
-        game = Game.decode(json_row)
-        self.process_game(game, packet_id)
+        try:
+            for row in batch:
+                json_row = json.loads(row)
+                game = Game.decode(json_row)
+                self.process_game(game, packet_id)
+            serialized_dict = json.dumps(self.game_playtimes_by_client[self.last_client_id])
+            value_to_store = f"{packet_id}\n{serialized_dict}"
+            self.fault_manager.update(f'top10_indie_counter_{self.last_client_id}', value_to_store)
+            
+        
+        except Exception as e:
+            logging.error(f"Error in _process_callback: {e}")
+            
 
     def _eof_callback(self, data):
         """

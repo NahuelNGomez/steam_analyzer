@@ -15,7 +15,7 @@ class LanguageFilter:
         :param output_exchanges: Lista de exchanges de salida.
         :param instance_id: ID de instancia para identificar colas únicas.
         """
-        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack, 1, "fanout", "direct" )
+        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack, None, 1, "fanout", "direct" )
 
     def start(self):
         """

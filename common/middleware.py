@@ -1,7 +1,11 @@
 import pika
 import logging
 import time
+from common.fault_manager import FaultManager
 from typing import Callable
+from datetime import datetime, timedelta
+import threading
+import json
 
 RABBITMQ_HOST = "rabbitmq"
 RABBITMQ_PORT = 5672
@@ -17,6 +21,7 @@ class Middleware:
         intance_id: int = None,
         callback: Callable = None,
         eofCallback: Callable = None,
+        faultManager: FaultManager = None,
         amount_output_instances: int = 1,
         exchange_output_type: str = "fanout",
         exchange_input_type: str = "fanout",
@@ -28,15 +33,21 @@ class Middleware:
         self.channel = self.connection.channel()
         self.channel.basic_qos(prefetch_count=1)
         self.input_queues: dict[str, str] = {}
+        for queue, exchange in input_queues.items():
+            self.input_queues_aux = queue 
         self.output_queues = output_queues
         self.output_exchanges = output_exchanges
         self.intance_id = intance_id
+        self.fault_manager = faultManager
+        self.processed_packets = []
+        self.init_state()
         self.callback = callback
         self.eofCallback = eofCallback
-        self.auto_ack = False
+        self.auto_ack = False #sacarlo
         self._init_input_queues(input_queues)
         self._init_output_queues()
-
+        self.start_persistence_cleaner()
+        
     def _connect_with_retries(self, retries=5, delay=5):
         for attempt in range(retries):
             try:
@@ -104,15 +115,29 @@ class Middleware:
     def _create_callback_wrapper(self, callback, eofCallback):
 
         def callback_wrapper(ch, method, properties, body):
-            response = 0
             mensaje_str = body.decode("utf-8")
+            if self.fault_manager is not None:
+                mensaje_str_aux = mensaje_str.strip().split("\n")
+                packet_id = mensaje_str_aux[0]
+                logging.info(f"Paquete recibido con ID: {packet_id}")
+                if packet_id in self.processed_packets and not "fin" in packet_id:
+                    logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
+                    self.ack(method.delivery_tag)
+                    return
             #logging.info("Received %s", mensaje_str)
             if "fin\n\n" in mensaje_str:
                 eofCallback(mensaje_str)
             else:
-                response = callback(mensaje_str)
+                callback(mensaje_str)
             if not self.auto_ack:
                 self.ack(method.delivery_tag)
+            if self.fault_manager is not None:
+                now = datetime.now()
+                logging.info(f"Paquete {packet_id} procesado a las {now}")
+            
+                self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
+                self.processed_packets.append(f'{packet_id}')
+
         return callback_wrapper
 
     def ack(self, delivery_tag):
@@ -143,3 +168,57 @@ class Middleware:
     def stop(self):
         self.channel.stop_consuming()
         logging.info("Middleware stopped consuming messages")
+        
+    def init_state(self):
+        if self.fault_manager is not None:
+            for key in self.fault_manager.get_keys("middleware"):
+                packet_id = self.fault_manager.get(key)
+                packets = packet_id.strip().split("\n")
+                self.processed_packets = packets
+                
+                logging.info(f"Restaurando estado para el paquete {packet_id}")
+            logging.info(f'Paquetes procesados: {self.processed_packets}')
+        
+    def clean_persistence(self):
+        """
+        Remove processed packets older than 2 minutes from the persistence directory.
+        """
+        for key in self.fault_manager.get_keys("middleware"):
+            state = self.fault_manager.get(key)
+            if state is not None:
+                now = datetime.now()
+                updated_aux = []
+                packets = state.strip().split("\n")
+                logging.info(f"Restaurando estado para el paquete {state}")
+                for packet in packets:
+                    packet_time_str = packet.split("_")[-1]
+                    if not packet_time_str:
+                        logging.warning(f"Empty packet time string for packet: {packet}")
+                        continue
+                    packet_time = datetime.strptime(packet_time_str, "%Y%m%d%H%M%S")
+                    if now - packet_time <= timedelta(minutes=2):
+                        updated_aux.append(packet)
+                    else:
+                        logging.info(f"Removed outdated packet: {packet}")
+                updated_aux_str = '\n'.join(updated_aux)
+                self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}", updated_aux_str)
+        
+            aux = []
+            for packet in updated_aux:
+                aux.append(packet.split("_")[0])
+            self.processed_packets = aux
+        
+    def start_persistence_cleaner(self):
+        if self.fault_manager is not None:
+            def cleaner():
+                while True:
+                    try:
+                        time.sleep(60)
+                        self.clean_persistence()
+                    except Exception as e:
+                        logging.error(f"Error while cleaning persistence: {e}")
+            cleaner_thread = threading.Thread(target=cleaner)
+            cleaner_thread.start()
+            logging.info("Persistence cleaner started")
+    
+        

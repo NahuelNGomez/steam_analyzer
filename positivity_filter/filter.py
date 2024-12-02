@@ -33,12 +33,15 @@ class PositivityFilter:
     def _callback(self, message):
         try:
             batch = message.split("\n")
+            packet_id = batch[0]
+            logging.info(f"Processing batch {packet_id}")
+            batch = batch[1:]
             finalList = []
 
             for row in batch:
                 if not row.strip():
                     continue
-                result_review = Review.decode(json.loads(row))   #mandar los msj por csv
+                result_review = Review.decode(json.loads(row))
                 review_score = result_review.review_score
                 
                 if int(review_score) == self.positivity:
@@ -59,6 +62,7 @@ class PositivityFilter:
             if finalList:
                 # Unir todas las líneas con \n solo cuando hay contenido válido
                 finalList = "\n".join(finalList)
+                finalList = f"{packet_id}\n{finalList}"
                 self.middleware.send(finalList)
                 self.batch_counter[client_id] += 1
             else:

@@ -15,7 +15,7 @@ class GenreFilter:
         """
         self.genre = genre
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
-        self.packet_id = 0
+        #self.packet_id = 0
 
     def filter_games_by_genre(self, message):
         """
@@ -52,7 +52,9 @@ class GenreFilter:
             packet_id = batch[0]
             logging.info(f"Recibido paquete con ID: {packet_id}")
             batch = batch[1:]
+            finalList = []
 
+                
             for row in batch:
                 row = row.strip()
                 if not row:
@@ -66,13 +68,21 @@ class GenreFilter:
                 filtered_game = self.filter_games_by_genre(game)
                 if filtered_game:
                     game_str = json.dumps(filtered_game.getData())
-                    game_str = f"{self.packet_id}\n{game_str}\n"
-                    self.middleware.send(game_str)
-                    self.packet_id += 1
+                    #game_str = f"{self.packet_id}\n{game_str}\n"
+                    #self.middleware.send(game_str)
+                    #self.packet_id += 1
+                    finalList.append(game_str)
+                    
                     logging.info(f"Juego filtrado enviado: {filtered_game}")
                 else:
                     logging.info("Juego no cumple con el filtro de género.")
-        
+            
+            if finalList:
+                finalList = "\n".join(finalList)
+                finalList = f"{packet_id}\n{finalList}"
+                self.middleware.send(finalList)
+            
+                    
         except json.JSONDecodeError as e:
             logging.error(f"Error de JSON al procesar el mensaje: {e}")
         except Exception as e:

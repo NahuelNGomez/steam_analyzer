@@ -54,7 +54,7 @@ class FaultManager:
     # Text incluye el package_number
     def _append(self, path: str, text: str):
         try:
-            data = text.encode('unicode_escape')
+            data = text.encode()
             
             # (big-endian)
             data += b'\n'
@@ -78,7 +78,7 @@ class FaultManager:
     def _write(self, path, data: str):
         try:
             logging.debug(f"Writing to {path}")
-            data = data.encode('unicode_escape')
+            data = data.encode()
             data += b'\n'
             length_bytes = len(data).to_bytes(
                 LENGTH_BYTES, byteorder='big')
@@ -107,11 +107,14 @@ class FaultManager:
             path = f'{self.storage_dir}/{self._get_internal_key(key)}'
             os.remove(path)
             self._keys_index.pop(key)
+            logging.info(f"Key deleted: {key}")
             
             updated_keys = [json.dumps([k, v]) for k, v in self._keys_index.items()]
             if len(updated_keys) == 0:
+                logging.info(f"No keys left. Deleting keys index file.")
                 os.remove(f'{self.storage_dir}/{KEYS_INDEX_KEY_PREFIX}')
             else:
+                logging.info(f"Updating keys index file.")
                 self._write(f'{self.storage_dir}/{KEYS_INDEX_KEY_PREFIX}', '\n'.join(updated_keys))
                 
                 
@@ -135,7 +138,7 @@ class FaultManager:
                     content = f.read(length)
                                         
                     if len(content) == length:
-                        data += content.decode('unicode_escape')
+                        data += content.decode()
                     else:
                         logging.error(f"Error reading key: {key}")
                 return data
@@ -150,154 +153,3 @@ class FaultManager:
             self._write(path, value)
         except Exception as e:
             logging.error(f"Error updating key: {key}: {e}")
-
-    # def _load_translator(self):
-    #     with TRANSLATOR_LOCK:
-    #         with open(self.translator_path, 'r') as f:
-    #             self.translator = json.load(f)
-    #         logging.info(f"Traductor cargado con {len(self.translator)} claves")
-
-    # def _save_translator(self):
-    #     with TRANSLATOR_LOCK:
-    #         temp_path = self.translator_path + ".tmp"
-    #         with open(temp_path, 'w') as f:
-    #             json.dump(self.translator, f)
-    #         os.replace(temp_path, self.translator_path)
-    #         logging.info(f"Traductor guardado con {len(self.translator)} claves")
-            
-    # def _get_file_path(self, key: str) -> str:
-    #     with TRANSLATOR_LOCK:
-    #         if key not in self.translator:
-    #             file_name = f"{uuid.uuid4()}.txt"
-    #             self.translator[key] = file_name
-    #             self._save_translator()
-    #             logging.info(f"Generado nuevo archivo para la clave '{key}': {self.translator[key]}")
-    #         else:
-    #             file_name = self.translator[key]
-    #     return os.path.join(self.storage_dir, file_name)
-
-    # def delete(self, key: str):
-    #     file_path = self._get_file_path(key)
-    #     with TRANSLATOR_LOCK:
-    #         if key in self.translator:
-    #             logging.info(f"Eliminando archivo para la clave '{key}': {self.translator[key]}")
-    #             del self.translator[key]
-    #             self._save_translator()
-    #     if os.path.exists(file_path):
-    #         os.remove(file_path)
-    #         logging.info(f"Archivo eliminado: {file_path}")
-    #     else: 
-    #         logging.info(f"Archivo no encontrado para la clave {key}")
-
-    # def get(self, key: str) -> Optional[Dict[str, Any]]:
-    #     file_path = self._get_file_path(key)
-    #     if not os.path.exists(file_path):
-    #         logging.info(f"Archivo no encontrado para la clave {key}")
-    #         return None
-    #     try:
-    #         with open(file_path, 'r') as f:
-    #             content = f.read()
-    #         logging.info(f"Leído el archivo {file_path}")
-    #         # Leer el tamaño de la línea y reconstruir el estado
-    #         lines = content.split('\n')
-    #         data = {}
-    #         for line in lines:
-    #             if not line.strip():
-    #                 continue
-    #             try:
-    #                 size_str, json_data = line.split(" ", 1)
-    #                 size = int(size_str)
-    #                 if len(json_data.encode('utf-8')) != size:
-    #                     # Archivo corrupto, omitir esta línea
-    #                     logging.info(f"Archivo corrupto para la clave {key}, omitiendo")
-    #                     continue
-    #                 entry = json.loads(json_data)
-    #                 # Suponiendo que cada entry tiene 'package_number' y 'text'
-    #                 data = {
-    #                     'package_number': entry.get('package_number', 0),
-    #                     'text': entry.get('text', '')
-    #                 }
-    #             except (ValueError, json.JSONDecodeError) as e:
-    #                 # Línea malformada, omitir
-    #                 logging.info(f"Error al decodificar la línea '{line}': {e}")
-    #                 continue
-    #         return data if data else None
-    #     except Exception as e:
-    #         logging.info(f"Error al leer el archivo {file_path}: {e}")
-    #         return None
-
-    # def get_keys(self, prefix: str) -> List[str]:
-    #     with TRANSLATOR_LOCK:
-    #         keys = [key for key in self.translator.keys() if key.startswith(prefix)]
-    #     logging.info(f"Claves encontradas con prefijo '{prefix}': {keys}")
-    #     return keys
-
-    # # def append(self, key: str, text: str, package_number: int):
-    # #     """
-    # #     Agrega una nueva entrada asociada a una clave.
-    # #     Cada entrada incluye el texto y el número de paquete.
-    # #     """
-    # #     file_path = self._get_file_path(key)
-    # #     try:
-    # #         with open(file_path, 'a') as f:
-    # #             entry = {
-    # #                 'package_number': package_number,
-    # #                 'text': text
-    # #             }
-    # #             json_data = json.dumps(entry)
-    # #             f.write(f"{len(json_data.encode('utf-8'))} {json_data}\n")
-    # #         logging.info(f"Agregado nuevo valor a la clave {key}")
-    # #     except Exception as e:
-    # #         logging.info(f"Error al agregar la clave {key}: {e}")
-
-    # def update(self, key: str, text: str, package_number: int):
-    #     """
-    #     Actualiza una entrada asociada a una clave.
-    #     Si no existe, la crea.
-    #     Incluye el texto y el número de paquete.
-    #     """
-    #     file_path = self._get_file_path(key)
-    #     temp_path = file_path + ".tmp"
-    #     try:
-    #         # Leer el contenido existente
-    #         data = {}
-    #         if os.path.exists(file_path):
-    #             with open(file_path, 'r') as f:
-    #                 lines = f.readlines()
-    #             for line in lines:
-    #                 if not line.strip():
-    #                     continue
-    #                 try:
-    #                     size_str, json_data = line.split(" ", 1)
-    #                     size = int(size_str)
-    #                     if len(json_data.encode('utf-8')) != size:
-    #                         logging.info(f"Archivo corrupto para la clave {key}, omitiendo")
-    #                         continue
-    #                     entry = json.loads(json_data)
-    #                     data = {
-    #                         'package_number': entry.get('package_number', 0),
-    #                         'text': entry.get('text', '')
-    #                     }
-    #                 except (ValueError, json.JSONDecodeError):
-    #                     continue
-    #         # Verificar si el paquete es más reciente
-    #         if package_number >= data.get('package_number', 0):
-    #             # Actualizar el valor
-    #             data.update({
-    #                 'package_number': package_number,
-    #                 'text': text
-    #             })
-    #             # Escribir en el archivo temporal
-    #             with open(temp_path, 'w') as f:
-    #                 json_data = json.dumps(data)
-    #                 f.write(f"{len(json_data.encode('utf-8'))} {json_data}\n")
-    #             # Reemplazar el archivo original de manera atómica
-    #             os.replace(temp_path, file_path)
-    #             logging.info(f"Actualizado el valor de la clave {key}")
-    #         else:
-    #             # Ignorar actualizaciones de paquetes más antiguos
-    #             logging.info(f"Ignorando actualización de paquete {package_number} para la clave {key}")
-    #     except Exception as e:
-    #         logging.info(f"Error al actualizar la clave {key}: {e}")
-    #         if os.path.exists(temp_path):
-    #             os.remove(temp_path)

@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from queue import Queue, Empty
+import random
 import sys
 from common.game import Game
 from common.middleware import Middleware
@@ -73,9 +74,8 @@ class ConnectionHandler:
         self.result_queue = modify_queue_key(address[0])
         csv.field_size_limit(sys.maxsize)
         self.batch_id_reviews = -1
-        self.batch_id_review_positive = [0, 0, 0, 0]
-        self.json_data = {}
         self.packet_id = 0
+        self.packet_id_review = 0
             
         self.gamesHeader = []
         self.shutdown_event = threading.Event()
@@ -240,6 +240,9 @@ class ConnectionHandler:
                             logging.info("No hay datos para enviar después del filtrado.")
                         self.games_from_client_queue.put(finalList)
                         self.protocol.send_message("OK\n\n")
+                        if random.random() > 0.95:
+                            logging.info(f"Paquete duplicado - {self.packet_id}")
+                            self.games_from_client_queue.put(finalList)
                         self.packet_id += 1
                 except Exception as e:
                     logging.error(f"Error al procesar el CSV: {e}")
@@ -381,7 +384,7 @@ class ConnectionHandler:
                 data = packet[1]
                 client_id = packet[0]
                 review_list = data.strip().split("\n")
-                finalList = ''
+                finalList = str(self.packet_id_review) + "\n"
                 for row in review_list:
                     review = Review.from_csv_row(self.id_reviews, row, client_id)
                     if review.checkNanElements():
@@ -393,6 +396,7 @@ class ConnectionHandler:
                     self.id_reviews += 1
                 self.reviews_from_client_queue.put(finalList)
                 self.reviews_from_client_queue_to_positive.put(finalList)
+                self.packet_id_review += 1
                 logging.info("Review batch processed")
             except Empty:
                 continue #revisar except, consume mucho CPU

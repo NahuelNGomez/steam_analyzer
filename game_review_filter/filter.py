@@ -7,7 +7,7 @@ from common.game_review import GameReview
 from common.middleware import Middleware
 from common.packet_fin import Fin
 from common.review import Review
-from common.middleware import Middleware
+from common.fault_manager import FaultManager
 
 class GameReviewFilter:
     def __init__(
@@ -41,9 +41,8 @@ class GameReviewFilter:
         self.review_file_size: dict = {}  # {client_id: file_size_count}
         self.batch_counter: dict = {} 
         self.total_batches: dict = {} 
-        self.the_plan_1 = 0
-        self.the_plan_2 = 0
         self.amount_of_language_filters = amount_of_language_filters
+        self.fault_manager = FaultManager("../persistence/")
         self.next_instance = 1
         if "action" in self.games_input_queue[1].lower():
             self.packet_id = 1
@@ -53,7 +52,7 @@ class GameReviewFilter:
         self.action_packet_id = 1
         self.games: dict = {}
         self.file_lock = threading.Lock()
-
+        #self.init_state()
         self.games_receiver = threading.Thread(target=self._games_receiver)
         self.reviews_receiver = threading.Thread(target=self._reviews_receiver)
 
@@ -64,6 +63,7 @@ class GameReviewFilter:
             eofCallback=self.handle_game_eof,
             output_queues=self.output_queues,  ## ???
             output_exchanges=self.output_exchanges,  ## ???
+            faultManager=self.fault_manager,
             intance_id=self.instance_id,
             exchange_output_type="direct"
         )
@@ -76,6 +76,7 @@ class GameReviewFilter:
             eofCallback=self.handle_review_eof,
             output_queues=[],  ## ???
             output_exchanges=self.output_exchanges,  ## ???
+            faultManager=self.fault_manager,
             intance_id=self.instance_id,
             exchange_output_type="direct",
         )
@@ -87,14 +88,35 @@ class GameReviewFilter:
         """
         try:
             aux = game.strip().split("\n")
-            client_id = aux[0]
-            game = Game.decode(json.loads(aux[1]))
-            print(
-                "Recibiendo GAME", flush=True)
-            client_id = game.client_id
-            if client_id not in self.games:
-                self.games[client_id] = {}
-            self.games[client_id][str(game.id)] = game.name
+            packet_id = aux[0]
+            batch = aux[1:]
+            client_id_file = None
+            
+            
+            final_list = str(packet_id) + "\n"
+            for game in batch:
+                
+                game = Game.decode(json.loads(game))
+                logging.info(f"Recibido juego: {game} - {packet_id}")
+                client_id = game.client_id
+                client_id_file = client_id
+                if client_id not in self.games:
+                    self.games[client_id] = {}
+                self.games[client_id][str(game.id)] = game.name
+                game_data = {
+                    "id": game.id,
+                    "name": game.name,
+                }
+                final_list += f"{json.dumps(game_data)}\n"
+            
+            self.fault_manager.append(f"game_filter_{self.reviews_input_queue[0]}_{client_id_file}", final_list)
+            final_list = ""
+            # game = Game.decode(json.loads(aux[1]))
+            # logging.info(f"Recibido juego: {game} - {packet_id}")
+            # client_id = game.client_id
+            # if client_id not in self.games:
+            #     self.games[client_id] = {}
+            # self.games[client_id][str(game.id)] = game.name
         except Exception as e:
             logging.error(f"Error al agregar juego para cliente {game.client_id}: {e}")
 
@@ -103,6 +125,10 @@ class GameReviewFilter:
         Agrega una review a la lista y escribe en el archivo cuando llega a 1000.
         """
         batch = message.split("\n")
+        packet_id = batch[0]
+        logging.info(f"Recibiendo REVIEW - {packet_id}")
+        batch = batch[1:]
+        final_list = str(packet_id) + "\n"
        # print("Recibiendo REVIEW - batch:", len(batch), flush=True)
        # print("Recibiendo REVIEW - batch:", batch, flush=True)
         client_id = int(Review.decode(json.loads(batch[0])).client_id)
@@ -129,11 +155,7 @@ class GameReviewFilter:
                 if not row.strip():
                     continue
                 self.reviews_to_add[client_id].append(row)
-                if (Review.decode(json.loads(row)).game_id == 250600 or Review.decode(json.loads(row)).game_id == "250600") and Review.decode(json.loads(row)).client_id == "1":
-                    self.the_plan_1 += 1
-                if (Review.decode(json.loads(row)).game_id == 250600 or Review.decode(json.loads(row)).game_id == "250600") and Review.decode(json.loads(row)).client_id == "2":
-                    self.the_plan_2 += 1
-                    
+                final_list += f"{row}\n"
                 if len(self.reviews_to_add[client_id]) >= 3000:
                     name = f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt"
                     with open(name, "a") as file:
@@ -148,10 +170,13 @@ class GameReviewFilter:
                         f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt",
                         client_id,
                     )
+                    self.fault_manager.delete_key(f"review_filter_{self.reviews_input_queue[0]}_{client_id}")
+                    
         if (
             self.nodes_completed[client_id] == self.previous_review_nodes
         ) and not self.sended_fin[client_id]:
             if self.batch_counter[client_id] >= self.total_batches[client_id] and self.total_batches[client_id] != 0:
+                
                 print(
                     "Fin de la transmisión de datos batches",
                     self.batch_counter[client_id],
@@ -164,7 +189,9 @@ class GameReviewFilter:
                     self.send_fin(client_id)
 
                 self.sended_fin[client_id] = True
-
+        self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", final_list)
+        
+        
     def send_fin(self, client_id):
         # print("envío fin", flush=True)
         self.reviews_middleware.send(Fin(0, client_id).encode(), routing_key="games_reviews_queue_0")
