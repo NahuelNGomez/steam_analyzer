@@ -21,6 +21,7 @@ class Middleware:
         intance_id: int = None,
         callback: Callable = None,
         eofCallback: Callable = None,
+        faultManager: FaultManager = None,
         amount_output_instances: int = 1,
         exchange_output_type: str = "fanout",
         exchange_input_type: str = "fanout",
@@ -32,10 +33,12 @@ class Middleware:
         self.channel = self.connection.channel()
         self.channel.basic_qos(prefetch_count=1)
         self.input_queues: dict[str, str] = {}
+        for queue, exchange in input_queues.items():
+            self.input_queues_aux = queue 
         self.output_queues = output_queues
         self.output_exchanges = output_exchanges
         self.intance_id = intance_id
-        self.fault_manager = FaultManager("../persistence/")
+        self.fault_manager = faultManager
         self.processed_packets = []
         self.init_state()
         self.callback = callback
@@ -112,28 +115,26 @@ class Middleware:
     def _create_callback_wrapper(self, callback, eofCallback):
 
         def callback_wrapper(ch, method, properties, body):
-            response = 0
             mensaje_str = body.decode("utf-8")
             #logging.info("Received %s", mensaje_str)
             if "fin\n\n" in mensaje_str:
                 eofCallback(mensaje_str)
             else:
-                response = callback(mensaje_str)
+                callback(mensaje_str)
             if not self.auto_ack:
                 self.ack(method.delivery_tag)
-
-            mensaje_str = mensaje_str.strip().split("\n")
-            packet_id = mensaje_str[0]
-            if packet_id in self.processed_packets:
-                logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
-                return
-            now = datetime.now()
-            logging.info(f"Paquete {packet_id} procesado a las {now}")
-           
+            if self.fault_manager is not None:
+                mensaje_str = mensaje_str.strip().split("\n")
+                packet_id = mensaje_str[0]
+                if packet_id in self.processed_packets:
+                    logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
+                    return
+                now = datetime.now()
+                logging.info(f"Paquete {packet_id} procesado a las {now}")
             
-            self.fault_manager.append(f"middleware_{self.intance_id}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}\n')
-            self.processed_packets.append(f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
-            logging.info(f"Paquete recibido con ID: {packet_id}")
+                self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}\n')
+                self.processed_packets.append(f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
+                logging.info(f"Paquete recibido con ID: {packet_id}")
 
         return callback_wrapper
 
@@ -167,49 +168,53 @@ class Middleware:
         logging.info("Middleware stopped consuming messages")
         
     def init_state(self):
-        for key in self.fault_manager.get_keys("middleware"):
-            packet_id = self.fault_manager.get(key)
-            packets = packet_id.strip().split("\n")
-            self.processed_packets = packets
-            
-            logging.info(f"Restaurando estado para el paquete {packet_id}")
-        logging.info(f'Paquetes procesados: {self.processed_packets}')
+        if self.fault_manager is not None:
+            for key in self.fault_manager.get_keys("middleware"):
+                packet_id = self.fault_manager.get(key)
+                packets = packet_id.strip().split("\n")
+                self.processed_packets = packets
+                
+                logging.info(f"Restaurando estado para el paquete {packet_id}")
+            logging.info(f'Paquetes procesados: {self.processed_packets}')
         
     def clean_persistence(self):
         """
         Remove processed packets older than 2 minutes from the persistence directory.
         """
-        now = datetime.now()
-        
-        aux = self.processed_packets
-        for packet in aux:
-            try:
-                packet_time_str = packet.split("_")[-1]
-                if not packet_time_str:
-                    logging.warning(f"Empty packet time string for packet: {packet}")
-                    continue
+        if self.fault_manager is not None:
+            now = datetime.now()
+            
+            aux = self.processed_packets
+            for packet in aux:
+                try:
+                    packet_time_str = packet.split("_")[-1]
+                    if not packet_time_str:
+                        logging.warning(f"Empty packet time string for packet: {packet}")
+                        continue
 
-                packet_time = datetime.strptime(packet_time_str, "%Y%m%d%H%M%S")
-                if now - packet_time > timedelta(minutes=1):
-                    aux.remove(packet)
-                    logging.info(f"Removed outdated packet: {packet}")
-            except ValueError as e:
-                logging.error(f"Error parsing packet time for packet '{packet}': {e}")
-            except Exception as e:
-                logging.error(f"Unexpected error while cleaning packet '{packet}': {e}")
-        self.fault_manager.update(f"middleware_{self.intance_id}", json.dumps("".join(aux)))
-        self.processed_packets = aux
+                    packet_time = datetime.strptime(packet_time_str, "%Y%m%d%H%M%S")
+                    if now - packet_time > timedelta(minutes=1):
+                        aux.remove(packet)
+                        logging.info(f"Removed outdated packet: {packet}")
+                except ValueError as e:
+                    logging.error(f"Error parsing packet time for packet '{packet}': {e}")
+                except Exception as e:
+                    logging.error(f"Unexpected error while cleaning packet '{packet}': {e}")
+            
+            self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}", json.dumps("".join(aux)))
+            self.processed_packets = aux
         
     def start_persistence_cleaner(self):
-        def cleaner():
-            while True:
-                try:
-                    time.sleep(60)
-                    self.clean_persistence()
-                except Exception as e:
-                    logging.error(f"Error while cleaning persistence: {e}")
-        cleaner_thread = threading.Thread(target=cleaner)
-        cleaner_thread.start()
-        logging.info("Persistence cleaner started")
+        if self.fault_manager is not None:
+            def cleaner():
+                while True:
+                    try:
+                        time.sleep(60)
+                        self.clean_persistence()
+                    except Exception as e:
+                        logging.error(f"Error while cleaning persistence: {e}")
+            cleaner_thread = threading.Thread(target=cleaner)
+            cleaner_thread.start()
+            logging.info("Persistence cleaner started")
     
         

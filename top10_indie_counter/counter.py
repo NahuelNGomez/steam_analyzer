@@ -9,14 +9,6 @@ from common.fault_manager import FaultManager
 
 class Top10IndieCounter:
     def __init__(self, input_queues, output_exchanges, instance_id):
-        self.middleware = Middleware(
-            input_queues=input_queues,
-            output_queues=[],
-            output_exchanges=output_exchanges,
-            intance_id=instance_id,
-            callback=self._process_callback,
-            eofCallback=self._eof_callback
-        )
         #self.game_playtimes = {i: {"nombre": None, "tiempo": None} for i in range(10)}
         self.game_playtimes_by_client = {}
         self.fault_manager = FaultManager(storage_dir="../persistence/")
@@ -24,6 +16,15 @@ class Top10IndieCounter:
         self.last_packet_id = None
         self.last_client_id = None
         self._init_state()
+        self.middleware = Middleware(
+            input_queues=input_queues,
+            output_queues=[],
+            output_exchanges=output_exchanges,
+            intance_id=instance_id,
+            callback=self._process_callback,
+            eofCallback=self._eof_callback,
+            faultManager=self.fault_manager,
+        )
         
     def _init_state(self):
         for key in self.fault_manager.get_keys('top10_indie_counter'):

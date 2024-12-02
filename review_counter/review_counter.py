@@ -22,6 +22,7 @@ class Top5ReviewCounter:
             intance_id=instance_id,
             callback=self._process_callback,
             eofCallback=self._eof_callback,
+            faultManager=self.fault_manager,
             exchange_input_type="direct",
         )
 

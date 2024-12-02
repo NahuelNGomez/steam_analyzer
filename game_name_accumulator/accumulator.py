@@ -32,6 +32,7 @@ class GameNamesAccumulator:
             instance_id,
             self._callBack,
             self._finCallBack,
+            self.fault_manager,
         )
         self.datasent_by_client = defaultdict(bool)
         self.total_fin = int(previous_language_nodes)

@@ -16,7 +16,7 @@ class GamesCounter:
         self.fault_manager = FaultManager(storage_dir="../persistence/")
         self.platform_counts = defaultdict(lambda: {'Windows': 0, 'Mac': 0, 'Linux': 0})
         self.init_state()
-        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack)
+        self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, self._callBack, self._finCallBack, self.fault_manager)
         self.last_client_id = None
         self.processed_batches = []
         self.last_processed_packet = None

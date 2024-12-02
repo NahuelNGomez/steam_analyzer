@@ -23,7 +23,7 @@ class PercentileAccumulator:
         self.fault_manager = FaultManager('../persistence/')
         self.init_state()
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
-                                     self._callBack, self._finCallBack, 1, "fanout", "direct")
+                                     self._callBack, self._finCallBack, self.fault_manager, 1, "fanout", "direct")
 
     def start(self):
         """

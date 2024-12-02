@@ -7,7 +7,6 @@ from common.game_review import GameReview
 from common.middleware import Middleware
 from common.packet_fin import Fin
 from common.review import Review
-from common.middleware import Middleware
 from common.fault_manager import FaultManager
 
 class GameReviewFilter:
@@ -64,6 +63,7 @@ class GameReviewFilter:
             eofCallback=self.handle_game_eof,
             output_queues=self.output_queues,  ## ???
             output_exchanges=self.output_exchanges,  ## ???
+            faultManager=self.fault_manager,
             intance_id=self.instance_id,
             exchange_output_type="direct"
         )
@@ -76,6 +76,7 @@ class GameReviewFilter:
             eofCallback=self.handle_review_eof,
             output_queues=[],  ## ???
             output_exchanges=self.output_exchanges,  ## ???
+            faultManager=self.fault_manager,
             intance_id=self.instance_id,
             exchange_output_type="direct",
         )
