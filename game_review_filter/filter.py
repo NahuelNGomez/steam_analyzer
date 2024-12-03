@@ -110,7 +110,6 @@ class GameReviewFilter:
                 final_list += f"{json.dumps(game_data)}\n"
             
             self.fault_manager.append(f"game_filter_{self.reviews_input_queue[0]}_{client_id_file}", final_list)
-            final_list = ""
 
         except Exception as e:
             logging.error(f"Error al agregar juego para cliente {game.client_id}: {e}")
@@ -123,7 +122,7 @@ class GameReviewFilter:
         packet_id = batch[0]
         logging.info(f"Recibiendo REVIEW - {packet_id}")
         batch = batch[1:]
-        final_list = str(packet_id) + "\n"
+        #final_list = str(packet_id) + "\n"
        # print("Recibiendo REVIEW - batch:", len(batch), flush=True)
        # print("Recibiendo REVIEW - batch:", batch, flush=True)
         client_id = int(Review.decode(json.loads(batch[0])).client_id)
@@ -150,39 +149,44 @@ class GameReviewFilter:
                 if not row.strip():
                     continue
                 self.reviews_to_add[client_id].append(row)
-                final_list += f"{row}\n"
-                if len(self.reviews_to_add[client_id]) >= 300:
-                    self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", '\n'.join(self.reviews_to_add[client_id]))
-                    self.reviews_to_add[client_id] = []
-                    self.review_file_size[client_id] += 1
-                if self.review_file_size[client_id] >= 7:
-                    print("Procesando reviews para cliente {client_id}", flush=True)
-                    self.review_file_size[client_id] = 0
-                    self.process_reviews(
-                        f"review_filter_{self.reviews_input_queue[0]}_{client_id}",
-                        client_id,
-                    )
+            self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", '\n'.join(self.reviews_to_add[client_id]))
+            self.reviews_to_add[client_id] = []
+            self.review_file_size[client_id] += 1
+
+            if self.review_file_size[client_id] >= 100: # Proceso cada 100 batches
+                print("Procesando reviews para cliente {client_id}", flush=True)
+                self.review_file_size[client_id] = 0
+                self.process_reviews(
+                    f"review_filter_{self.reviews_input_queue[0]}_{client_id}",
+                    client_id,
+                )
+
+
+
+            
+            if len(self.reviews_to_add[client_id]) >= 300:
+                self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", '\n'.join(self.reviews_to_add[client_id]))
+                self.reviews_to_add[client_id] = []
+                self.review_file_size[client_id] += 1
+            if self.review_file_size[client_id] >= 7:
+                print("Procesando reviews para cliente {client_id}", flush=True)
+                self.review_file_size[client_id] = 0
+                self.process_reviews(
+                    f"review_filter_{self.reviews_input_queue[0]}_{client_id}",
+                    client_id,
+                )
 
                     
-        if (
-            self.nodes_completed[client_id] == self.previous_review_nodes
-        ) and not self.sended_fin[client_id]:
+        if (self.nodes_completed[client_id] == self.previous_review_nodes) and not self.sended_fin[client_id]:
             if self.batch_counter[client_id] >= self.total_batches[client_id] and self.total_batches[client_id] != 0:
                 
-                print(
-                    "Fin de la transmisión de datos batches",
-                    self.batch_counter[client_id],
-                    flush=True,
-                )
+                print("Fin de la transmisión de datos batches",self.batch_counter[client_id],flush=True)
                 with self.file_lock:
                     self.save_last_reviews(client_id)
-                    #self.process_reviews(f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt",client_id)
                     self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
-                    #self.reviews_middleware.send(Fin(0, client_id).encode())
                     self.send_fin(client_id)
-
                 self.sended_fin[client_id] = True
-        #self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", final_list)
+
         
         
     def send_fin(self, client_id):
