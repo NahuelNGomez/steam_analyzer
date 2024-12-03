@@ -40,7 +40,7 @@ class FaultManager:
                         length = struct.unpack('>I', length_bytes)[0]
                         
                         # Leer los siguientes `length` bytes (datos en JSON)
-                        data = f.read(length).decode('unicode_escape')
+                        data = f.read(length).decode()
                         
                         # Parsear la línea en JSON
                         key, internal_key = json.loads(data)

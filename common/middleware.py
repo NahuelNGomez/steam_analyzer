@@ -181,7 +181,7 @@ class Middleware:
         
     def init_state(self):
         if self.fault_manager is not None:
-            for key in self.fault_manager.get_keys("middleware"):
+            for key in self.fault_manager.get_keys(f"middleware_{self.intance_id}_{self.input_queues_aux}"):
                 packet_id = self.fault_manager.get(key)
                 packets = packet_id.strip().split("\n")
                 self.processed_packets = packets
@@ -193,7 +193,7 @@ class Middleware:
         """
         Remove processed packets older than 2 minutes from the persistence directory.
         """
-        for key in self.fault_manager.get_keys("middleware"):
+        for key in self.fault_manager.get_keys(f"middleware_{self.intance_id}_{self.input_queues_aux}"):
             state = self.fault_manager.get(key)
             if state is not None:
                 now = datetime.now()
