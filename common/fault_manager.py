@@ -24,33 +24,33 @@ class FaultManager:
         self._keys_index: dict[str, dict[str, str]] = {}
         
         
-        self._init_state()
+        self.init_state()
         
-
-    def _init_state(self):
+    def init_state(self):
+        self._keys_index = {}  # Inicializamos el diccionario una vez fuera del loop
         for file_name in os.listdir(self.storage_dir):
             if file_name.startswith(self.key_index_prefix):
-                self._keys_index = {}   
-                with open(f'{self.storage_dir}/{file_name}', 'rb') as f:
-                    while True:
-                        # Leer los primeros 4 bytes (longitud)
-                        length_bytes = f.read(4)
-                        if not length_bytes:
-                            break  # Fin del archivo
-                        length = struct.unpack('>I', length_bytes)[0]
+                with open(f'{self.storage_dir}/{file_name}', 'r') as f:
+                    for line in f:
+                        line = line.strip()  # Remover espacios y saltos de línea
+                        if not line:  # Saltar líneas vacías
+                            continue
+                        try:
+                            # Parse the line as a JSON list
+                            parsed_line = json.loads(line)
+                            
+                            # Ensure the list has exactly 2 elements
+                            if len(parsed_line) == 2:
+                                key, internal_key = parsed_line
+                                self._keys_index[key] = internal_key
+                            else:
+                                print(f"Línea no válida: {line}")
                         
-                        # Leer los siguientes `length` bytes (datos en JSON)
-                        data = f.read(length).decode()
-                        
-                        # Parsear la línea en JSON
-                        key, internal_key = json.loads(data)
-                        
-                        # Agregar al diccionario
-                        self._keys_index[key] = internal_key
-                        
-                        # Leer el separador '\n'
-                        f.read(1)  # Salta el salto de línea
+                        except json.JSONDecodeError as e:
+                            print(f"Error al decodificar JSON: {e}, línea: {line}")
+        
         print(self._keys_index)
+        
     # Text incluye el package_number
     def _append(self, path: str, text: str):
         try:
@@ -58,10 +58,10 @@ class FaultManager:
             
             # (big-endian)
             data += b'\n'
-            length_bytes = len(data).to_bytes(
-                LENGTH_BYTES, byteorder='big')
+            # length_bytes = len(data).to_bytes(
+            #     LENGTH_BYTES, byteorder='big')
             with open(path, 'ab') as f:
-                f.write(length_bytes + data)
+                f.write(data)
                 f.flush()
                 
         except Exception as e:
@@ -80,11 +80,11 @@ class FaultManager:
             logging.debug(f"Writing to {path}")
             data = data.encode()
             data += b'\n'
-            length_bytes = len(data).to_bytes(
-                LENGTH_BYTES, byteorder='big')
+            # length_bytes = len(data).to_bytes(
+            #     LENGTH_BYTES, byteorder='big')
             temp_path = f'{self.storage_dir}/{AUX_FILE}'
             with open(temp_path, 'wb') as f:
-                f.write(length_bytes + data)
+                f.write(data)
                 f.flush()
             os.replace(temp_path, path)
         except Exception as e:
@@ -131,16 +131,17 @@ class FaultManager:
         try:
             path = f'{self.storage_dir}/{self._get_internal_key(key)}'
             with open(path, 'rb') as f:
-                data = ''
-                while (length_bytes := f.read(LENGTH_BYTES)):
-                    length = int.from_bytes(length_bytes, byteorder='big')
+                data = f.read().decode()
+
+                # while (length_bytes := f.read(LENGTH_BYTES)):
+                #     length = int.from_bytes(length_bytes, byteorder='big')
                     
-                    content = f.read(length)
+                #     content = f.read(length)
                                         
-                    if len(content) == length:
-                        data += content.decode()
-                    else:
-                        logging.error(f"Error reading key: {key}")
+                #     if len(content) == length:
+                #         data += content.decode()
+                #     else:
+                #         logging.error(f"Error reading key: {key}")
                 return data
                     
         except Exception as e:  

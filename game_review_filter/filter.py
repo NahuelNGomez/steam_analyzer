@@ -52,7 +52,7 @@ class GameReviewFilter:
         self.action_packet_id = 1
         self.games: dict = {}
         self.file_lock = threading.Lock()
-        #self.init_state()
+        self.init_state()
         self.games_receiver = threading.Thread(target=self._games_receiver)
         self.reviews_receiver = threading.Thread(target=self._reviews_receiver)
 
@@ -81,6 +81,33 @@ class GameReviewFilter:
             exchange_output_type="direct",
         )
         self.reviews_middleware.start()
+        
+    def init_state(self):
+        for key in self.fault_manager.get_keys(f'game_filter_{self.reviews_input_queue[0]}'):
+            data = self.fault_manager.get(key)
+            data = data.strip().split("\n")
+            client_id = key.split("_")[-1]
+            if "game_filter" in key:
+                for line in data:
+                    if line.isdigit():
+                        last_packet_id = line
+                        continue
+                    if not line:
+                        continue
+                    json_data_game = json.loads(line)
+                    game_id = json_data_game["id"]
+                    game_name = json_data_game["name"]
+                    
+                    if client_id not in self.games:
+                        self.games[client_id] = {}
+                    self.games[client_id][str(game_id)] = game_name
+            
+            if "review_filter" in key:
+                for line in data:
+                    if line.isdigit():
+                        last_packet_id = line
+                        continue
+                    # Guardar batch counter, last packet id, total batches
 
     def _add_game(self, game):
         """
@@ -165,8 +192,6 @@ class GameReviewFilter:
                     client_id,
                 )
 
-
-
                     
         if (self.nodes_completed[client_id] == self.previous_review_nodes) and not self.sended_fin[client_id]:
             if self.batch_counter[client_id] >= self.total_batches[client_id] and self.total_batches[client_id] != 0:
@@ -178,7 +203,6 @@ class GameReviewFilter:
                     self.send_fin(client_id)
                 self.sended_fin[client_id] = True
 
-        
         
     def send_fin(self, client_id):
         # print("envío fin", flush=True)

@@ -1,5 +1,21 @@
 [
     {
+        "supported_platforms": [
+            {
+                "platform": "Windows",
+                "game_count": 9230
+            },
+            {
+                "platform": "Mac",
+                "game_count": 1773
+            },
+            {
+                "platform": "Linux",
+                "game_count": 1280
+            }
+        ]
+    },
+    {
         "top_10_indie_games_2010s": [
             {
                 "rank": 1,
@@ -54,22 +70,6 @@
         ]
     },
     {
-        "supported_platforms": [
-            {
-                "platform": "Windows",
-                "game_count": 9230
-            },
-            {
-                "platform": "Mac",
-                "game_count": 1773
-            },
-            {
-                "platform": "Linux",
-                "game_count": 1280
-            }
-        ]
-    },
-    {
         "top_5_indie_games_positive_reviews": [
             {
                 "rank": 1,
@@ -97,136 +97,5 @@
                 "positive_review_count": 501
             }
         ]
-    },
-    {
-        "negative_count_percentile": [
-            {
-                "game_id": "10",
-                "name": "Counter-Strike"
-            },
-            {
-                "game_id": "620",
-                "name": "Portal 2"
-            },
-            {
-                "game_id": "12220",
-                "name": "Grand Theft Auto: Episodes from Liberty City"
-            },
-            {
-                "game_id": "17410",
-                "name": "Mirror's Edge™"
-            },
-            {
-                "game_id": "49540",
-                "name": "Aliens: Colonial Marines Collection"
-            },
-            {
-                "game_id": "65790",
-                "name": "ARMA: Cold War Assault"
-            },
-            {
-                "game_id": "107410",
-                "name": "Arma 3"
-            },
-            {
-                "game_id": "220240",
-                "name": "Far Cry 3"
-            },
-            {
-                "game_id": "232090",
-                "name": "Killing Floor 2"
-            },
-            {
-                "game_id": "233720",
-                "name": "Surgeon Simulator"
-            },
-            {
-                "game_id": "234670",
-                "name": "NARUTO SHIPPUDEN: Ultimate Ninja STORM 3 Full Burst HD"
-            },
-            {
-                "game_id": "236150",
-                "name": "Starpoint Gemini 2"
-            },
-            {
-                "game_id": "238090",
-                "name": "Sniper Elite 3"
-            },
-            {
-                "game_id": "250400",
-                "name": "How to Survive"
-            },
-            {
-                "game_id": "250900",
-                "name": "The Binding of Isaac: Rebirth"
-            },
-            {
-                "game_id": "258970",
-                "name": "Gauntlet™ Slayer Edition"
-            },
-            {
-                "game_id": "265300",
-                "name": "Lords Of The Fallen™"
-            },
-            {
-                "game_id": "268750",
-                "name": "Magicite"
-            },
-            {
-                "game_id": "270550",
-                "name": "Yet Another Zombie Defense"
-            },
-            {
-                "game_id": "275490",
-                "name": "Canyon Capers"
-            },
-            {
-                "game_id": "278080",
-                "name": "DYNASTY WARRIORS 8: Xtreme Legends Complete Edition"
-            },
-            {
-                "game_id": "282440",
-                "name": "Quake Live™"
-            },
-            {
-                "game_id": "285920",
-                "name": "TerraTech"
-            },
-            {
-                "game_id": "293180",
-                "name": "Overcast - Walden and the Werewolf"
-            },
-            {
-                "game_id": "299740",
-                "name": "Miscreated"
-            },
-            {
-                "game_id": "310950",
-                "name": "Street Fighter V"
-            },
-            {
-                "game_id": "323470",
-                "name": "DRAGON BALL XENOVERSE"
-            },
-            {
-                "game_id": "351290",
-                "name": "SURVIVAL: Postapocalypse Now"
-            },
-            {
-                "game_id": "352460",
-                "name": "Dead Realm"
-            },
-            {
-                "game_id": "381210",
-                "name": "Dead by Daylight"
-            },
-            {
-                "game_id": "447040",
-                "name": "Watch_Dogs® 2"
-            }
-        ]
-    },
-    {
-        "game_exceeding_limit": []
     }
 ]
