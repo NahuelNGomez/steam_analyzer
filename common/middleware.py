@@ -116,29 +116,39 @@ class Middleware:
 
         def callback_wrapper(ch, method, properties, body):
             mensaje_str = body.decode("utf-8")
-            if self.fault_manager is not None:
-                mensaje_str_aux = mensaje_str.strip().split("\n")
-                packet_id = mensaje_str_aux[0]
-                logging.info(f"Paquete recibido con ID: {packet_id}")
-                if packet_id in self.processed_packets and not "fin" in packet_id:
-                    logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
-                    self.ack(method.delivery_tag)
-                    return
-            #logging.info("Received %s", mensaje_str)
-            if "fin\n\n" in mensaje_str:
-                eofCallback(mensaje_str)
-            else:
-                callback(mensaje_str)
-            if not self.auto_ack:
-                self.ack(method.delivery_tag)
-            if self.fault_manager is not None:
-                now = datetime.now()
-                logging.info(f"Paquete {packet_id} procesado a las {now}")
             
-                self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
-                self.processed_packets.append(f'{packet_id}')
+            if self.fault_manager is not None:
+                self._callback_with_state(mensaje_str, method, callback, eofCallback)
+            else:
+                self._do_callback(mensaje_str, callback, eofCallback, method)
+                self.ack(method.delivery_tag)
 
         return callback_wrapper
+    
+    def _do_callback(self, mensaje_str, callback, eofCallback, method):
+        if "fin\n\n" in mensaje_str:
+            eofCallback(mensaje_str)
+        else:
+            callback(mensaje_str)
+    
+    def _callback_with_state(self, mensaje_str, method, callback, eofCallback):
+        mensaje_str_aux = mensaje_str.strip().split("\n")
+        packet_id = mensaje_str_aux[0]
+        logging.info(f"Paquete recibido con ID: {packet_id}")
+        if packet_id in self.processed_packets and not "fin" in packet_id:
+            logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
+            self.ack(method.delivery_tag)
+            return
+        
+        self._do_callback(mensaje_str, callback, eofCallback, method)
+        
+        now = datetime.now()
+        logging.info(f"Paquete {packet_id} procesado a las {now}")
+    
+        self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
+        self.processed_packets.append(f'{packet_id}')
+        self.ack(method.delivery_tag)
+        
 
     def ack(self, delivery_tag):
         self.channel.basic_ack(delivery_tag=delivery_tag)
