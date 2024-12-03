@@ -34,6 +34,7 @@ services:
     - AMOUNT_OF_GAMES_INSTANCE=2
     - OUTPUT_EXCHANGES=["games"]
     - 'INPUT_QUEUES={"result_queue_gateway": "result_queue"}'
+    - DUPLICATION_PROB=0.05
     volumes:
     - ./results_gateway:/results_gateway
   games_counter:
