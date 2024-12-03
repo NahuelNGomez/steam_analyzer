@@ -122,6 +122,7 @@ class GameReviewFilter:
         packet_id = batch[0]
         logging.info(f"Recibiendo REVIEW - {packet_id}")
         batch = batch[1:]
+        
         #final_list = str(packet_id) + "\n"
        # print("Recibiendo REVIEW - batch:", len(batch), flush=True)
        # print("Recibiendo REVIEW - batch:", batch, flush=True)
@@ -149,7 +150,10 @@ class GameReviewFilter:
                 if not row.strip():
                     continue
                 self.reviews_to_add[client_id].append(row)
-            self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", '\n'.join(self.reviews_to_add[client_id]))
+            
+            data_to_send = f'{packet_id}\n' + '\n'.join(self.reviews_to_add[client_id])
+            self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", data_to_send)
+            
             self.reviews_to_add[client_id] = []
             self.review_file_size[client_id] += 1
 
@@ -161,13 +165,11 @@ class GameReviewFilter:
                     client_id,
                 )
 
-
-
-            
             if len(self.reviews_to_add[client_id]) >= 300:
                 self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", '\n'.join(self.reviews_to_add[client_id]))
                 self.reviews_to_add[client_id] = []
                 self.review_file_size[client_id] += 1
+            
             if self.review_file_size[client_id] >= 7:
                 print("Procesando reviews para cliente {client_id}", flush=True)
                 self.review_file_size[client_id] = 0
@@ -309,37 +311,43 @@ class GameReviewFilter:
         
         name = key 
         lines = data.strip().split("\n")
+        lines = lines[1:]
         
         logging.info(f"[PROCESS REVIEW] Procesando reviews para cliente {client_id}")
         
         for line in lines:
-
-            json_data = json.loads(line)
-            review = Review.decode(json_data)
-            if review.game_id in client_games:
-                game = client_games[review.game_id]
-                if "action" in self.games_input_queue[1].lower():
-                    game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
-                    game_str = json.dumps(game_review.getData())
-                    data_to_send = f"{self.action_packet_id}\n{game_str}\n"
-                    routing = f"games_reviews_action_queue_{self.next_instance}_0"
-                    self.reviews_middleware.send(data=data_to_send,routing_key=routing)
-                    self.reviews_middleware.send(data=data_to_send,routing_key="games_reviews_action_queue_3")
-                    self.action_packet_id += 1
-                    self.next_instance = (self.next_instance % self.amount_of_language_filters) + 1                    
+            try: 
+                if line.isdigit():
+                    continue
+                json_data = json.loads(line)
+                review = Review.decode(json_data)
+                if review.game_id in client_games:
+                    game = client_games[review.game_id]
+                    if "action" in self.games_input_queue[1].lower():
+                        game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
+                        game_str = json.dumps(game_review.getData())
+                        data_to_send = f"{self.action_packet_id}\n{game_str}\n"
+                        routing = f"games_reviews_action_queue_{self.next_instance}_0"
+                        self.reviews_middleware.send(data=data_to_send,routing_key=routing)
+                        self.reviews_middleware.send(data=data_to_send,routing_key="games_reviews_action_queue_3")
+                        self.action_packet_id += 1
+                        self.next_instance = (self.next_instance % self.amount_of_language_filters) + 1                    
+                    else:
+                        game_review = GameReview(review.game_id, game, None, review.client_id)
+                        game_str = json.dumps(game_review.getData())
+                        final_list += f"{game_str}\n"
+                        batch_counter += 1
+                        if (batch_counter >= batch_size):
+                            self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
+                            self.packet_id += 4
+                            final_list = str(self.packet_id) + "\n"
+                            batch_counter = 0
                 else:
-                    game_review = GameReview(review.game_id, game, None, review.client_id)
-                    game_str = json.dumps(game_review.getData())
-                    final_list += f"{game_str}\n"
-                    batch_counter += 1
-                    if (batch_counter >= batch_size):
-                        self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-                        self.packet_id += 4
-                        final_list = str(self.packet_id) + "\n"
-                        batch_counter = 0
-            else:
-                pass
+                    pass
+            except json.JSONDecodeError as e:
+                logging.error(f"Error al procesar la línea '{line}': {e}")
             
+                
         if final_list:
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
             self.packet_id += 4

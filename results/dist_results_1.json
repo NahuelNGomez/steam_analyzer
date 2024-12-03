@@ -1,5 +1,21 @@
 [
     {
+        "supported_platforms": [
+            {
+                "platform": "Windows",
+                "game_count": 9230
+            },
+            {
+                "platform": "Mac",
+                "game_count": 1773
+            },
+            {
+                "platform": "Linux",
+                "game_count": 1280
+            }
+        ]
+    },
+    {
         "top_10_indie_games_2010s": [
             {
                 "rank": 1,
@@ -50,51 +66,6 @@
                 "rank": 10,
                 "name": "太吾绘卷 The Scroll Of Taiwu",
                 "average_playtime_hours": 2555
-            }
-        ]
-    },
-    {
-        "supported_platforms": [
-            {
-                "platform": "Windows",
-                "game_count": 9230
-            },
-            {
-                "platform": "Mac",
-                "game_count": 1773
-            },
-            {
-                "platform": "Linux",
-                "game_count": 1280
-            }
-        ]
-    },
-    {
-        "top_5_indie_games_positive_reviews": [
-            {
-                "rank": 1,
-                "name": "The Plan",
-                "positive_review_count": 831
-            },
-            {
-                "rank": 2,
-                "name": "RimWorld",
-                "positive_review_count": 642
-            },
-            {
-                "rank": 3,
-                "name": "Surgeon Simulator",
-                "positive_review_count": 631
-            },
-            {
-                "rank": 4,
-                "name": "Darkest Dungeon®",
-                "positive_review_count": 537
-            },
-            {
-                "rank": 5,
-                "name": "A Story About My Uncle",
-                "positive_review_count": 501
             }
         ]
     },
