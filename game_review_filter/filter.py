@@ -42,7 +42,7 @@ class GameReviewFilter:
         self.batch_counter: dict = {} 
         self.total_batches: dict = {} 
         self.amount_of_language_filters = amount_of_language_filters
-        self.fault_manager = FaultManager("../persistence/")
+        self.fault_manager = FaultManager("../persistence/", self.reviews_input_queue[0])
         self.next_instance = 1
         if "action" in self.games_input_queue[1].lower():
             self.packet_id = 1
@@ -165,18 +165,7 @@ class GameReviewFilter:
                     client_id,
                 )
 
-            if len(self.reviews_to_add[client_id]) >= 300:
-                self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", '\n'.join(self.reviews_to_add[client_id]))
-                self.reviews_to_add[client_id] = []
-                self.review_file_size[client_id] += 1
-            
-            if self.review_file_size[client_id] >= 7:
-                print("Procesando reviews para cliente {client_id}", flush=True)
-                self.review_file_size[client_id] = 0
-                self.process_reviews(
-                    f"review_filter_{self.reviews_input_queue[0]}_{client_id}",
-                    client_id,
-                )
+
 
                     
         if (self.nodes_completed[client_id] == self.previous_review_nodes) and not self.sended_fin[client_id]:
