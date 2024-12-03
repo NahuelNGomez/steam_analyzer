@@ -111,12 +111,7 @@ class GameReviewFilter:
             
             self.fault_manager.append(f"game_filter_{self.reviews_input_queue[0]}_{client_id_file}", final_list)
             final_list = ""
-            # game = Game.decode(json.loads(aux[1]))
-            # logging.info(f"Recibido juego: {game} - {packet_id}")
-            # client_id = game.client_id
-            # if client_id not in self.games:
-            #     self.games[client_id] = {}
-            # self.games[client_id][str(game.id)] = game.name
+
         except Exception as e:
             logging.error(f"Error al agregar juego para cliente {game.client_id}: {e}")
 
@@ -156,22 +151,18 @@ class GameReviewFilter:
                     continue
                 self.reviews_to_add[client_id].append(row)
                 final_list += f"{row}\n"
-                if len(self.reviews_to_add[client_id]) >= 3000:
-                    # name = f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt"
+                if len(self.reviews_to_add[client_id]) >= 300:
                     self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", '\n'.join(self.reviews_to_add[client_id]))
-                    # with open(name, "a") as file:
-                    #     for review_cleaned in self.reviews_to_add[client_id]:
-                    #         file.write(review_cleaned + "\n")
                     self.reviews_to_add[client_id] = []
                     self.review_file_size[client_id] += 1
-                if self.review_file_size[client_id] >= 70:
+                if self.review_file_size[client_id] >= 7:
                     print("Procesando reviews para cliente {client_id}", flush=True)
                     self.review_file_size[client_id] = 0
                     self.process_reviews(
                         f"review_filter_{self.reviews_input_queue[0]}_{client_id}",
                         client_id,
                     )
-                    # self.fault_manager.delete_key(f"review_filter_{self.reviews_input_queue[0]}_{client_id}")
+
                     
         if (
             self.nodes_completed[client_id] == self.previous_review_nodes
@@ -237,9 +228,8 @@ class GameReviewFilter:
         ):
             self.sended_fin[client_id] = True
             logging.info("Fin de la transmisión de datos")
-            #self.process_reviews(f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt",fin.client_id)
+
             self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
-            #self.reviews_middleware.send(message)
             self.send_fin(client_id)
 
     def save_last_reviews(self,client_id):
@@ -247,12 +237,8 @@ class GameReviewFilter:
         Guarda las reviews restantes en el archivo.
         """
         # print(" EOF Recibiendo- ", flush=True)
-        #name = f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt"
         self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", '\n'.join(self.reviews_to_add[client_id]))
-        
-        # with open(name, "a") as file:
-        #     for review in self.reviews_to_add[client_id]:
-        #         file.write(review + "\n")
+
         self.reviews_to_add[client_id] = []
 
     def handle_review_eof(self, message):
@@ -297,15 +283,12 @@ class GameReviewFilter:
                 )
                 with self.file_lock:
                     self.save_last_reviews(client_id)
-                    # self.process_reviews(
-                    #     f"../data/reviewsData{self.reviews_input_queue[0]}_{client_id}.txt",
-                    #     message_fin.client_id,
-                    # )
+
                     self.process_reviews(
                         f"review_filter_{self.reviews_input_queue[0]}_{client_id}",
                         message_fin.client_id,
                     )
-                    #self.reviews_middleware.send(Fin(self.total_batches, message_fin.client_id).encode())
+
                     self.send_fin(client_id)
                     self.sended_fin[client_id] = True
                     self.fault_manager.delete_key(f"game_filter_{self.reviews_input_queue[0]}_{client_id}")
@@ -326,8 +309,7 @@ class GameReviewFilter:
         logging.info(f"[PROCESS REVIEW] Procesando reviews para cliente {client_id}")
         
         for line in lines:
-        # with open(name, "r") as file:
-        #     for line in file:
+
             json_data = json.loads(line)
             review = Review.decode(json_data)
             if review.game_id in client_games:
@@ -357,7 +339,6 @@ class GameReviewFilter:
         if final_list:
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
             self.packet_id += 4
-        #os.remove(name)
         self.fault_manager.delete_key(f"review_filter_{self.reviews_input_queue[0]}_{client_id}")
 
     def start(self):
