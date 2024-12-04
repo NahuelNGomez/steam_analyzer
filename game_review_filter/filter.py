@@ -204,7 +204,7 @@ class GameReviewFilter:
             self.completed_reviews[client_id] = False
         
         self.batch_counter[client_id] += 1
-        logging.info(f"Recibiendo REVIEW - batch_counter: {self.batch_counter[client_id]}")
+        #logging.info(f"Recibiendo REVIEW - batch_counter: {self.batch_counter[client_id]}")
         with self.file_lock:
             for row in batch:
                 if not row.strip():
@@ -348,6 +348,7 @@ class GameReviewFilter:
                     self.send_fin(client_id)
                     self.sended_fin[client_id] = True
                     self.fault_manager.delete_key(f"game_filter_{self.reviews_input_queue[0]}_{client_id}")
+                    self.fault_manager.delete_key(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}")
                     
     def process_reviews(self, key, client_id):
         """
@@ -377,7 +378,7 @@ class GameReviewFilter:
                 review = Review.decode(json_data)
                 #logging.info(f"Procesando review - {type(review.client_id)}(STR) - {type(review.game_id) (STR)}")
                 if review.game_id in client_games:
-                    logging.info(f"Procesando review - {self.action_packet_id} - {self.packet_id}")
+                    #logging.info(f"Procesando review - {self.action_packet_id} - {self.packet_id}")
                     game = client_games[review.game_id]
                     if "action" in self.games_input_queue[1].lower():
 
@@ -416,7 +417,7 @@ class GameReviewFilter:
             self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
         else:
             self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
-
+        logging.info(f"[PROCESS REVIEW] Reviews procesadas para cliente {client_id} - {self.action_packet_id} - {self.packet_id}")
     def start(self):
         """
         Inicia el proceso de join.

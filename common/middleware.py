@@ -134,7 +134,7 @@ class Middleware:
     def _callback_with_state(self, mensaje_str, method, callback, eofCallback):
         mensaje_str_aux = mensaje_str.strip().split("\n")
         packet_id = mensaje_str_aux[0]
-        logging.info(f"Paquete recibido con ID: {packet_id}")
+        #logging.info(f"Paquete recibido con ID: {packet_id}")
         if packet_id in self.processed_packets and not "fin" in packet_id:
             logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
             self.ack(method.delivery_tag)
@@ -187,7 +187,7 @@ class Middleware:
                 self.processed_packets = packets
                 
                 #logging.info(f"Restaurando estado para el paquete {packet_id}")
-            logging.info(f'Paquetes procesados: {self.processed_packets}')
+            #logging.info(f'Paquetes procesados: {self.processed_packets}')
         
     def clean_persistence(self):
         """

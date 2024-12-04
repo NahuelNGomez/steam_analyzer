@@ -22,10 +22,17 @@ class FaultManager:
         self.key_index_prefix = KEYS_INDEX_KEY_PREFIX + extension
         # Del tipo {"client1": {"nombre": "Alice", "edad": 30}}
         self._keys_index: dict[str, dict[str, str]] = {}
-        
+        self.locks = {}  # Diccionario para mantener los bloqueos por archivo
+        self.locks_lock = threading.Lock()  # Lock para el diccionario de locks
         
         self.init_state()
         
+    def _get_lock(self, path: str) -> threading.Lock:
+        with self.locks_lock:
+            if path not in self.locks:
+                self.locks[path] = threading.Lock()
+            return self.locks[path]
+            
     def init_state(self):
         self._keys_index = {}  # Inicializamos el diccionario una vez fuera del loop
         for file_name in os.listdir(self.storage_dir):
@@ -81,17 +88,16 @@ class FaultManager:
     #         if os.path.exists(temp_path):
     #             os.remove(temp_path)
     def _append(self, path: str, text: str):
-        try:
-            data = text.encode()
-            
-            # (big-endian)
-            data += b'\n'
-            with open(path, 'ab') as f:
-                f.write(data)
-                f.flush()
-                
-        except Exception as e:
-            logging.error(f"Error appending to {path}: {e}")
+        lock = self._get_lock(path)
+        with lock:
+            try:
+                data = text.encode()
+                data += b'\n'
+                with open(path, 'ab') as f:
+                    f.write(data)
+                    f.flush()
+            except Exception as e:
+                logging.error(f"Error appending to {path}: {e}")
                 
                 
     def append(self, key: str, value: str):
@@ -101,20 +107,22 @@ class FaultManager:
         except Exception as e:
             logging.error(f"Error appending value: {value} for key: {key}: {e}")
 
-    def _write(self, path, data: str):
-        try:
-            logging.debug(f"Writing to {path}")
-            data = data.encode()
-            data += b'\n'
-            # length_bytes = len(data).to_bytes(
-            #     LENGTH_BYTES, byteorder='big')
-            temp_path = f'{self.storage_dir}/{AUX_FILE}'
-            with open(temp_path, 'wb') as f:
-                f.write(data)
-                f.flush()
-            os.replace(temp_path, path)
-        except Exception as e:
-            logging.error(f"Error writing to {path}: {e}")
+    def _write(self, path: str, data: str):
+        lock = self._get_lock(path)
+        with lock:
+            try:
+                logging.debug(f"Writing to {path}")
+                encoded_data = data.encode()
+                encoded_data += b'\n'
+                temp_path = f'{path}_{AUX_FILE}'
+                with open(temp_path, 'wb') as f:
+                    f.write(encoded_data)
+                    f.flush()
+                os.replace(temp_path, path)
+            except Exception as e:
+                logging.error(f"Error writing to {path}: {e}")
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
 
 
     def _get_internal_key(self, key: str) -> str:
@@ -154,17 +162,16 @@ class FaultManager:
         return keys
 
     def get(self, key: str) -> Optional[str]:
-        try:
-            path = f'{self.storage_dir}/{self._get_internal_key(key)}'
-            with open(path, 'rb') as f:
-                data = f.read().decode()
-
-                
-                return data
-                    
-        except Exception as e:  
-            logging.error(f"Error getting key: {key}: {e}")
-            return None
+        path = f'{self.storage_dir}/{self._get_internal_key(key)}'
+        lock = self._get_lock(path)
+        with lock:
+            try:
+                with open(path, 'rb') as f:
+                    data = f.read().decode()
+                    return data
+            except Exception as e:
+                logging.error(f"Error getting key: {key}: {e}")
+                return None
 
     def update(self, key: str, value: str):
         try:
