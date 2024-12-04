@@ -34,17 +34,22 @@ class LanguageFilter:
         try:
             aux = data.split('\n')
             packet_id = aux[0]
+            batch = aux[1:]
+            finalList = []
             
-            game_review = GameReview.decode(json.loads(aux[1]))
-            result_text = game_review.review_text
-            language, confidence = langid.classify(result_text)
-            if language == 'en':
-                game = GameReview(game_review.game_id, game_review.game_name, None, game_review.client_id)
-                game_str = json.dumps(game.getData())
-                data_to_send = packet_id + '\n' + game_str + '\n'
+            for row in batch:
+                if not row.strip():
+                    continue
+                game_review = GameReview.decode(json.loads(row))
+                result_text = game_review.review_text
+                language, confidence = langid.classify(result_text)
+                if language == 'en':
+                    finalList.append(json.dumps(game_review.getData()))
+                else:
+                    logging.info("Mensaje no es en inglés, no se envía")
+            if finalList:
+                data_to_send = packet_id + '\n' + '\n'.join(finalList) + '\n'
                 self.middleware.send(data_to_send)
-            else:
-                logging.info("Mensaje no es en inglés, no se envía")
             
         except Exception as e:
             logging.error(f"Error en LanguageFilter callback: {e}")

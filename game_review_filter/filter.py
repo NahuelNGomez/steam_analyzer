@@ -357,10 +357,10 @@ class GameReviewFilter:
         client_games = self.games.get(int(client_id), {})
         batch_size = 200
         final_list = str(self.packet_id) + "\n"
+        final_list_action = str(self.action_packet_id) + "\n"
         batch_counter = 0
         data = self.fault_manager.get(key)
-        
-        name = key 
+        self.next_instance = 1
         lines = data.strip().split("\n")
         lines = lines[1:]   
         logging.info(f"[PROCESS REVIEW] Procesando reviews para cliente {client_id} - {self.action_packet_id} - {self.packet_id}")
@@ -384,13 +384,18 @@ class GameReviewFilter:
 
                         game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
                         game_str = json.dumps(game_review.getData())
-                        data_to_send = f"{self.action_packet_id}\n{game_str}\n"
-                        routing = f"games_reviews_action_queue_{self.next_instance}_0"
-                        self.reviews_middleware.send(data=data_to_send,routing_key=routing) # language filter
-                        self.reviews_middleware.send(data=data_to_send,routing_key="games_reviews_action_queue_3") # Percentil directo
-                        self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": initial_packet}))
-                        self.action_packet_id += 1
-                        self.next_instance = (self.next_instance % self.amount_of_language_filters) + 1                    
+                        #data_to_send = f"{self.action_packet_id}\n{game_str}\n"
+                        final_list_action += f"{game_str}\n"
+                        batch_counter += 1
+                        if (batch_counter >= batch_size):
+                            routing = f"games_reviews_action_queue_{self.next_instance}_0"
+                            self.reviews_middleware.send(data=final_list_action,routing_key=routing) # language filter
+                            self.reviews_middleware.send(data=final_list_action,routing_key="games_reviews_action_queue_3") # Percentil directo
+                            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": initial_packet}))
+                            self.action_packet_id += 1
+                            self.next_instance = (self.next_instance % self.amount_of_language_filters) + 1
+                            final_list_action = str(self.action_packet_id) + "\n"
+                            batch_counter = 0                    
                     else:
                         game_review = GameReview(review.game_id, game, None, review.client_id)
                         game_str = json.dumps(game_review.getData())
@@ -411,6 +416,13 @@ class GameReviewFilter:
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
             self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
             self.packet_id += 4
+        if final_list_action and "action" in self.games_input_queue[1].lower():
+            routing = f"games_reviews_action_queue_{self.next_instance}_0"
+            self.reviews_middleware.send(data=final_list_action,routing_key=routing) # language filter
+            self.reviews_middleware.send(data=final_list_action,routing_key="games_reviews_action_queue_3")
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": initial_packet}))
+            self.action_packet_id += 1
+            
         self.fault_manager.delete_key(f"review_filter_{self.reviews_input_queue[0]}_{client_id}")
 
         if "action" in self.games_input_queue[1].lower():

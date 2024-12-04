@@ -24,7 +24,7 @@ class PercentileAccumulator:
         self.init_state()
         self.middleware = Middleware(input_queues, [], output_exchanges, instance_id, 
                                      self._callBack, self._finCallBack, self.fault_manager, 1, "fanout", "direct")
-
+        self.value_to_store = ''
     def start(self):
         """
         Inicia el acumulador.
@@ -55,7 +55,9 @@ class PercentileAccumulator:
                 'game_name': game.game_name,
                 'packet_id': packet_id
             }
-            self.fault_manager.append(f"percentile_{client_id}", json.dumps(game_data))
+            self.value_to_store += json.dumps(game_data) + "\n"
+            
+            #self.fault_manager.append(f"percentile_{client_id}", json.dumps(game_data))
         except Exception as e:
             logging.error(f"Error in process_game: {e}")
             
@@ -132,10 +134,11 @@ class PercentileAccumulator:
                 logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
                 self.last_packet_id.remove(packet_id)
                 return
-            game_review  = GameReview.decode(json.loads(aux[1]))
-            # logging.info(f"Mensaje recivido, packet_id: {packet_id}")
-            self.process_game(game_review, packet_id)
-            
+            for row in aux[1:]:
+                game_review = GameReview.decode(json.loads(row))
+                # logging.info(f"Mensaje recibido, packet_id: {packet_id}")
+                self.process_game(game_review, packet_id)
+            self.fault_manager.append(f"percentile_{game_review.client_id}", self.value_to_store)
         except Exception as e:
             logging.error(f"Error en PercentileAccumulator callback: {e}")
 
@@ -157,6 +160,8 @@ class PercentileAccumulator:
                 self.last_packet_id.append(json.loads(game_entries[-1])['packet_id'])
                 for entry in game_entries:
                     try:
+                        if not entry.strip():
+                            continue
                         game_data = json.loads(entry)
                         game_id = game_data['game_id']
                         game_name = game_data['game_name']
