@@ -193,11 +193,11 @@ class Middleware:
         """
         Remove processed packets older than 2 minutes from the persistence directory.
         """
+        updated_aux = []
         for key in self.fault_manager.get_keys(f"middleware_{self.intance_id}_{self.input_queues_aux}"):
             state = self.fault_manager.get(key)
             if state is not None:
                 now = datetime.now()
-                updated_aux = []
                 packets = state.strip().split("\n")
                 logging.info(f"Restaurando estado para el paquete {state}")
                 for packet in packets:

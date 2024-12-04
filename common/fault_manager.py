@@ -51,23 +51,49 @@ class FaultManager:
         
         print(self._keys_index)
         
-    # Text incluye el package_number
+    # def _append(self, path: str, text: str):
+    #     try:
+    #         data = text.encode()
+    #         data += b'\n'
+            
+    #         # Crear un archivo temporal y escribir los datos existentes + nuevos
+    #         temp_path = f'{path}_{AUX_FILE}'
+            
+    #         # Copiar datos existentes si el archivo existe
+    #         if os.path.exists(path):
+    #             with open(path, 'rb') as original:
+    #                 existing_data = original.read()
+    #         else:
+    #             existing_data = b''
+                
+    #         # Escribir datos existentes + nuevos en archivo temporal
+    #         with open(temp_path, 'wb') as f:
+    #             f.write(existing_data)
+    #             f.write(data)
+    #             f.flush()
+                
+    #         # Reemplazar archivo original con temporal
+    #         os.replace(temp_path, path)
+                    
+    #     except Exception as e:
+    #         logging.error(f"Error appending to {path}: {e}")
+    #         # Limpiar archivo temporal si hubo error
+    #         if os.path.exists(temp_path):
+    #             os.remove(temp_path)
     def _append(self, path: str, text: str):
         try:
             data = text.encode()
             
             # (big-endian)
             data += b'\n'
-            # length_bytes = len(data).to_bytes(
-            #     LENGTH_BYTES, byteorder='big')
             with open(path, 'ab') as f:
                 f.write(data)
                 f.flush()
                 
         except Exception as e:
             logging.error(f"Error appending to {path}: {e}")
-
-
+                
+                
     def append(self, key: str, value: str):
         try:
             path = f'{self.storage_dir}/{self._get_internal_key(key)}'
@@ -133,15 +159,7 @@ class FaultManager:
             with open(path, 'rb') as f:
                 data = f.read().decode()
 
-                # while (length_bytes := f.read(LENGTH_BYTES)):
-                #     length = int.from_bytes(length_bytes, byteorder='big')
-                    
-                #     content = f.read(length)
-                                        
-                #     if len(content) == length:
-                #         data += content.decode()
-                #     else:
-                #         logging.error(f"Error reading key: {key}")
+                
                 return data
                     
         except Exception as e:  
