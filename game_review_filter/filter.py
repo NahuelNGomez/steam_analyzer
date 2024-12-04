@@ -87,12 +87,16 @@ class GameReviewFilter:
             data = json.loads(data)
             client_id = int(key.split("_")[-1])
             self.action_packet_id = data["last_sended_packet"]
+            self.packet_id = data["last_sended_packet"]
             
             if self.fault_manager.get(f"review_filter_{self.reviews_input_queue[0]}_{client_id}") is not None:
                 if self.action_packet_id == data["last_sended_packet"]:
+                    logging.info(f"Estado PROCESSED para cliente {client_id}: {self.action_packet_id}")
                     self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
                 else:
                     self.action_packet_id = data["last_init_process_packet"]
+                    self.packet_id = data["last_init_process_packet"]
+                    logging.info(f"Estado PROCESSED para cliente {client_id}: {self.action_packet_id}")
                     self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
             logging.info(f"Estado PROCESSED para cliente {client_id}: {self.action_packet_id}")
         self.reviews_middleware.start()
@@ -359,7 +363,10 @@ class GameReviewFilter:
         lines = data.strip().split("\n")
         lines = lines[1:]   
         logging.info(f"[PROCESS REVIEW] Procesando reviews para cliente {client_id} - {self.action_packet_id} - {self.packet_id}")
-        self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
+        if "action" in self.games_input_queue[1].lower():
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
+        else:
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
         initial_packet = self.action_packet_id
         for line in lines:
             try: 
@@ -370,7 +377,7 @@ class GameReviewFilter:
                 review = Review.decode(json_data)
                 #logging.info(f"Procesando review - {type(review.client_id)}(STR) - {type(review.game_id) (STR)}")
                 if review.game_id in client_games:
-                    logging.info(f"Procesando review - {review.client_id} - {review.game_id}")
+                    logging.info(f"Procesando review - {self.action_packet_id} - {self.packet_id}")
                     game = client_games[review.game_id]
                     if "action" in self.games_input_queue[1].lower():
 
@@ -390,6 +397,7 @@ class GameReviewFilter:
                         batch_counter += 1
                         if (batch_counter >= batch_size):
                             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
+                            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
                             self.packet_id += 4
                             final_list = str(self.packet_id) + "\n"
                             batch_counter = 0
@@ -398,11 +406,16 @@ class GameReviewFilter:
             except json.JSONDecodeError as e:
                 logging.error(f"Error al procesar la línea '{line}': {e}")
         
-        if final_list:
+        if final_list and "action" not in self.games_input_queue[1].lower():
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
             self.packet_id += 4
         self.fault_manager.delete_key(f"review_filter_{self.reviews_input_queue[0]}_{client_id}")
-        self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
+
+        if "action" in self.games_input_queue[1].lower():
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
+        else:
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
 
     def start(self):
         """
