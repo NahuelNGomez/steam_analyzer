@@ -12,6 +12,7 @@ import logging
 LENGTH_BYTES = 4
 AUX_FILE = '_aux'
 KEYS_INDEX_KEY_PREFIX = 'keys_index'
+SEPARATOR = b'\xFF\xFF\xFF'
 
 logging.basicConfig(level=logging.INFO)
 
@@ -34,71 +35,67 @@ class FaultManager:
             return self.locks[path]
             
     def init_state(self):
-        self._keys_index = {}  # Inicializamos el diccionario una vez fuera del loop
+        self._keys_index = {}
         for file_name in os.listdir(self.storage_dir):
             if file_name.startswith(self.key_index_prefix):
-                with open(f'{self.storage_dir}/{file_name}', 'r') as f:
-                    for line in f:
-                        line = line.strip()  # Remover espacios y saltos de línea
-                        if not line:  # Saltar líneas vacías
-                            continue
+                with open(f'{self.storage_dir}/{file_name}', 'rb') as f:
+                    while True:
                         try:
-                            # Parse the line as a JSON list
+                            length_bytes = f.read(4)
+                            if not length_bytes or len(length_bytes) < 4:
+                                break
+                                
+                            length = struct.unpack('>I', length_bytes)[0]
+                            data = f.read(length)
+                            
+                            if len(data) != length:
+                                logging.warning("Datos truncados detectados")
+                                break
+                                
+                            separator = f.read(len(SEPARATOR))
+                            if separator != SEPARATOR:
+                                logging.warning("Separador inválido detectado")
+                                break
+                                
+                            line = data.decode()
                             parsed_line = json.loads(line)
                             
-                            # Ensure the list has exactly 2 elements
                             if len(parsed_line) == 2:
                                 key, internal_key = parsed_line
                                 self._keys_index[key] = internal_key
-                            else:
-                                print(f"Línea no válida: {line}")
-                        
-                        except json.JSONDecodeError as e:
-                            print(f"Error al decodificar JSON: {e}, línea: {line}")
+                                
+                        except Exception as e:
+                            logging.error(f"Error procesando línea: {e}")
         
         print(self._keys_index)
-        
-    # def _append(self, path: str, text: str):
-    #     try:
-    #         data = text.encode()
-    #         data += b'\n'
-            
-    #         # Crear un archivo temporal y escribir los datos existentes + nuevos
-    #         temp_path = f'{path}_{AUX_FILE}'
-            
-    #         # Copiar datos existentes si el archivo existe
-    #         if os.path.exists(path):
-    #             with open(path, 'rb') as original:
-    #                 existing_data = original.read()
-    #         else:
-    #             existing_data = b''
-                
-    #         # Escribir datos existentes + nuevos en archivo temporal
-    #         with open(temp_path, 'wb') as f:
-    #             f.write(existing_data)
-    #             f.write(data)
-    #             f.flush()
-                
-    #         # Reemplazar archivo original con temporal
-    #         os.replace(temp_path, path)
-                    
-    #     except Exception as e:
-    #         logging.error(f"Error appending to {path}: {e}")
-    #         # Limpiar archivo temporal si hubo error
-    #         if os.path.exists(temp_path):
-    #             os.remove(temp_path)
+
     def _append(self, path: str, text: str):
         lock = self._get_lock(path)
         with lock:
             try:
                 data = text.encode()
-                data += b'\n'
+                length = len(data)
+                
+                # Formato: [longitud(4 bytes)][datos][separador]
+                length_bytes = struct.pack('>I', length)
+                final_data = length_bytes + data + SEPARATOR
+                
                 with open(path, 'ab') as f:
-                    f.write(data)
+                    f.write(final_data)
                     f.flush()
+                    #os.fsync(f.fileno())
             except Exception as e:
                 logging.error(f"Error appending to {path}: {e}")
                 
+    # def _append(persistent_path, temp_path):
+    #     with open(persistent_path, 'ab') as persistent_file, open(temp_path, 'rb') as temp_file:
+    #         # Lock the persistent file
+    #         fcntl.flock(persistent_file, fcntl.LOCK_EX)
+    #         # Append data from the temporary file
+    #         while chunk := temp_file.read(4096):  # Read in chunks to handle large files
+    #             persistent_file.write(chunk)
+    #         # Unlock the persistent file
+    #         fcntl.flock(persistent_file, fcntl.LOCK_UN)            
                 
     def append(self, key: str, value: str):
         try:
@@ -111,13 +108,16 @@ class FaultManager:
         lock = self._get_lock(path)
         with lock:
             try:
-                logging.debug(f"Writing to {path}")
                 encoded_data = data.encode()
-                encoded_data += b'\n'
+                length = len(encoded_data)
+                length_bytes = struct.pack('>I', length)
+                final_data = length_bytes + encoded_data + SEPARATOR
+                
                 temp_path = f'{path}_{AUX_FILE}'
                 with open(temp_path, 'wb') as f:
-                    f.write(encoded_data)
+                    f.write(final_data)
                     f.flush()
+                    #os.fsync(f.fileno())
                 os.replace(temp_path, path)
             except Exception as e:
                 logging.error(f"Error writing to {path}: {e}")
@@ -166,9 +166,33 @@ class FaultManager:
         lock = self._get_lock(path)
         with lock:
             try:
+                result = []
                 with open(path, 'rb') as f:
-                    data = f.read().decode()
-                    return data
+                    while True:
+                        # Leer longitud
+                        length_bytes = f.read(4)
+                        if not length_bytes or len(length_bytes) < 4:
+                            break
+                            
+                        # Extraer longitud
+                        length = struct.unpack('>I', length_bytes)[0]
+                        
+                        # Leer datos
+                        data = f.read(length)
+                        if len(data) != length:
+                            logging.warning(f"Datos truncados detectados en {path}")
+                            break
+                            
+                        # Verificar separador
+                        separator = f.read(len(SEPARATOR))
+                        if separator != SEPARATOR:
+                            logging.warning(f"Separador inválido detectado en {path}")
+                            break
+                            
+                        result.append(data.decode())
+                        
+                return '\n'.join(result)
+                
             except Exception as e:
                 logging.error(f"Error getting key: {key}: {e}")
                 return None
