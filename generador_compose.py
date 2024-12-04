@@ -3,7 +3,7 @@ import yaml
 import re
 
 
-def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
+def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3, duplication_prob=0):
 
     # Base configuration
     base_config = {
@@ -40,6 +40,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3):
                     "AMOUNT_OF_GAMES_INSTANCE=2",
                     'OUTPUT_EXCHANGES=["games"]',
                     'INPUT_QUEUES={"result_queue_gateway": "result_queue"}',
+                    f"DUPLICATION_PROB={duplication_prob}",
                 ],
                 "volumes": ["./results_gateway:/results_gateway"],
             },
@@ -433,6 +434,7 @@ def load_node_files(config_file="config.ini"):
     # Read number of clients
     num_clients = int(config["global"]["num_clients"])
     language_num_nodes = int(config["language_filter"]["instances"])
+    duplication_prob = float(config["duplication"]["probability"])
     # Collect client-specific file information
     client_files = {}
     for i in range(1, num_clients + 1):
@@ -442,12 +444,12 @@ def load_node_files(config_file="config.ini"):
             "review_file": config[client_name]["review_file"],
         }
 
-    return num_clients, client_files, language_num_nodes
+    return num_clients, client_files, language_num_nodes, duplication_prob
 
 
 # Ejemplo de uso
 if __name__ == "__main__":
-    num_clients, client_files, language_num_nodes = load_node_files()
-    config = generate_yaml(num_clients, client_files, language_num_nodes)
+    num_clients, client_files, language_num_nodes, duplication_prob = load_node_files()
+    config = generate_yaml(num_clients, client_files, language_num_nodes, 3, duplication_prob)
     save_yaml(config)
     print(f"Archivo YAML generado con {num_clients} clientes.")

@@ -55,7 +55,7 @@ def modify_queue_key(suffix: str) -> dict:
     return {new_key: original_value}
 
 class ConnectionHandler:
-    def __init__(self, client_socket, address, amount_of_review_instances):
+    def __init__(self, client_socket, address, amount_of_review_instances, duplication_prob):
         self.id_reviews = 0
         self.client_socket = client_socket
         self.address = address
@@ -76,6 +76,7 @@ class ConnectionHandler:
         self.batch_id_reviews = -1
         self.packet_id = 0
         self.packet_id_review = 0
+        self.duplication_prob = duplication_prob
             
         self.gamesHeader = []
         self.shutdown_event = threading.Event()
@@ -240,7 +241,7 @@ class ConnectionHandler:
                             logging.info("No hay datos para enviar después del filtrado.")
                         self.games_from_client_queue.put(finalList)
                         self.protocol.send_message("OK\n\n")
-                        if random.random() > 0.95:
+                        if random.random() < self.duplication_prob:
                             logging.info(f"Paquete duplicado - {self.packet_id}")
                             self.games_from_client_queue.put(finalList)
                         self.packet_id += 1

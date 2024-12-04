@@ -34,6 +34,7 @@ services:
     - AMOUNT_OF_GAMES_INSTANCE=2
     - OUTPUT_EXCHANGES=["games"]
     - 'INPUT_QUEUES={"result_queue_gateway": "result_queue"}'
+    - DUPLICATION_PROB=0.05
     volumes:
     - ./results_gateway:/results_gateway
   games_counter:
@@ -343,8 +344,8 @@ services:
     - BOUNDARY_PORT=12345
     - DELAY=5
     - RETRIES=5
-    - GAME_FILE=sample_10_por_ciento_games.csv
-    - REVIEW_FILE=sample_10_por_ciento_review.csv
+    - GAME_FILE=sample_30_games.csv
+    - REVIEW_FILE=sample_30_reviews.csv
     volumes:
     - ./data:/data
     - ./results:/results

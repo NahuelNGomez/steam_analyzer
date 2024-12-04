@@ -116,29 +116,39 @@ class Middleware:
 
         def callback_wrapper(ch, method, properties, body):
             mensaje_str = body.decode("utf-8")
-            if self.fault_manager is not None:
-                mensaje_str_aux = mensaje_str.strip().split("\n")
-                packet_id = mensaje_str_aux[0]
-                logging.info(f"Paquete recibido con ID: {packet_id}")
-                if packet_id in self.processed_packets and not "fin" in packet_id:
-                    logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
-                    self.ack(method.delivery_tag)
-                    return
-            #logging.info("Received %s", mensaje_str)
-            if "fin\n\n" in mensaje_str:
-                eofCallback(mensaje_str)
-            else:
-                callback(mensaje_str)
-            if not self.auto_ack:
-                self.ack(method.delivery_tag)
-            if self.fault_manager is not None:
-                now = datetime.now()
-                logging.info(f"Paquete {packet_id} procesado a las {now}")
             
-                self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
-                self.processed_packets.append(f'{packet_id}')
+            if self.fault_manager is not None:
+                self._callback_with_state(mensaje_str, method, callback, eofCallback)
+            else:
+                self._do_callback(mensaje_str, callback, eofCallback, method)
+                self.ack(method.delivery_tag)
 
         return callback_wrapper
+    
+    def _do_callback(self, mensaje_str, callback, eofCallback, method):
+        if "fin\n\n" in mensaje_str:
+            eofCallback(mensaje_str)
+        else:
+            callback(mensaje_str)
+    
+    def _callback_with_state(self, mensaje_str, method, callback, eofCallback):
+        mensaje_str_aux = mensaje_str.strip().split("\n")
+        packet_id = mensaje_str_aux[0]
+        #logging.info(f"Paquete recibido con ID: {packet_id}")
+        if packet_id in self.processed_packets and not "fin" in packet_id:
+            logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
+            self.ack(method.delivery_tag)
+            return
+        
+        self._do_callback(mensaje_str, callback, eofCallback, method)
+        
+        now = datetime.now()
+        #logging.info(f"Paquete {packet_id} procesado a las {now}")
+    
+        self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
+        self.processed_packets.append(f'{packet_id}')
+        self.ack(method.delivery_tag)
+        
 
     def ack(self, delivery_tag):
         self.channel.basic_ack(delivery_tag=delivery_tag)
@@ -171,25 +181,25 @@ class Middleware:
         
     def init_state(self):
         if self.fault_manager is not None:
-            for key in self.fault_manager.get_keys("middleware"):
+            for key in self.fault_manager.get_keys(f"middleware_{self.intance_id}_{self.input_queues_aux}"):
                 packet_id = self.fault_manager.get(key)
                 packets = packet_id.strip().split("\n")
                 self.processed_packets = packets
                 
-                logging.info(f"Restaurando estado para el paquete {packet_id}")
-            logging.info(f'Paquetes procesados: {self.processed_packets}')
+                #logging.info(f"Restaurando estado para el paquete {packet_id}")
+            #logging.info(f'Paquetes procesados: {self.processed_packets}')
         
     def clean_persistence(self):
         """
         Remove processed packets older than 2 minutes from the persistence directory.
         """
-        for key in self.fault_manager.get_keys("middleware"):
+        updated_aux = []
+        for key in self.fault_manager.get_keys(f"middleware_{self.intance_id}_{self.input_queues_aux}"):
             state = self.fault_manager.get(key)
             if state is not None:
                 now = datetime.now()
-                updated_aux = []
                 packets = state.strip().split("\n")
-                logging.info(f"Restaurando estado para el paquete {state}")
+                #logging.info(f"Restaurando estado para el paquete {state}")
                 for packet in packets:
                     packet_time_str = packet.split("_")[-1]
                     if not packet_time_str:
@@ -199,7 +209,8 @@ class Middleware:
                     if now - packet_time <= timedelta(minutes=2):
                         updated_aux.append(packet)
                     else:
-                        logging.info(f"Removed outdated packet: {packet}")
+                        pass
+                        #logging.info(f"Removed outdated packet: {packet}")
                 updated_aux_str = '\n'.join(updated_aux)
                 self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}", updated_aux_str)
         

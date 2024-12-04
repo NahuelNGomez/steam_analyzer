@@ -10,5 +10,7 @@ fi
 echo "Buscando y eliminando subdirectorios llamados 'persistence'..."
 find . -type d -name "persistence" -exec rm -rf {} +
 
+find . -type d -name "results_gateway" -exec rm -rf {} +
+
 # Mensaje de confirmación
 echo "Todos los subdirectorios 'persistence' han sido eliminados."

@@ -24,6 +24,7 @@ class GameNamesAccumulator:
         self.reviews_low_limit = reviews_low_limit
         self.fault_manager = FaultManager("../persistence/")
         self.last_packet_id = []
+        self.datasent_by_client = defaultdict(bool)
         self.init_state()
         self.middleware = Middleware(
             input_queues,
@@ -34,9 +35,9 @@ class GameNamesAccumulator:
             self._finCallBack,
             self.fault_manager,
         )
-        self.datasent_by_client = defaultdict(bool)
         self.total_fin = int(previous_language_nodes)
         self.received_fin:dict = {}
+        self.data_to_store = ''
         
     def start(self):
         """
@@ -110,8 +111,8 @@ class GameNamesAccumulator:
                 'game_name': game.game_name,
                 'packet_id': packet_id
             }
+            self.data_to_store += json.dumps(game_data) + "\n"
 
-            self.fault_manager.append(f'game_names_accumulator_{str(client_id)}', json.dumps(game_data))
             
         except Exception as e:
             logging.error(f"Error in process_game: {str(e)}")
@@ -158,15 +159,15 @@ class GameNamesAccumulator:
         try:
             aux = data.strip().split("\n")
             packet_id = aux[0]
+            self.data_to_store = ''
             if packet_id in self.last_packet_id:
                 logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
                 self.last_packet_id.remove(packet_id)
                 return
-            logging.info(f"Paquete recibido con ID: {packet_id}")
-            game = GameReview.decode(json.loads(aux[1]))
-            # logging.info(f"Mensaje decodificado: {game}")
-            self.process_game(game, packet_id)
-
+            for row in aux[1:]:
+                game = GameReview.decode(json.loads(row))
+                self.process_game(game, packet_id)
+            self.fault_manager.append(f'game_names_accumulator_{game.client_id}', self.data_to_store)
         except Exception as e:
             logging.error(f"Error en GameNamesAccumulator callback: {e}")
 
@@ -188,6 +189,8 @@ class GameNamesAccumulator:
             self.last_packet_id.append(json.loads(data[-1])['packet_id'])
             try:
                 for game_data in data:
+                    if not game_data.strip():
+                        continue
                     game = json.loads(game_data)
                     game_id = game["game_id"]
                     game_name = game["game_name"]
