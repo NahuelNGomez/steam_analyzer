@@ -24,6 +24,7 @@ class GameNamesAccumulator:
         self.reviews_low_limit = reviews_low_limit
         self.fault_manager = FaultManager("../persistence/")
         self.last_packet_id = []
+        self.datasent_by_client = defaultdict(bool)
         self.init_state()
         self.middleware = Middleware(
             input_queues,
@@ -34,7 +35,6 @@ class GameNamesAccumulator:
             self._finCallBack,
             self.fault_manager,
         )
-        self.datasent_by_client = defaultdict(bool)
         self.total_fin = int(previous_language_nodes)
         self.received_fin:dict = {}
         self.data_to_store = ''
@@ -159,6 +159,7 @@ class GameNamesAccumulator:
         try:
             aux = data.strip().split("\n")
             packet_id = aux[0]
+            self.data_to_store = ''
             if packet_id in self.last_packet_id:
                 logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
                 self.last_packet_id.remove(packet_id)
