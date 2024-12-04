@@ -143,7 +143,7 @@ class Middleware:
         self._do_callback(mensaje_str, callback, eofCallback, method)
         
         now = datetime.now()
-        logging.info(f"Paquete {packet_id} procesado a las {now}")
+        #logging.info(f"Paquete {packet_id} procesado a las {now}")
     
         self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
         self.processed_packets.append(f'{packet_id}')
@@ -186,7 +186,7 @@ class Middleware:
                 packets = packet_id.strip().split("\n")
                 self.processed_packets = packets
                 
-                logging.info(f"Restaurando estado para el paquete {packet_id}")
+                #logging.info(f"Restaurando estado para el paquete {packet_id}")
             logging.info(f'Paquetes procesados: {self.processed_packets}')
         
     def clean_persistence(self):
@@ -199,7 +199,7 @@ class Middleware:
             if state is not None:
                 now = datetime.now()
                 packets = state.strip().split("\n")
-                logging.info(f"Restaurando estado para el paquete {state}")
+                #logging.info(f"Restaurando estado para el paquete {state}")
                 for packet in packets:
                     packet_time_str = packet.split("_")[-1]
                     if not packet_time_str:
@@ -209,7 +209,8 @@ class Middleware:
                     if now - packet_time <= timedelta(minutes=2):
                         updated_aux.append(packet)
                     else:
-                        logging.info(f"Removed outdated packet: {packet}")
+                        pass
+                        #logging.info(f"Removed outdated packet: {packet}")
                 updated_aux_str = '\n'.join(updated_aux)
                 self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}", updated_aux_str)
         

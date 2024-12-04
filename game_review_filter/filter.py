@@ -41,6 +41,7 @@ class GameReviewFilter:
         self.review_file_size: dict = {}  # {client_id: file_size_count}
         self.batch_counter: dict = {} 
         self.total_batches: dict = {} 
+        self.last_processed_packet: dict = {} 
         self.amount_of_language_filters = amount_of_language_filters
         self.fault_manager = FaultManager("../persistence/", self.reviews_input_queue[0])
         self.next_instance = 1
@@ -55,6 +56,7 @@ class GameReviewFilter:
         self.init_state()
         self.games_receiver = threading.Thread(target=self._games_receiver)
         self.reviews_receiver = threading.Thread(target=self._reviews_receiver)
+        
 
     def _games_receiver(self):
         self.books_middleware = Middleware(
@@ -80,34 +82,61 @@ class GameReviewFilter:
             intance_id=self.instance_id,
             exchange_output_type="direct",
         )
+        for key in self.fault_manager.get_keys(f'processed_packets_{self.reviews_input_queue[0]}'):
+            data = self.fault_manager.get(key)
+            data = json.loads(data)
+            client_id = int(key.split("_")[-1])
+            self.action_packet_id = data["last_sended_packet"]
+            
+            if self.fault_manager.get(f"review_filter_{self.reviews_input_queue[0]}_{client_id}") is not None:
+                if self.action_packet_id == data["last_sended_packet"]:
+                    self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
+                else:
+                    self.action_packet_id = data["last_init_process_packet"]
+                    self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
+            logging.info(f"Estado PROCESSED para cliente {client_id}: {self.action_packet_id}")
         self.reviews_middleware.start()
         
     def init_state(self):
         for key in self.fault_manager.get_keys(f'game_filter_{self.reviews_input_queue[0]}'):
             data = self.fault_manager.get(key)
             data = data.strip().split("\n")
-            client_id = key.split("_")[-1]
-            if "game_filter" in key:
-                for line in data:
-                    if line.isdigit():
-                        last_packet_id = line
-                        continue
-                    if not line:
-                        continue
-                    json_data_game = json.loads(line)
-                    game_id = json_data_game["id"]
-                    game_name = json_data_game["name"]
-                    
-                    if client_id not in self.games:
-                        self.games[client_id] = {}
-                    self.games[client_id][str(game_id)] = game_name
+            client_id = int(key.split("_")[-1])
+            if client_id not in self.games:
+                self.games[client_id] = {}
+            for line in data:
+                if line.isdigit():
+                    last_packet_id = line
+                    continue
+                if not line:
+                    continue
+                json_data_game = json.loads(line)
+                game_id = json_data_game["id"]
+                game_name = json_data_game["name"]
+                
+                self.games[client_id][str(game_id)] = game_name
+            logging.info(f"Estado JUEGOS para cliente {client_id}: {last_packet_id} - {self.games[client_id]}")
+        for key in self.fault_manager.get_keys(f'review_filter_{self.reviews_input_queue[0]}'):
+            data = self.fault_manager.get(key)
+            data = data.strip().split("\n")
+            client_id = int(key.split("_")[-1])
+            if client_id not in self.total_batches:
+                self.total_batches[client_id] = 0
+            if client_id not in self.batch_counter:
+                self.batch_counter[client_id] = 0
+            if client_id not in self.last_processed_packet:
+                self.last_processed_packet[client_id] = None
+            for line in data:
+                if not line:
+                    continue
+                json_data = json.loads(line)
+                if isinstance(json_data, dict) and all(key in json_data for key in ["packet_id", "batch_counter", "total_batches"]):
+                    self.batch_counter[client_id] = int(json_data["batch_counter"])
+                    self.total_batches[client_id] = int(json_data["total_batches"])
+                    self.last_processed_packet[client_id] = json_data["packet_id"]
+            logging.info(f"Estado REVIEW para cliente {client_id}: {self.batch_counter[client_id]} - {self.total_batches[client_id]} - {self.last_processed_packet[client_id]}")
             
-            if "review_filter" in key:
-                for line in data:
-                    if line.isdigit():
-                        last_packet_id = line
-                        continue
-                    # Guardar batch counter, last packet id, total batches
+        
 
     def _add_game(self, game):
         """
@@ -124,7 +153,7 @@ class GameReviewFilter:
             for game in batch:
                 
                 game = Game.decode(json.loads(game))
-                logging.info(f"Recibido juego: {game} - {packet_id}")
+                logging.info(f"Recibido juego - {packet_id}")
                 client_id = game.client_id
                 client_id_file = client_id
                 if client_id not in self.games:
@@ -147,7 +176,7 @@ class GameReviewFilter:
         """
         batch = message.split("\n")
         packet_id = batch[0]
-        logging.info(f"Recibiendo REVIEW - {packet_id}")
+        #logging.info(f"Recibiendo REVIEW - {packet_id}")
         batch = batch[1:]
         
         #final_list = str(packet_id) + "\n"
@@ -171,20 +200,24 @@ class GameReviewFilter:
             self.completed_reviews[client_id] = False
         
         self.batch_counter[client_id] += 1
-        print("Recibiendo REVIEW - batch_counter:", self.batch_counter[client_id], flush=True)
+        logging.info(f"Recibiendo REVIEW - batch_counter: {self.batch_counter[client_id]}")
         with self.file_lock:
             for row in batch:
                 if not row.strip():
                     continue
                 self.reviews_to_add[client_id].append(row)
-            
-            data_to_send = f'{packet_id}\n' + '\n'.join(self.reviews_to_add[client_id])
+            meta_data = {
+                "packet_id": packet_id,
+                "batch_counter": self.batch_counter[client_id],
+                "total_batches": self.total_batches[client_id],
+            }
+            data_to_send = json.dumps(meta_data) +'\n' + '\n'.join(self.reviews_to_add[client_id])
             self.fault_manager.append(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", data_to_send)
             
             self.reviews_to_add[client_id] = []
             self.review_file_size[client_id] += 1
 
-            if self.review_file_size[client_id] >= 100: # Proceso cada 100 batches
+            if self.review_file_size[client_id] >= 1000: # Proceso cada 100 batches
                 print("Procesando reviews para cliente {client_id}", flush=True)
                 self.review_file_size[client_id] = 0
                 self.process_reviews(
@@ -324,25 +357,30 @@ class GameReviewFilter:
         
         name = key 
         lines = data.strip().split("\n")
-        lines = lines[1:]
-        
-        logging.info(f"[PROCESS REVIEW] Procesando reviews para cliente {client_id}")
-        
+        lines = lines[1:]   
+        logging.info(f"[PROCESS REVIEW] Procesando reviews para cliente {client_id} - {self.action_packet_id} - {self.packet_id}")
+        self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
+        initial_packet = self.action_packet_id
         for line in lines:
             try: 
-                if line.isdigit():
-                    continue
                 json_data = json.loads(line)
+            
+                if isinstance(json_data, dict) and all(key in json_data for key in ["packet_id", "batch_counter", "total_batches"]):
+                    continue
                 review = Review.decode(json_data)
+                #logging.info(f"Procesando review - {type(review.client_id)}(STR) - {type(review.game_id) (STR)}")
                 if review.game_id in client_games:
+                    logging.info(f"Procesando review - {review.client_id} - {review.game_id}")
                     game = client_games[review.game_id]
                     if "action" in self.games_input_queue[1].lower():
+
                         game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
                         game_str = json.dumps(game_review.getData())
                         data_to_send = f"{self.action_packet_id}\n{game_str}\n"
                         routing = f"games_reviews_action_queue_{self.next_instance}_0"
-                        self.reviews_middleware.send(data=data_to_send,routing_key=routing)
-                        self.reviews_middleware.send(data=data_to_send,routing_key="games_reviews_action_queue_3")
+                        self.reviews_middleware.send(data=data_to_send,routing_key=routing) # language filter
+                        self.reviews_middleware.send(data=data_to_send,routing_key="games_reviews_action_queue_3") # Percentil directo
+                        self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": initial_packet}))
                         self.action_packet_id += 1
                         self.next_instance = (self.next_instance % self.amount_of_language_filters) + 1                    
                     else:
@@ -359,12 +397,12 @@ class GameReviewFilter:
                     pass
             except json.JSONDecodeError as e:
                 logging.error(f"Error al procesar la línea '{line}': {e}")
-            
-                
+        
         if final_list:
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
             self.packet_id += 4
         self.fault_manager.delete_key(f"review_filter_{self.reviews_input_queue[0]}_{client_id}")
+        self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
 
     def start(self):
         """
