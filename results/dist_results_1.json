@@ -77,35 +77,6 @@
         ]
     },
     {
-        "top_5_indie_games_positive_reviews": [
-            {
-                "rank": 1,
-                "name": "Space Engineers",
-                "positive_review_count": 10105
-            },
-            {
-                "rank": 2,
-                "name": "The Forest",
-                "positive_review_count": 8229
-            },
-            {
-                "rank": 3,
-                "name": "Kerbal Space Program",
-                "positive_review_count": 7716
-            },
-            {
-                "rank": 4,
-                "name": "FTL: Faster Than Light",
-                "positive_review_count": 7364
-            },
-            {
-                "rank": 5,
-                "name": "Goat Simulator",
-                "positive_review_count": 6382
-            }
-        ]
-    },
-    {
         "negative_count_percentile": [
             {
                 "game_id": "280",
@@ -526,6 +497,35 @@
             {
                 "game_id": "447040",
                 "name": "Watch_Dogs® 2"
+            }
+        ]
+    },
+    {
+        "top_5_indie_games_positive_reviews": [
+            {
+                "rank": 1,
+                "name": "Space Engineers",
+                "positive_review_count": 10105
+            },
+            {
+                "rank": 2,
+                "name": "The Forest",
+                "positive_review_count": 8229
+            },
+            {
+                "rank": 3,
+                "name": "Kerbal Space Program",
+                "positive_review_count": 7716
+            },
+            {
+                "rank": 4,
+                "name": "FTL: Faster Than Light",
+                "positive_review_count": 7364
+            },
+            {
+                "rank": 5,
+                "name": "Goat Simulator",
+                "positive_review_count": 6382
             }
         ]
     }

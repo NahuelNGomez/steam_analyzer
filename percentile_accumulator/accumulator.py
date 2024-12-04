@@ -49,6 +49,7 @@ class PercentileAccumulator:
                     'name': game.game_name,
                     'count': 1
                 }
+                logging.info(f"Juego añadido para cliente {client_id}: {game.game_name}")
             # Guardar el estado en formato JSON
             game_data = {
                 'game_id': game_id,
@@ -130,13 +131,14 @@ class PercentileAccumulator:
         try:
             aux = data.strip().split("\n")
             packet_id = aux[0]
+            logging.info(f"Mensaje recibido, packet_id: {packet_id}")
+            self.value_to_store = ''
             if packet_id in self.last_packet_id:
                 logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
                 self.last_packet_id.remove(packet_id)
                 return
             for row in aux[1:]:
                 game_review = GameReview.decode(json.loads(row))
-                # logging.info(f"Mensaje recibido, packet_id: {packet_id}")
                 self.process_game(game_review, packet_id)
             self.fault_manager.append(f"percentile_{game_review.client_id}", self.value_to_store)
         except Exception as e:

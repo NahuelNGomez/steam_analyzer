@@ -119,7 +119,7 @@ class GameReviewFilter:
                 game_name = json_data_game["name"]
                 
                 self.games[client_id][str(game_id)] = game_name
-            logging.info(f"Estado JUEGOS para cliente {client_id}: {last_packet_id} - {self.games[client_id]}")
+            # logging.info(f"Estado JUEGOS para cliente {client_id}: {last_packet_id} - {self.games[client_id]}")
         for key in self.fault_manager.get_keys(f'review_filter_{self.reviews_input_queue[0]}'):
             data = self.fault_manager.get(key)
             data = data.strip().split("\n")
@@ -157,7 +157,7 @@ class GameReviewFilter:
             for game in batch:
                 
                 game = Game.decode(json.loads(game))
-                logging.info(f"Recibido juego - {packet_id}")
+                # logging.info(f"Recibido juego - {packet_id}")
                 client_id = game.client_id
                 client_id_file = client_id
                 if client_id not in self.games:
@@ -204,7 +204,7 @@ class GameReviewFilter:
             self.completed_reviews[client_id] = False
         
         self.batch_counter[client_id] += 1
-        #logging.info(f"Recibiendo REVIEW - batch_counter: {self.batch_counter[client_id]}")
+        logging.info(f"Recibiendo REVIEW - batch_counter: {self.batch_counter[client_id]}")
         with self.file_lock:
             for row in batch:
                 if not row.strip():
@@ -381,7 +381,6 @@ class GameReviewFilter:
                     #logging.info(f"Procesando review - {self.action_packet_id} - {self.packet_id}")
                     game = client_games[review.game_id]
                     if "action" in self.games_input_queue[1].lower():
-
                         game_review = GameReview(review.game_id, game, review.review_text, review.client_id)
                         game_str = json.dumps(game_review.getData())
                         #data_to_send = f"{self.action_packet_id}\n{game_str}\n"
@@ -402,6 +401,7 @@ class GameReviewFilter:
                         final_list += f"{game_str}\n"
                         batch_counter += 1
                         if (batch_counter >= batch_size):
+                            logging.info(f"Enviando paquete {self.packet_id}")
                             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
                             self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
                             self.packet_id += 4
