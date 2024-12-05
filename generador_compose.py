@@ -3,7 +3,7 @@ import yaml
 import re
 
 
-def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3, duplication_prob=0):
+def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3, duplication_prob=0, timeout_doctors=15):
 
     # Base configuration
     base_config = {
@@ -418,6 +418,7 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3, 
                 f"ID={i}",
                 f"WORKERS={workers_str}",
                 f"NUM_DOCTORS={num_doctors}",
+                f"TIMEOUT={timeout_doctors}",
             ],
             "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
         }
@@ -436,6 +437,8 @@ def load_node_files(config_file="config.ini"):
 
     # Read number of clients
     num_clients = int(config["global"]["num_clients"])
+    num_doctors = int(config["global"]["num_doctors"])
+    timeout_doctors = int(config["global"]["timeout_doctors"])
     language_num_nodes = int(config["language_filter"]["instances"])
     duplication_prob = float(config["duplication"]["probability"])
     # Collect client-specific file information
@@ -447,12 +450,12 @@ def load_node_files(config_file="config.ini"):
             "review_file": config[client_name]["review_file"],
         }
 
-    return num_clients, client_files, language_num_nodes, duplication_prob
+    return num_clients, client_files, language_num_nodes, duplication_prob, num_doctors, timeout_doctors
 
 
 # Ejemplo de uso
 if __name__ == "__main__":
-    num_clients, client_files, language_num_nodes, duplication_prob = load_node_files()
-    config = generate_yaml(num_clients, client_files, language_num_nodes, 3, duplication_prob)
+    num_clients, client_files, language_num_nodes, duplication_prob, num_doctors, timeout_doctors = load_node_files()
+    config = generate_yaml(num_clients, client_files, language_num_nodes, num_doctors, duplication_prob, timeout_doctors)
     save_yaml(config)
     print(f"Archivo YAML generado con {num_clients} clientes.")

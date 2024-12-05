@@ -115,11 +115,6 @@ class Doctor:
                 logging.error(f"Invalid message type: {message_type}")
             client_socket.close()
 
-    def send_leader_loop(self):
-        while True:
-            self.send_message(LEADER, self.id)
-            time.sleep(self.timeout/3)
-
     def check_health_loop_leader(self):
         current_leader = self.leader_id
         leader_hostname = self.doctors[current_leader]
@@ -184,6 +179,11 @@ class Doctor:
             s.send(data.to_bytes(4, byteorder='big'))
 
         s.close()
+
+    def send_leader_loop(self):
+        while True:
+            self.send_message(LEADER, self.id)
+            time.sleep(self.timeout/3)
 
     def check_health_loop(self): 
         logging.info(f"Starting health check for {len(self.host_list)} hosts: {self.host_list}")
