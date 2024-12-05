@@ -18,6 +18,7 @@ class Doctor:
 
         self.id: int = int(os.getenv("ID", '0'))
         self.host_list = os.getenv("WORKERS", "").split(",")
+        self.timeout = int(os.getenv("TIMEOUT", '15'))
 
         self.leader_id: int = None
         self.leader_id_lock = threading.Lock()
@@ -116,9 +117,8 @@ class Doctor:
 
     def send_leader_loop(self):
         while True:
-            if self.leader_id == self.id:
-                self.send_message(LEADER, self.id)
-                time.sleep(5)
+            self.send_message(LEADER, self.id)
+            time.sleep(self.timeout/3)
 
     def check_health_loop_leader(self):
         current_leader = self.leader_id
@@ -126,7 +126,7 @@ class Doctor:
         logging.info(f"Starting health check for leader: {leader_hostname}")
 
         while True:
-            time.sleep(5)
+            time.sleep(self.timeout/3)
             logging.info(f"Checking health of {leader_hostname}")
             res: int = self.check_health(leader_hostname, port=HEALTH_CHECK_PORT)
             if res == 0:
@@ -190,7 +190,7 @@ class Doctor:
         l = self.host_list + self.doctors 
         l.remove(self.doctors[self.id])
         while True:
-            time.sleep(15)
+            time.sleep(self.timeout)
             for host in l:
                 # logging.info(f"Checking health of {host}")
                 res: int = self.check_health(host)
@@ -218,7 +218,7 @@ class Doctor:
                 s.close()
 
             retries+=1
-            time.sleep(1)
+            time.sleep(self.timeout/10)
 
         return 0
     
