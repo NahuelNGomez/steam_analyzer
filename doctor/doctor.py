@@ -3,9 +3,7 @@ import logging
 from common.healthcheck import HEALTH_CHECK_PORT
 import socket
 import time
-import re
 import threading
-from common.healthcheck import HealthCheckServer
 import os
 
 VOTE=b'3'
@@ -22,6 +20,8 @@ class Doctor:
         self.host_list = os.getenv("WORKERS", "").split(",")
 
         self.leader_id: int = None
+        self.leader_id_lock = threading.Lock()
+
         self.prev_leader_id: int = None
         self.curr_leader_id = self.id
 
@@ -59,7 +59,10 @@ class Doctor:
                         logging.info(f"I am the leader. sending DECISION to everyone.")
                         self.send_message(DECISION, self.id)
                         self.participating = False
+
+                        self.leader_id_lock.acquire()
                         self.leader_id = self.id
+                        self.leader_id_lock.release()
 
                         self.check_health_thread = threading.Thread(target=self.check_health_loop)
                         self.check_health_thread.start()
@@ -71,7 +74,11 @@ class Doctor:
                         self.send_message(VOTE, doctor_id_recv)
             elif message_type == DECISION:
                 if self.participating:
+
+                    self.leader_id_lock.acquire()
                     self.leader_id = int.from_bytes(client_socket.recv(4), byteorder='big')
+                    self.leader_id_lock.release()
+
                     self.participating = False
                     logging.info(f"DECISION. Leader id received: {self.leader_id}")
                     if self.leader_id != self.id:
@@ -92,7 +99,11 @@ class Doctor:
                     client_socket.send(b'1')
             elif message_type == LEADER:
                 if self.leader_id is None:
+
+                    self.leader_id_lock.acquire()
                     self.leader_id = int.from_bytes(client_socket.recv(4), byteorder='big')
+                    self.leader_id_lock.release()
+
                     logging.info(f"LEADER message received. Leader id received: {self.leader_id}. Setting leader. starting health check thread.")
                     self.check_health_thread = threading.Thread(target=self.check_health_loop_leader)
                     self.check_health_thread.start()
@@ -121,7 +132,9 @@ class Doctor:
             if res == 0:
                 logging.error(f"Leader {leader_hostname} is down.")
 
+                self.leader_id_lock.acquire()
                 self.leader_id = None
+                self.leader_id_lock.release()
 
                 i = 1
                 while True:
