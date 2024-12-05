@@ -146,7 +146,7 @@ class GamesCounter:
                     self.platform_counts[client_id]['Windows'] = int(state_cleaned[0])
                     self.platform_counts[client_id]['Mac'] = int(state_cleaned[1])
                     self.platform_counts[client_id]['Linux'] = int(state_cleaned[2])
-                    self.last_processed_packet = int(state_cleaned[3])  # Nuevo campo para packet_id
+                    self.last_processed_packet = state_cleaned[3]  # Nuevo campo para packet_id
                 else:
                     print("Error: Estado no tiene el formato esperado.", flush=True)
                 
