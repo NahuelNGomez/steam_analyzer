@@ -226,7 +226,7 @@ class GameReviewFilter:
             self.reviews_to_add[client_id] = []
             self.review_file_size[client_id] += 1
 
-            if self.review_file_size[client_id] >= 1000: # Proceso cada 100 batches
+            if self.review_file_size[client_id] >= 2000:
                 print("Procesando reviews para cliente {client_id}", flush=True)
                 self.review_file_size[client_id] = 0
                 self.process_reviews(
@@ -244,6 +244,8 @@ class GameReviewFilter:
                     self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
                     self.send_fin(client_id)
                 self.sended_fin[client_id] = True
+                self.fault_manager.delete_key(f"game_filter_{self.reviews_input_queue[0]}_{client_id}")
+                self.fault_manager.delete_key(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}")
 
         
     def send_fin(self, client_id):

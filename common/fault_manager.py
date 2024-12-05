@@ -136,7 +136,7 @@ class FaultManager:
         return internal_key
 
 
-    def delete_key(self, key:str):
+    def delete_key(self, key: str):
         try:
             path = f'{self.storage_dir}/{self._get_internal_key(key)}'
             os.remove(path)
@@ -149,11 +149,21 @@ class FaultManager:
                 os.remove(f'{self.storage_dir}/{self.key_index_prefix}')
             else:
                 logging.info(f"Updating keys index file.")
-                self._write(f'{self.storage_dir}/{self.key_index_prefix}', '\n'.join(updated_keys))
-                
-                
+                temp_path = f'{self.storage_dir}/{self.key_index_prefix}_{AUX_FILE}'
+                with open(temp_path, 'wb') as f:
+                    for item in updated_keys:
+                        data = item.encode()
+                        length = len(data)
+                        length_bytes = struct.pack('>I', length)
+                        final_data = length_bytes + data + SEPARATOR
+                        f.write(final_data)
+                    f.flush()
+                    #os.fsync(f.fileno())
+                os.replace(temp_path, f'{self.storage_dir}/{self.key_index_prefix}')
         except Exception as e:
             logging.error(f"Error deleting key: {key}: {e}")
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
 
 
     def get_keys(self, prefix: str) -> List[str]:

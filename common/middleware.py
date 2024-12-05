@@ -145,7 +145,7 @@ class Middleware:
         now = datetime.now()
         #logging.info(f"Paquete {packet_id} procesado a las {now}")
     
-        self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
+        self.fault_manager.append(f"middleware_{self.intance_id}_{self.input_queues_aux}_fin", f'{packet_id}_{now.strftime("%Y%m%d%H%M%S")}')
         self.processed_packets.append(f'{packet_id}')
         self.ack(method.delivery_tag)
         
@@ -185,7 +185,7 @@ class Middleware:
         
     def init_state(self):
         if self.fault_manager is not None:
-            for key in self.fault_manager.get_keys(f"middleware_{self.intance_id}_{self.input_queues_aux}"):
+            for key in self.fault_manager.get_keys(f"middleware_{self.intance_id}_{self.input_queues_aux}_fin"):
                 packet_id = self.fault_manager.get(key)
                 packets = packet_id.strip().split("\n")
                 self.processed_packets = packets
@@ -198,7 +198,7 @@ class Middleware:
         Remove processed packets older than 2 minutes from the persistence directory.
         """
         updated_aux = []
-        for key in self.fault_manager.get_keys(f"middleware_{self.intance_id}_{self.input_queues_aux}"):
+        for key in self.fault_manager.get_keys(f"middleware_{self.intance_id}_{self.input_queues_aux}_fin"):
             state = self.fault_manager.get(key)
             if state is not None:
                 now = datetime.now()
@@ -216,7 +216,7 @@ class Middleware:
                         pass
                         #logging.info(f"Removed outdated packet: {packet}")
                 updated_aux_str = '\n'.join(updated_aux)
-                self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}", updated_aux_str)
+                self.fault_manager.update(f"middleware_{self.intance_id}_{self.input_queues_aux}_fin", updated_aux_str)
         
             aux = []
             for packet in updated_aux:

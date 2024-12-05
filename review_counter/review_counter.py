@@ -13,6 +13,7 @@ class Top5ReviewCounter:
         self.fault_manager = FaultManager("../persistence/")
         self.last_packet_id = None
         self.last_games = ''
+        self.last_client_id = None
         self.init_state()
         
         self.middleware = Middleware(
@@ -77,7 +78,7 @@ class Top5ReviewCounter:
                 'game_name': name
             }
             self.last_games += json.dumps(game_data) + "\n"
-            
+            self.last_client_id = client_id
             #self.fault_manager.append(f"top5_review_counter_{str(client_id)}", json.dumps(game_data))
             
         except Exception as e:
@@ -104,7 +105,7 @@ class Top5ReviewCounter:
             json_data = json.loads(row)
             game_review = GameReview.decode(json_data)
             self.process_game(game_review, packet_id)
-        self.fault_manager.append(f"top5_review_counter_{str(game_review.client_id)}", self.last_games)
+        self.fault_manager.append(f"top5_review_counter_{str(self.last_client_id)}", self.last_games)
         self.last_games = ''
         
         
