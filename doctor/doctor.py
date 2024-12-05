@@ -15,7 +15,6 @@ HEALTH=b'1'
 LEADER_PORT=8888
 
 class Doctor:
-    not_include_host_regexes = ["rabbitmq", "doctor\d?", "client\d"]
     def __init__(self):
         doctors = int(os.getenv("NUM_DOCTORS", '1'))
         self.doctors: list[str] = [f"doctor{i}" for i in range(int(doctors))]
@@ -83,10 +82,7 @@ class Doctor:
                     else:
                         client_socket.send(b'0')
                 else:
-                    # Not the leader
                     client_socket.send(b'1')
-
-
             else:
                 logging.error(f"Invalid message type: {message_type}")
 
@@ -104,11 +100,22 @@ class Doctor:
             if res == 0:
                 logging.error(f"Leader {leader_hostname} is down.")
 
-                next_to_leader = (self.leader_id+1)%len(self.doctors)
-                logging.info(f"{next_to_leader} should start the election")
+                i = 1
+                while True:
+                    next_to_leader = (self.leader_id+i)%len(self.doctors)
+                    logging.info(f"{next_to_leader} should start the election")
 
-                if self.id == next_to_leader:
-                    self.send_message(VOTE, next_to_leader)
+                    if self.id == next_to_leader:
+                        logging.info(f"{next_to_leader} its me, so i send the VOTE to {next_to_leader+1}")
+                        self.send_message(VOTE, self.id)
+                        break
+
+                    res = self.check_health(self.doctors[next_to_leader])
+                    if res == 0:
+                        logging.error(f"Doctor {next_to_leader} is down.")
+                        i+=1
+                    else:
+                        break
 
                 return 0
             elif res == 1:
