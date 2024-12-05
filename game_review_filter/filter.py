@@ -197,7 +197,9 @@ class GameReviewFilter:
         packet_id = batch[0]
         #logging.info(f"Recibiendo REVIEW - {packet_id}")
         batch = batch[1:]
-        
+        if packet_id == self.last_processed_packet:
+            logging.info("Ignoring duplicate packet.")
+            return
         #final_list = str(packet_id) + "\n"
        # print("Recibiendo REVIEW - batch:", len(batch), flush=True)
        # print("Recibiendo REVIEW - batch:", batch, flush=True)
@@ -388,6 +390,7 @@ class GameReviewFilter:
         else:
             self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
         initial_packet = self.action_packet_id
+        indie_initial_packet = self.packet_id
         for line in lines:
             try: 
                 json_data = json.loads(line)
@@ -422,7 +425,7 @@ class GameReviewFilter:
                         if (batch_counter >= batch_size):
                             logging.info(f"Enviando paquete {self.packet_id}")
                             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-                            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
+                            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": indie_initial_packet}))
                             self.packet_id += 4
                             final_list = str(self.packet_id) + "\n"
                             batch_counter = 0
@@ -433,7 +436,7 @@ class GameReviewFilter:
         
         if final_list and "action" not in self.games_input_queue[1].lower():
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": indie_initial_packet}))
             self.packet_id += 4
         if final_list_action and "action" in self.games_input_queue[1].lower():
             routing = f"games_reviews_action_queue_{self.next_instance}_0"
