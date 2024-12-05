@@ -349,6 +349,28 @@ services:
     volumes:
     - ./data:/data
     - ./results:/results
+  client2:
+    container_name: client2
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    image: client:latest
+    networks:
+    - testing_net
+    depends_on:
+    - gateway
+    environment:
+    - LOGGING_LEVEL=INFO
+    - CLIENT_ID=2
+    - BOUNDARY_IP=gateway
+    - BOUNDARY_PORT=12345
+    - DELAY=5
+    - RETRIES=5
+    - GAME_FILE=sample_10_por_ciento_games.csv
+    - REVIEW_FILE=sample_10_por_ciento_review.csv
+    volumes:
+    - ./data:/data
+    - ./results:/results
   language_filter_1:
     container_name: language_filter_1
     build:
@@ -399,7 +421,7 @@ services:
     environment:
     - LOGGING_LEVEL=INFO
     - ID=0
-    - WORKERS=gateway,games_counter,indie_filter,action_filter,range_filter,top10_indie_counter,positive_review_filter,positive_review_filter4,positive_review_filter3,positive_review_filter_2,negative_review_filter,indie_game_review_filter,indie_game_review_filter2,indie_game_review_filter3,indie_game_review_filter4,action_game_review_filter,game_review_positive_counter,action_name_accumulator,percentile_accumulator,language_filter_1,language_filter_2,language_filter_3
+    - WORKERS=gateway,games_counter,indie_filter,action_filter,range_filter,top10_indie_counter,positive_review_filter,positive_review_filter4,positive_review_filter3,positive_review_filter_2,negative_review_filter,indie_game_review_filter,indie_game_review_filter2,indie_game_review_filter3,indie_game_review_filter4,action_game_review_filter,game_review_positive_counter,action_name_accumulator,percentile_accumulator,client2,language_filter_1,language_filter_2,language_filter_3
     - NUM_DOCTORS=3
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
@@ -414,7 +436,7 @@ services:
     environment:
     - LOGGING_LEVEL=INFO
     - ID=1
-    - WORKERS=gateway,games_counter,indie_filter,action_filter,range_filter,top10_indie_counter,positive_review_filter,positive_review_filter4,positive_review_filter3,positive_review_filter_2,negative_review_filter,indie_game_review_filter,indie_game_review_filter2,indie_game_review_filter3,indie_game_review_filter4,action_game_review_filter,game_review_positive_counter,action_name_accumulator,percentile_accumulator,language_filter_1,language_filter_2,language_filter_3
+    - WORKERS=gateway,games_counter,indie_filter,action_filter,range_filter,top10_indie_counter,positive_review_filter,positive_review_filter4,positive_review_filter3,positive_review_filter_2,negative_review_filter,indie_game_review_filter,indie_game_review_filter2,indie_game_review_filter3,indie_game_review_filter4,action_game_review_filter,game_review_positive_counter,action_name_accumulator,percentile_accumulator,client2,language_filter_1,language_filter_2,language_filter_3
     - NUM_DOCTORS=3
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
@@ -429,7 +451,7 @@ services:
     environment:
     - LOGGING_LEVEL=INFO
     - ID=2
-    - WORKERS=gateway,games_counter,indie_filter,action_filter,range_filter,top10_indie_counter,positive_review_filter,positive_review_filter4,positive_review_filter3,positive_review_filter_2,negative_review_filter,indie_game_review_filter,indie_game_review_filter2,indie_game_review_filter3,indie_game_review_filter4,action_game_review_filter,game_review_positive_counter,action_name_accumulator,percentile_accumulator,language_filter_1,language_filter_2,language_filter_3
+    - WORKERS=gateway,games_counter,indie_filter,action_filter,range_filter,top10_indie_counter,positive_review_filter,positive_review_filter4,positive_review_filter3,positive_review_filter_2,negative_review_filter,indie_game_review_filter,indie_game_review_filter2,indie_game_review_filter3,indie_game_review_filter4,action_game_review_filter,game_review_positive_counter,action_name_accumulator,percentile_accumulator,client2,language_filter_1,language_filter_2,language_filter_3
     - NUM_DOCTORS=3
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
