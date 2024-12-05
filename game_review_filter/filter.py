@@ -71,7 +71,7 @@ class GameReviewFilter:
             exchange_output_type="direct"
         )
         self.books_middleware.start()
-
+        
     def _reviews_receiver(self):
         self.reviews_middleware = Middleware(
             input_queues={self.reviews_input_queue[0]: self.reviews_input_queue[1]},
@@ -86,20 +86,30 @@ class GameReviewFilter:
         for key in self.fault_manager.get_keys(f'processed_packets_{self.reviews_input_queue[0]}'):
             data = self.fault_manager.get(key)
             data = json.loads(data)
-            client_id = int(key.split("_")[-1])
+            #client_id = int(key.split("_")[-1])
             self.action_packet_id = data["last_sended_packet"]
             self.packet_id = data["last_sended_packet"]
+            last_init_process_packet = data["last_init_process_packet"]
+            logging.info(f"last_sended_packet: {self.packet_id} - last_init_process_packet: {last_init_process_packet}")
             
-            if self.fault_manager.get(f"review_filter_{self.reviews_input_queue[0]}_{client_id}") is not None:
-                if self.action_packet_id == data["last_sended_packet"]:
-                    logging.info(f"Estado PROCESSED para cliente {client_id}: {self.action_packet_id}")
-                    self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
-                else:
-                    self.action_packet_id = data["last_init_process_packet"]
-                    self.packet_id = data["last_init_process_packet"]
-                    logging.info(f"Estado PROCESSED para cliente {client_id}: {self.action_packet_id}")
-                    self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
-            logging.info(f"Estado PROCESSED para cliente {client_id}: {self.action_packet_id}")
+            for key in self.fault_manager.get_keys(f'game_filter_{self.reviews_input_queue[0]}'):
+                if self.fault_manager.get(key) is not None:
+                    client_id = int(key.split("_")[-1])
+                    if self.action_packet_id != data["last_init_process_packet"]: # se quedó a medio procesar
+                        self.action_packet_id = data["last_init_process_packet"]
+                        self.packet_id = data["last_init_process_packet"]
+                        logging.info(f"[1] Estado PROCESSED para cliente {client_id}: {self.action_packet_id}")
+                        self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
+                        
+            
+            for key in self.fault_manager.get_keys(f'review_filter_{self.reviews_input_queue[0]}'):
+                    
+                if self.fault_manager.get(key) is not None:
+                    client_id = int(key.split("_")[-1])
+                    if self.action_packet_id == data["last_sended_packet"]:
+                        logging.info(f"[2] Estado PROCESSED para cliente {client_id}: {self.action_packet_id}") 
+                        self.process_reviews(f"review_filter_{self.reviews_input_queue[0]}_{client_id}", client_id)
+                logging.info(f"[3] Estado PROCESSED para cliente {client_id}: {self.action_packet_id}")
         self.reviews_middleware.start()
         
     def init_state(self):
@@ -245,7 +255,7 @@ class GameReviewFilter:
                     self.send_fin(client_id)
                 self.sended_fin[client_id] = True
                 self.fault_manager.delete_key(f"game_filter_{self.reviews_input_queue[0]}_{client_id}")
-                self.fault_manager.delete_key(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}")
+                self.fault_manager.delete_key(f"processed_packets_{self.reviews_input_queue[0]}")
 
         
     def send_fin(self, client_id):
@@ -355,7 +365,7 @@ class GameReviewFilter:
                     self.send_fin(client_id)
                     self.sended_fin[client_id] = True
                     self.fault_manager.delete_key(f"game_filter_{self.reviews_input_queue[0]}_{client_id}")
-                    self.fault_manager.delete_key(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}")
+                    self.fault_manager.delete_key(f"processed_packets_{self.reviews_input_queue[0]}")
                     
     def process_reviews(self, key, client_id):
         """
@@ -367,14 +377,16 @@ class GameReviewFilter:
         final_list_action = str(self.action_packet_id) + "\n"
         batch_counter = 0
         data = self.fault_manager.get(key)
+        if data is None:
+            return
         self.next_instance = 1
         lines = data.strip().split("\n")
         lines = lines[1:]   
         logging.info(f"[PROCESS REVIEW] Procesando reviews para cliente {client_id} - {self.action_packet_id} - {self.packet_id}")
         if "action" in self.games_input_queue[1].lower():
-            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
         else:
-            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
         initial_packet = self.action_packet_id
         for line in lines:
             try: 
@@ -397,7 +409,7 @@ class GameReviewFilter:
                             routing = f"games_reviews_action_queue_{self.next_instance}_0"
                             self.reviews_middleware.send(data=final_list_action,routing_key=routing) # language filter
                             self.reviews_middleware.send(data=final_list_action,routing_key="games_reviews_action_queue_3") # Percentil directo
-                            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": initial_packet}))
+                            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": initial_packet}))
                             self.action_packet_id += 1
                             self.next_instance = (self.next_instance % self.amount_of_language_filters) + 1
                             final_list_action = str(self.action_packet_id) + "\n"
@@ -410,7 +422,7 @@ class GameReviewFilter:
                         if (batch_counter >= batch_size):
                             logging.info(f"Enviando paquete {self.packet_id}")
                             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-                            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
+                            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
                             self.packet_id += 4
                             final_list = str(self.packet_id) + "\n"
                             batch_counter = 0
@@ -421,21 +433,21 @@ class GameReviewFilter:
         
         if final_list and "action" not in self.games_input_queue[1].lower():
             self.reviews_middleware.send(final_list, routing_key="games_reviews_queue_0")
-            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
             self.packet_id += 4
         if final_list_action and "action" in self.games_input_queue[1].lower():
             routing = f"games_reviews_action_queue_{self.next_instance}_0"
             self.reviews_middleware.send(data=final_list_action,routing_key=routing) # language filter
             self.reviews_middleware.send(data=final_list_action,routing_key="games_reviews_action_queue_3")
-            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": initial_packet}))
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": initial_packet}))
             self.action_packet_id += 1
             
         self.fault_manager.delete_key(f"review_filter_{self.reviews_input_queue[0]}_{client_id}")
 
         if "action" in self.games_input_queue[1].lower():
-            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.action_packet_id, "last_init_process_packet": self.action_packet_id}))
         else:
-            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}_{client_id}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
+            self.fault_manager.update(f"processed_packets_{self.reviews_input_queue[0]}", json.dumps({"last_sended_packet": self.packet_id, "last_init_process_packet": self.packet_id}))
         logging.info(f"[PROCESS REVIEW] Reviews procesadas para cliente {client_id} - {self.action_packet_id} - {self.packet_id}")
     def start(self):
         """

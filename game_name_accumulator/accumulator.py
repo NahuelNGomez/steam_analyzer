@@ -38,6 +38,7 @@ class GameNamesAccumulator:
         self.total_fin = int(previous_language_nodes)
         self.received_fin:dict = {}
         self.data_to_store = ''
+        self.counter = 0
         
     def start(self):
         """
@@ -164,6 +165,8 @@ class GameNamesAccumulator:
                 logging.info(f"Paquete {packet_id} ya ha sido procesado, saltando...")
                 self.last_packet_id.remove(packet_id)
                 return
+            self.counter += 1
+            logging.info(f"Contador de paquetes: {self.counter}")
             for row in aux[1:]:
                 game = GameReview.decode(json.loads(row))
                 self.process_game(game, packet_id)
