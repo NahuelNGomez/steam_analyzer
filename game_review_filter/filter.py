@@ -8,6 +8,7 @@ from common.middleware import Middleware
 from common.packet_fin import Fin
 from common.review import Review
 from common.fault_manager import FaultManager
+import uuid
 
 class GameReviewFilter:
     def __init__(
@@ -108,12 +109,16 @@ class GameReviewFilter:
             client_id = int(key.split("_")[-1])
             if client_id not in self.games:
                 self.games[client_id] = {}
+            
             for line in data:
-                if line.isdigit():
-                    last_packet_id = line
-                    continue
                 if not line:
                     continue
+                try:
+                    uuid_line = uuid.UUID(line)
+                    last_packet_id = str(uuid_line)
+                    continue
+                except:
+                    pass
                 json_data_game = json.loads(line)
                 game_id = json_data_game["id"]
                 game_name = json_data_game["name"]

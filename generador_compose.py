@@ -393,13 +393,16 @@ def generate_yaml(num_clients, client_files, language_num_nodes, num_doctors=3, 
         }
 
 
-    not_include_host_regex = "client\d"
+    
+    not_include_host_regex = "client\\d"
     workers: list[str] = list(base_config["services"].keys())
-    for host in workers:
-        if re.search(not_include_host_regex, host):
-            workers.remove(host)
 
-    workers_str = ",".join(workers)
+    new_workers = []
+
+    for host in workers:
+        if not re.search(not_include_host_regex, host):
+            new_workers.append(host)
+    workers_str = ",".join(new_workers)
     print(workers_str)
 
     for i in range(0, num_doctors):

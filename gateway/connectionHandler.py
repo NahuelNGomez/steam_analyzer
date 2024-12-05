@@ -6,6 +6,7 @@ import os
 from queue import Queue, Empty
 import random
 import sys
+import uuid
 from common.game import Game
 from common.middleware import Middleware
 from common.protocol import Protocol
@@ -74,8 +75,8 @@ class ConnectionHandler:
         self.result_queue = modify_queue_key(address[0])
         csv.field_size_limit(sys.maxsize)
         self.batch_id_reviews = -1
-        self.packet_id = 0
-        self.packet_id_review = 0
+        self.packet_id = uuid.uuid4()
+        self.packet_id_review = uuid.uuid4()
         self.duplication_prob = duplication_prob
             
         self.gamesHeader = []
@@ -139,7 +140,7 @@ class ConnectionHandler:
             name="process_review",
             daemon=True
         )
-        
+        # NUEVO - ACTIVE_THREADS - self.shutdown()
         self.active_threads = [
             self.games_middleware_sender_thread,
             self.review_middleware_sender_thread,
@@ -184,7 +185,7 @@ class ConnectionHandler:
                         self._send_old_results()
                         self.client_results_sent = True
                         #self.shutdown_event.set()
-                        self.shutdown()
+                        #self.shutdown()
                         return
                     else:
                         self.protocol.send_message("False\n\n")
@@ -244,7 +245,7 @@ class ConnectionHandler:
                         if random.random() < self.duplication_prob:
                             logging.info(f"Paquete duplicado - {self.packet_id}")
                             self.games_from_client_queue.put(finalList)
-                        self.packet_id += 1
+                        self.packet_id = uuid.uuid4()
                 except Exception as e:
                     logging.error(f"Error al procesar el CSV: {e}")
                     self.protocol.send_message("Error processing data")
@@ -252,13 +253,13 @@ class ConnectionHandler:
             logging.info(f"Fin del recibo de datos {self.address}")
             if not self.client_results_sent:
                 self._send_results()
-                self.shutdown()
+                #self.shutdown()
         except Exception as e:
             logging.error(f"Error en la conexión con {self.address}: {e}")
-            self.shutdown()
+            #self.shutdown()
         finally:
             logging.info("Conexión cerrada.")
-            self.shutdown()
+            #self.shutdown()
             #self.shutdown_event.set()
     
     def _send_old_results(self):
@@ -354,28 +355,7 @@ class ConnectionHandler:
         middleware = Middleware(
             input_queues, [], [], instance_id, self.get_data, self.get_data
         )
-        
-        def monitor_shutdown():
-            while not self.shutdown_event.is_set():
-                self.shutdown_event.wait()
-            
-            logging.info("Shutdown event detected. Stopping middleware receiver.")
-            middleware.stop()
-        
-        # Lanzar el thread de monitoreo
-        shutdown_monitor_thread = threading.Thread(
-            target=monitor_shutdown, 
-            name="middleware_shutdown_monitor",
-            daemon=True
-        )
-        shutdown_monitor_thread.start()
-        
-        # Iniciar el middleware
         middleware.start()
-        
-        # Esperar a que el thread de monitoreo termine
-        shutdown_monitor_thread.join()
-        
         logging.info("Middleware receiver stopped")
 
     def process_review(self):
@@ -397,7 +377,7 @@ class ConnectionHandler:
                     self.id_reviews += 1
                 self.reviews_from_client_queue.put(finalList)
                 self.reviews_from_client_queue_to_positive.put(finalList)
-                self.packet_id_review += 1
+                self.packet_id_review = uuid.uuid4()
                 logging.info("Review batch processed")
             except Empty:
                 continue #revisar except, consume mucho CPU
@@ -452,8 +432,8 @@ class ConnectionHandler:
         if self.remaining_responses == 0:
             logging.info("All responses received. Sending to client.")
             self.result_to_client_queue.put("close\n\n")
-            threading.Thread(target=self.shutdown, daemon=True).start()
-            return
+            #threading.Thread(target=self.shutdown, daemon=True).start()
+            #return
 
         
     def shutdown(self):

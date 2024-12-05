@@ -14,7 +14,6 @@ class Top5ReviewCounter:
         self.last_packet_id = None
         self.last_games = ''
         self.init_state()
-        self.packets_received = 0
         
         self.middleware = Middleware(
             input_queues=input_queues,
@@ -92,10 +91,9 @@ class Top5ReviewCounter:
         packet_id = batch[0]
         batch = batch[1:]
         self.last_games = str(packet_id) + "\n"
-        self.packets_received += 1
-        
+
         logging.info(f"Received batch with packet_id {packet_id}")
-        logging.info(f"Packetd received {self.packets_received}")
+
         if packet_id == self.last_packet_id:
             logging.info("Ignoring duplicate packet.")
             return
@@ -155,6 +153,8 @@ class Top5ReviewCounter:
                     
                 for entry in game_entries:
                     try:
+                        if not entry:
+                            continue
                         if entry.isdigit():
                             self.last_packet_id = int(entry)
                             continue
@@ -171,6 +171,6 @@ class Top5ReviewCounter:
                                 'count': 1
                             }
                     except Exception as e:
-                        logging.error(f"Error in init_state: {e}")
+                        logging.error(f"Error in init_state: {e} - {entry}")
                 logging.info(f"Last packet_id: {self.last_packet_id}")
                         

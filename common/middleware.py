@@ -176,7 +176,11 @@ class Middleware:
         logging.debug("Sent to queue %s: %s", queue, data)
         
     def stop(self):
-        self.channel.stop_consuming()
+        if self.input_queues:
+            self.channel.stop_consuming()
+        if self.channel:
+            self.channel.close()
+        self.connection.close()
         logging.info("Middleware stopped consuming messages")
         
     def init_state(self):
