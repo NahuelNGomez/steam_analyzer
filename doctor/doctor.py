@@ -63,6 +63,10 @@ class Doctor:
 
                         self.check_health_thread = threading.Thread(target=self.check_health_loop)
                         self.check_health_thread.start()
+
+                        self.check_health_thread2 = threading.Thread(target=self.send_leader_loop)
+                        self.check_health_thread2.start()
+
                     elif doctor_id_recv > self.id:
                         self.send_message(VOTE, doctor_id_recv)
             elif message_type == DECISION:
